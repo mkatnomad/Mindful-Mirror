@@ -1,0 +1,45 @@
+
+export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY';
+
+export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
+
+export interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  type?: 'text' | 'decision-card';
+  decisionData?: DecisionData;
+  timestamp: number;
+}
+
+export interface DecisionData {
+  topic: string;
+  pros: string[];
+  cons: string[];
+}
+
+export interface ChatSession {
+  id: string;
+  mode: JournalMode;
+  date: number; // timestamp
+  duration: number; // seconds
+  preview: string; // short text preview
+  messages: Message[];
+}
+
+export interface UserProfile {
+  name: string;
+  email?: string;
+  avatarUrl: string | null;
+  isSetup: boolean;
+  isRegistered: boolean;
+}
+
+export type JournalEntryType = 'INTENTION' | 'INSIGHT' | 'GRATITUDE';
+
+export interface JournalEntry {
+  id: string;
+  date: number;
+  type: JournalEntryType;
+  content: string;
+}
