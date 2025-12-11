@@ -1,11 +1,9 @@
 import { 
   GoogleGenerativeAI, 
-  HarmCategory, 
-  HarmBlockThreshold 
 } from "@google/generative-ai";
 import { Message, DecisionData } from '../types';
 
-// Инструкции остаются теми же
+// --- ИНСТРУКЦИИ ---
 const SYSTEM_INSTRUCTION_EMOTION = `
 You are a deeply empathetic, calm, and supportive AI psychological companion.
 Your goal is not just to listen, but to help the user navigate their feelings.
@@ -31,17 +29,18 @@ Be concise, wise, and objective.
 IMPORTANT: You MUST reply in the Russian language.
 `;
 
-// Получение ключа
+// --- ПОЛУЧЕНИЕ КЛЮЧА ---
 const getApiKey = () => {
   const key = import.meta.env.VITE_GEMINI_API_KEY;
   if (!key) console.error("API Key is missing!");
   return key;
 };
 
-// === НАСТРОЙКА КЛИЕНТА (НОВАЯ БИБЛИОТЕКА) ===
+// --- НАСТРОЙКА ---
 const genAI = new GoogleGenerativeAI(getApiKey());
-const MODEL_NAME = "gemini-1.5-flash"; // Самая стабильная и бесплатная модель
+const MODEL_NAME = "gemini-1.5-flash"; 
 
+// --- ФУНКЦИЯ ЧАТА (ЭМОЦИИ И ДНЕВНИК) ---
 export const sendMessageToGemini = async (
   history: Message[], 
   newMessage: string, 
@@ -50,21 +49,25 @@ export const sendMessageToGemini = async (
   try {
     const systemInstruction = mode === 'EMOTIONS' ? SYSTEM_INSTRUCTION_EMOTION : SYSTEM_INSTRUCTION_REFLECTION;
 
-    // Получаем модель
     const model = genAI.getGenerativeModel({ 
       model: MODEL_NAME,
       systemInstruction: systemInstruction 
     });
 
-    // Преобразуем историю в формат Google
-    const chatHistory = history
+    // 1. Преобразуем историю в формат Google
+    let chatHistory = history
       .filter(m => m.role !== 'system' && m.type !== 'decision-card')
       .map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }],
       }));
 
-    // Запускаем чат
+    // 2. <--- ИСПРАВЛЕНИЕ ОШИБКИ "First content should be user" --->
+    // Если первое сообщение от Бота (Приветствие), мы его удаляем из истории для API
+    while (chatHistory.length > 0 && chatHistory[0].role === 'model') {
+      chatHistory.shift();
+    }
+
     const chat = model.startChat({
       history: chatHistory,
       generationConfig: {
@@ -78,10 +81,11 @@ export const sendMessageToGemini = async (
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Простите, я не смог соединиться с облаком. (Попробуйте позже)";
+    return "Простите, я не смог соединиться с облаком. (Попробуйте обновить страницу)";
   }
 };
 
+// --- ФУНКЦИЯ АНАЛИЗА РЕШЕНИЙ ---
 export const analyzeDecision = async (data: DecisionData): Promise<string> => {
   try {
     const model = genAI.getGenerativeModel({ 
@@ -95,16 +99,16 @@ export const analyzeDecision = async (data: DecisionData): Promise<string> => {
     return result.response.text();
   } catch (error) {
     console.error("Decision Error:", error);
-    return "Не удалось провести анализ.";
+    return "Не удалось провести анализ. Попробуйте еще раз.";
   }
 };
 
+// --- ФУНКЦИЯ УТОЧНЕНИЯ РЕШЕНИЙ ---
 export const refineDecision = async (
   currentData: DecisionData, 
   userInput: string
 ): Promise<{ text: string; data: DecisionData }> => {
   try {
-    // Для JSON ответа используем специальную конфигурацию
     const model = genAI.getGenerativeModel({ 
       model: MODEL_NAME,
       generationConfig: { responseMimeType: "application/json" }
