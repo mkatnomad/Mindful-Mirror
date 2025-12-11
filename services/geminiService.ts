@@ -1,5 +1,7 @@
 import { 
   GoogleGenerativeAI, 
+  HarmCategory, 
+  HarmBlockThreshold 
 } from "@google/generative-ai";
 import { Message, DecisionData } from '../types';
 
@@ -29,18 +31,26 @@ Be concise, wise, and objective.
 IMPORTANT: You MUST reply in the Russian language.
 `;
 
-// --- ПОЛУЧЕНИЕ КЛЮЧА ---
 const getApiKey = () => {
   const key = import.meta.env.VITE_GEMINI_API_KEY;
   if (!key) console.error("API Key is missing!");
   return key;
 };
 
-// --- НАСТРОЙКА ---
-const genAI = new GoogleGenerativeAI(getApiKey());
-const MODEL_NAME = "gemini-1.5-flash"; 
+// --- НАСТРОЙКИ БЕЗОПАСНОСТИ ---
+const safetySettings = [
+  { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+  { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+];
 
-// --- ФУНКЦИЯ ЧАТА (ЭМОЦИИ И ДНЕВНИК) ---
+const genAI = new GoogleGenerativeAI(getApiKey());
+
+// <--- ВОТ ЗДЕСЬ ИСПРАВЛЕНИЕ: ИСПОЛЬЗУЕМ ТОЧНУЮ ВЕРСИЮ --->
+const MODEL_NAME = "gemini-1.5-flash-001"; 
+
+// --- ЧАТ ---
 export const sendMessageToGemini = async (
   history: Message[], 
   newMessage: string, 
@@ -51,10 +61,10 @@ export const sendMessageToGemini = async (
 
     const model = genAI.getGenerativeModel({ 
       model: MODEL_NAME,
-      systemInstruction: systemInstruction 
+      systemInstruction: systemInstruction,
+      safetySettings: safetySettings
     });
 
-    // 1. Преобразуем историю в формат Google
     let chatHistory = history
       .filter(m => m.role !== 'system' && m.type !== 'decision-card')
       .map(m => ({
@@ -62,17 +72,13 @@ export const sendMessageToGemini = async (
         parts: [{ text: m.content }],
       }));
 
-    // 2. <--- ИСПРАВЛЕНИЕ ОШИБКИ "First content should be user" --->
-    // Если первое сообщение от Бота (Приветствие), мы его удаляем из истории для API
+    // Исправление ошибки "First content should be user"
     while (chatHistory.length > 0 && chatHistory[0].role === 'model') {
       chatHistory.shift();
     }
 
     const chat = model.startChat({
       history: chatHistory,
-      generationConfig: {
-        maxOutputTokens: 1000,
-      },
     });
 
     const result = await chat.sendMessage(newMessage);
@@ -81,16 +87,17 @@ export const sendMessageToGemini = async (
 
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Простите, я не смог соединиться с облаком. (Попробуйте обновить страницу)";
+    return "Простите, я не смог соединиться с облаком (Ошибка сети или модели).";
   }
 };
 
-// --- ФУНКЦИЯ АНАЛИЗА РЕШЕНИЙ ---
+// --- АНАЛИЗ РЕШЕНИЙ ---
 export const analyzeDecision = async (data: DecisionData): Promise<string> => {
   try {
     const model = genAI.getGenerativeModel({ 
       model: MODEL_NAME,
-      systemInstruction: SYSTEM_INSTRUCTION_DECISION_ANALYSIS
+      systemInstruction: SYSTEM_INSTRUCTION_DECISION_ANALYSIS,
+      safetySettings: safetySettings
     });
 
     const prompt = `Topic: ${data.topic}\nPros: ${data.pros.join(', ')}\nCons: ${data.cons.join(', ')}\nPlease analyze this decision.`;
@@ -99,11 +106,11 @@ export const analyzeDecision = async (data: DecisionData): Promise<string> => {
     return result.response.text();
   } catch (error) {
     console.error("Decision Error:", error);
-    return "Не удалось провести анализ. Попробуйте еще раз.";
+    return "Не удалось провести анализ.";
   }
 };
 
-// --- ФУНКЦИЯ УТОЧНЕНИЯ РЕШЕНИЙ ---
+// --- УТОЧНЕНИЕ РЕШЕНИЙ ---
 export const refineDecision = async (
   currentData: DecisionData, 
   userInput: string
@@ -111,7 +118,8 @@ export const refineDecision = async (
   try {
     const model = genAI.getGenerativeModel({ 
       model: MODEL_NAME,
-      generationConfig: { responseMimeType: "application/json" }
+      generationConfig: { responseMimeType: "application/json" },
+      safetySettings: safetySettings
     });
 
     const prompt = `
@@ -126,7 +134,8 @@ export const refineDecision = async (
     `;
 
     const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    let text = result.response.text();
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const response = JSON.parse(text);
 
     return {
@@ -135,6 +144,6 @@ export const refineDecision = async (
     };
   } catch (error) {
     console.error("Refine Error:", error);
-    return { text: "Ошибка обновления.", data: currentData };
+    return { text: "Ошибка обновления данных.", data: currentData };
   }
 };
