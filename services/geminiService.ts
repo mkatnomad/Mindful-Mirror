@@ -1,12 +1,17 @@
-import { GoogleGenAI, GenerateContentResponse, Type, Schema } from "@google/genai";
+import { 
+  GoogleGenerativeAI, 
+  HarmCategory, 
+  HarmBlockThreshold 
+} from "@google/generative-ai";
 import { Message, DecisionData } from '../types';
 
+// Инструкции остаются теми же
 const SYSTEM_INSTRUCTION_EMOTION = `
 You are a deeply empathetic, calm, and supportive AI psychological companion.
 Your goal is not just to listen, but to help the user navigate their feelings.
 1. Validate their emotion first.
-2. Ask a clarifying question OR offer a brief psychological insight/coping technique (e.g., breathing, reframing, grounding).
-3. Be gentle but proactive in helping them feel better.
+2. Ask a clarifying question OR offer a brief psychological insight/coping technique.
+3. Be gentle but proactive.
 Keep responses concise (under 4 sentences).
 IMPORTANT: You MUST reply in the Russian language.
 `;
@@ -21,26 +26,21 @@ IMPORTANT: You MUST reply in the Russian language.
 const SYSTEM_INSTRUCTION_DECISION_ANALYSIS = `
 You are an expert decision-making consultant. 
 The user will provide a Topic, Pros, and Cons.
-Your task is to:
-1. Analyze the balance between Pros and Cons.
-2. Identify any potential cognitive biases (e.g., fear of missing out, sunk cost).
-3. Offer a specific framework or perspective to help them decide (e.g., "How would you feel about this in 10 minutes, 10 months, 10 years?", or "What is the worst-case scenario?").
-4. Give a gentle recommendation or a question that cuts to the core of the issue.
+Analyze the balance, identify biases, and offer a framework.
 Be concise, wise, and objective.
 IMPORTANT: You MUST reply in the Russian language.
 `;
 
-// --- ВАЖНО: Мы используем import.meta.env для Vite ---
+// Получение ключа
 const getApiKey = () => {
   const key = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!key) {
-    console.error("API Key is missing! Check Vercel Environment Variables.");
-  }
+  if (!key) console.error("API Key is missing!");
   return key;
 };
 
-// Используем точную версию модели, чтобы избежать ошибки 404
-const MODEL_ID = 'gemini-pro'; 
+// === НАСТРОЙКА КЛИЕНТА (НОВАЯ БИБЛИОТЕКА) ===
+const genAI = new GoogleGenerativeAI(getApiKey());
+const MODEL_NAME = "gemini-1.5-flash"; // Самая стабильная и бесплатная модель
 
 export const sendMessageToGemini = async (
   history: Message[], 
@@ -48,60 +48,53 @@ export const sendMessageToGemini = async (
   mode: 'EMOTIONS' | 'REFLECTION'
 ): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: getApiKey() });
     const systemInstruction = mode === 'EMOTIONS' ? SYSTEM_INSTRUCTION_EMOTION : SYSTEM_INSTRUCTION_REFLECTION;
 
-    const apiHistory = history
+    // Получаем модель
+    const model = genAI.getGenerativeModel({ 
+      model: MODEL_NAME,
+      systemInstruction: systemInstruction 
+    });
+
+    // Преобразуем историю в формат Google
+    const chatHistory = history
       .filter(m => m.role !== 'system' && m.type !== 'decision-card')
       .map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }],
       }));
 
-    const chat = ai.chats.create({
-      model: MODEL_ID,
-      config: {
-        systemInstruction: systemInstruction,
+    // Запускаем чат
+    const chat = model.startChat({
+      history: chatHistory,
+      generationConfig: {
+        maxOutputTokens: 1000,
       },
-      history: apiHistory
     });
 
-    const result: GenerateContentResponse = await chat.sendMessage({
-      message: newMessage
-    });
+    const result = await chat.sendMessage(newMessage);
+    const response = await result.response;
+    return response.text();
 
-    return result.text || "Я слушаю...";
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Простите, я не смог соединиться с облаком. (Ошибка модели)";
+    return "Простите, я не смог соединиться с облаком. (Попробуйте позже)";
   }
 };
 
 export const analyzeDecision = async (data: DecisionData): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: getApiKey() });
-    const prompt = `
-      Topic: ${data.topic}
-      Pros: ${data.pros.join(', ')}
-      Cons: ${data.cons.join(', ')}
-      
-      Please analyze this decision.
-    `;
-
-    const chat = ai.chats.create({
-      model: MODEL_ID,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION_DECISION_ANALYSIS,
-      }
+    const model = genAI.getGenerativeModel({ 
+      model: MODEL_NAME,
+      systemInstruction: SYSTEM_INSTRUCTION_DECISION_ANALYSIS
     });
 
-    const result: GenerateContentResponse = await chat.sendMessage({
-      message: prompt
-    });
+    const prompt = `Topic: ${data.topic}\nPros: ${data.pros.join(', ')}\nCons: ${data.cons.join(', ')}\nPlease analyze this decision.`;
 
-    return result.text || "Я проанализировал ваши данные, но мне нужно чуть больше времени.";
+    const result = await model.generateContent(prompt);
+    return result.response.text();
   } catch (error) {
-    console.error("Gemini Decision Analysis Error:", error);
+    console.error("Decision Error:", error);
     return "Не удалось провести анализ.";
   }
 };
@@ -111,59 +104,33 @@ export const refineDecision = async (
   userInput: string
 ): Promise<{ text: string; data: DecisionData }> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: getApiKey() });
+    // Для JSON ответа используем специальную конфигурацию
+    const model = genAI.getGenerativeModel({ 
+      model: MODEL_NAME,
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
     const prompt = `
     CURRENT DATA:
     Topic: ${currentData.topic}
     Pros: ${JSON.stringify(currentData.pros)}
     Cons: ${JSON.stringify(currentData.cons)}
-
     USER INPUT: "${userInput}"
-
-    TASK:
-    1. Update the Pros and Cons lists based on the User Input. The user might want to add, remove, or modify items. Use your best judgment to interpret their request.
-    2. Provide a fresh analysis of the decision based on the UPDATED data.
+    
+    TASK: Update data and analyze.
+    Return ONLY JSON: { "updatedData": { "topic": "...", "pros": [], "cons": [] }, "analysis": "..." }
     `;
 
-    const schema: Schema = {
-      type: Type.OBJECT,
-      properties: {
-        updatedData: {
-          type: Type.OBJECT,
-          properties: {
-            topic: { type: Type.STRING },
-            pros: { type: Type.ARRAY, items: { type: Type.STRING } },
-            cons: { type: Type.ARRAY, items: { type: Type.STRING } },
-          }
-        },
-        analysis: { type: Type.STRING }
-      }
-    };
-
-    const chat = ai.chats.create({
-      model: MODEL_ID,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: schema
-      }
-    });
-
-    const result = await chat.sendMessage({
-      message: prompt
-    });
-
-    const jsonText = result.text || "{}";
-    const response = JSON.parse(jsonText);
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const response = JSON.parse(text);
 
     return {
       text: response.analysis || "Данные обновлены.",
       data: response.updatedData || currentData
     };
   } catch (error) {
-    console.error("Refine Decision Error:", error);
-    return {
-      text: "Извините, я не смог обновить данные.",
-      data: currentData
-    };
+    console.error("Refine Error:", error);
+    return { text: "Ошибка обновления.", data: currentData };
   }
 };
