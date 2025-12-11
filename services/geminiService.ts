@@ -40,7 +40,7 @@ const getApiKey = () => {
 };
 
 // Используем точную версию модели, чтобы избежать ошибки 404
-const MODEL_ID = 'gemini-1.5-flash-001'; 
+const MODEL_ID = 'gemini-pro'; 
 
 export const sendMessageToGemini = async (
   history: Message[], 
