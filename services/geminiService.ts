@@ -30,14 +30,23 @@ Be concise, wise, and objective.
 IMPORTANT: You MUST reply in the Russian language.
 `;
 
+// --- ВАЖНО: Мы используем import.meta.env для Vite ---
+const getApiKey = () => {
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!key) {
+    console.error("API Key is missing! Check Vercel Environment Variables.");
+  }
+  return key;
+};
+
 export const sendMessageToGemini = async (
   history: Message[], 
   newMessage: string, 
   mode: 'EMOTIONS' | 'REFLECTION'
 ): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const modelId = 'gemini-2.5-flash';
+    const ai = new GoogleGenAI({ apiKey: getApiKey() }); // ИЗМЕНЕНО ЗДЕСЬ
+    const modelId = 'gemini-2.0-flash'; // Рекомендую flash для скорости
     const systemInstruction = mode === 'EMOTIONS' ? SYSTEM_INSTRUCTION_EMOTION : SYSTEM_INSTRUCTION_REFLECTION;
 
     const apiHistory = history
@@ -68,7 +77,7 @@ export const sendMessageToGemini = async (
 
 export const analyzeDecision = async (data: DecisionData): Promise<string> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getApiKey() }); // ИЗМЕНЕНО ЗДЕСЬ
     const prompt = `
       Topic: ${data.topic}
       Pros: ${data.pros.join(', ')}
@@ -78,7 +87,7 @@ export const analyzeDecision = async (data: DecisionData): Promise<string> => {
     `;
 
     const chat = ai.chats.create({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       config: {
         systemInstruction: SYSTEM_INSTRUCTION_DECISION_ANALYSIS,
       }
@@ -100,7 +109,7 @@ export const refineDecision = async (
   userInput: string
 ): Promise<{ text: string; data: DecisionData }> => {
   try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey: getApiKey() }); // ИЗМЕНЕНО ЗДЕСЬ
     // We want the model to act as a data processor AND advisor.
     const prompt = `
     CURRENT DATA:
@@ -131,7 +140,7 @@ export const refineDecision = async (
     };
 
     const chat = ai.chats.create({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       config: {
         responseMimeType: "application/json",
         responseSchema: schema
