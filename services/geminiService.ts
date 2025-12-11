@@ -147,3 +147,27 @@ export const refineDecision = async (
     return { text: "Ошибка обновления данных.", data: currentData };
   }
 };
+
+// --- ДИАГНОСТИКА: ПРОВЕРКА ДОСТУПНЫХ МОДЕЛЕЙ ---
+export const checkAvailableModels = async () => {
+  const key = import.meta.env.VITE_GEMINI_API_KEY;
+  try {
+    console.log("Проверяем доступные модели...");
+    // Делаем прямой запрос к Google, минуя библиотеки
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+    const data = await response.json();
+    
+    if (data.error) {
+      console.error("ОШИБКА КЛЮЧА:", data.error);
+    } else {
+      console.log("=== СПИСОК ДОСТУПНЫХ МОДЕЛЕЙ ===");
+      console.log(data.models?.map((m: any) => m.name)); // Выведет список имен
+      console.log("================================");
+    }
+  } catch (e) {
+    console.error("Ошибка проверки:", e);
+  }
+};
+
+// Запускаем проверку сразу при загрузке файла (для теста)
+checkAvailableModels();
