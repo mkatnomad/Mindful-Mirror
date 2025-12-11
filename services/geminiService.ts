@@ -39,6 +39,9 @@ const getApiKey = () => {
   return key;
 };
 
+// Используем точную версию модели, чтобы избежать ошибки 404
+const MODEL_ID = 'gemini-1.5-flash-001'; 
+
 export const sendMessageToGemini = async (
   history: Message[], 
   newMessage: string, 
@@ -46,7 +49,6 @@ export const sendMessageToGemini = async (
 ): Promise<string> => {
   try {
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
-    const modelId = 'gemini-1.5-flash'; // <--- ИЗМЕНИЛ ЗДЕСЬ (было 2.0)
     const systemInstruction = mode === 'EMOTIONS' ? SYSTEM_INSTRUCTION_EMOTION : SYSTEM_INSTRUCTION_REFLECTION;
 
     const apiHistory = history
@@ -57,7 +59,7 @@ export const sendMessageToGemini = async (
       }));
 
     const chat = ai.chats.create({
-      model: modelId,
+      model: MODEL_ID,
       config: {
         systemInstruction: systemInstruction,
       },
@@ -71,7 +73,7 @@ export const sendMessageToGemini = async (
     return result.text || "Я слушаю...";
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "Простите, я не смог соединиться с облаком. Проверьте интернет или API ключ.";
+    return "Простите, я не смог соединиться с облаком. (Ошибка модели)";
   }
 };
 
@@ -87,7 +89,7 @@ export const analyzeDecision = async (data: DecisionData): Promise<string> => {
     `;
 
     const chat = ai.chats.create({
-      model: 'gemini-1.5-flash', // <--- ИЗМЕНИЛ ЗДЕСЬ (было 2.0)
+      model: MODEL_ID,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION_DECISION_ANALYSIS,
       }
@@ -100,7 +102,7 @@ export const analyzeDecision = async (data: DecisionData): Promise<string> => {
     return result.text || "Я проанализировал ваши данные, но мне нужно чуть больше времени.";
   } catch (error) {
     console.error("Gemini Decision Analysis Error:", error);
-    return "Не удалось провести анализ. Попробуйте еще раз.";
+    return "Не удалось провести анализ.";
   }
 };
 
@@ -110,7 +112,6 @@ export const refineDecision = async (
 ): Promise<{ text: string; data: DecisionData }> => {
   try {
     const ai = new GoogleGenAI({ apiKey: getApiKey() });
-    // We want the model to act as a data processor AND advisor.
     const prompt = `
     CURRENT DATA:
     Topic: ${currentData.topic}
@@ -140,7 +141,7 @@ export const refineDecision = async (
     };
 
     const chat = ai.chats.create({
-      model: 'gemini-1.5-flash', // <--- ИЗМЕНИЛ ЗДЕСЬ (было 2.0)
+      model: MODEL_ID,
       config: {
         responseMimeType: "application/json",
         responseSchema: schema
@@ -161,7 +162,7 @@ export const refineDecision = async (
   } catch (error) {
     console.error("Refine Decision Error:", error);
     return {
-      text: "Извините, я не смог обновить данные. Попробуйте сформулировать иначе.",
+      text: "Извините, я не смог обновить данные.",
       data: currentData
     };
   }
