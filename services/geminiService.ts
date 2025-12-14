@@ -48,7 +48,7 @@ const safetySettings = [
 const genAI = new GoogleGenerativeAI(getApiKey());
 
 // <--- ИСПРАВЛЕНИЕ: ИСПОЛЬЗУЕМ ТОЧНУЮ ВЕРСИЮ --->
-const MODEL_NAME = "gemma-3-12b"; 
+const MODEL_NAME = "gemini-2.5-flash-lite"; 
 
 // --- ЧАТ ---
 export const sendMessageToGemini = async (
