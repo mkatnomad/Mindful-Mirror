@@ -49,19 +49,21 @@ const JournalCard: React.FC<{
   entry: JournalEntry; 
   onEdit: (entry: JournalEntry) => void; 
   onDelete: (id: string) => void;
+  onLongPressStart: () => void;
+  onLongPressEnd: () => void;
 }> = ({ 
   entry, 
   onEdit,
-  onDelete
+  onDelete,
+  onLongPressStart,
+  onLongPressEnd
 }) => {
   const config = TYPE_CONFIG[entry.type] || TYPE_CONFIG['INSIGHT'];
   const Icon = config.icon;
   const dragControls = useDragControls();
   
   const [isLongPressed, setIsLongPressed] = useState(false);
-  
   const timerRef = useRef<number | null>(null);
-  const startPosRef = useRef<{ x: number, y: number } | null>(null);
   const isDraggingStarted = useRef(false);
 
   const previewText = entry.content.length > 80 
@@ -71,39 +73,21 @@ const JournalCard: React.FC<{
   const handlePointerDown = (event: React.PointerEvent) => {
     if ((event.target as HTMLElement).closest('.delete-btn')) return;
 
-    // Сохраняем начальную позицию для детекции скролла
-    startPosRef.current = { x: event.clientX, y: event.clientY };
     isDraggingStarted.current = false;
-
-    // Запускаем таймер активации режима перетаскивания
+    
     timerRef.current = window.setTimeout(() => {
       setIsLongPressed(true);
+      onLongPressStart();
       
-      // Отключаем системные жесты Telegram (важно для Android/iOS)
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.disableVerticalSwipes?.();
         window.Telegram.WebApp.HapticFeedback?.impactOccurred('medium');
       }
 
-      // Инициируем перетаскивание Framer Motion
+      // Немедленно передаем управление Framer Motion
       dragControls.start(event);
       isDraggingStarted.current = true;
-    }, 450); // Увеличиваем до 450мс для стабильности в Mini App
-  };
-
-  const handlePointerMove = (event: React.PointerEvent) => {
-    if (!startPosRef.current || isDraggingStarted.current) return;
-
-    const dx = Math.abs(event.clientX - startPosRef.current.x);
-    const dy = Math.abs(event.clientY - startPosRef.current.y);
-
-    // Если палец сдвинулся больше чем на 10px до срабатывания таймера — пользователь просто скроллит
-    if (dx > 10 || dy > 10) {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    }
+    }, 400);
   };
 
   const handlePointerUp = () => {
@@ -112,45 +96,23 @@ const JournalCard: React.FC<{
       timerRef.current = null;
     }
     
-    // Возвращаем Telegram возможность свайпа вниз
     if (window.Telegram?.WebApp) {
       window.Telegram.WebApp.enableVerticalSwipes?.();
     }
 
-    startPosRef.current = null;
-    
-    // Сбрасываем визуальный лонг-пресс через небольшую паузу
-    setTimeout(() => {
+    if (isLongPressed) {
       setIsLongPressed(false);
-    }, 100);
+      onLongPressEnd();
+    }
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Если мы перетаскивали карточку — не открываем редактор
-    if (isDraggingStarted.current) {
+    if (isDraggingStarted.current || isLongPressed) {
       e.preventDefault();
       e.stopPropagation();
       return;
     }
     onEdit(entry);
-  };
-
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-    
-    const confirmText = 'Вы уверены, что хотите удалить эту заметку?';
-    const webApp = window.Telegram?.WebApp;
-    
-    if (webApp?.isVersionAtLeast?.('6.2')) {
-      webApp.showConfirm(confirmText, (confirmed: boolean) => {
-        if (confirmed) onDelete(entry.id);
-      });
-    } else {
-      if (window.confirm(confirmText)) {
-        onDelete(entry.id);
-      }
-    }
   };
 
   return (
@@ -161,28 +123,25 @@ const JournalCard: React.FC<{
       dragControls={dragControls}
       style={{ 
         borderRadius: '24px',
-        // Если лонг-пресс активен — запрещаем браузерный скролл совсем
-        touchAction: isLongPressed ? 'none' : 'auto' 
+        touchAction: 'none' // Полностью отключаем браузерные жесты для этого элемента
       }}
       whileDrag={{ 
         scale: 1.05, 
-        boxShadow: "0px 25px 50px -12px rgba(99, 102, 241, 0.4)",
         zIndex: 100 
       }}
       className="relative mb-4 bg-transparent select-none outline-none"
     >
       <div 
         onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onClick={handleCardClick}
         onContextMenu={(e) => e.preventDefault()}
         className={`
            relative rounded-[24px] p-5 bg-gradient-to-br ${config.gradient} 
-           border border-white/70 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] 
-           transition-all duration-300 active:opacity-90
-           ${isLongPressed ? 'ring-2 ring-indigo-500 shadow-[0_0_25px_rgba(99,102,241,0.4)] scale-[1.01]' : 'hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)]'}
+           border border-white/70 shadow-sm
+           transition-all duration-200
+           ${isLongPressed ? 'ring-2 ring-indigo-500 scale-[1.02] shadow-xl' : ''}
         `}
       >
         <div className="flex items-center justify-between mb-2 pointer-events-none">
@@ -190,21 +149,19 @@ const JournalCard: React.FC<{
               <Icon size={12} className={config.color} />
               <span className={`text-[9px] font-bold uppercase tracking-wider ${config.color}`}>{config.label}</span>
             </div>
-            
             <div className="flex items-center space-x-2">
                 <span className="text-[10px] text-slate-400 font-semibold opacity-70">
                   {new Date(entry.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                 </span>
-                
                 <button 
-                  onClick={handleDelete}
-                  className="delete-btn pointer-events-auto w-10 h-10 -mr-2 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors rounded-full hover:bg-white/40"
+                  onClick={(e) => { e.stopPropagation(); onDelete(entry.id); }}
+                  className="delete-btn pointer-events-auto w-8 h-8 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors"
                 >
                   <Trash2 size={16} />
                 </button>
             </div>
         </div>
-        <p className="text-slate-700 text-[14px] leading-relaxed font-medium break-words pointer-events-none">
+        <p className="text-slate-700 text-[14px] leading-relaxed font-medium pointer-events-none">
           {previewText}
         </p>
       </div>
@@ -217,9 +174,11 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<JournalEntryType>('INSIGHT');
   const [content, setContent] = useState('');
-  
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<JournalEntryType | 'ALL'>('ALL');
+  
+  // Состояние для временного отключения скролла всего контейнера
+  const [isAnyCardLongPressed, setIsAnyCardLongPressed] = useState(false);
   
   const startTimeRef = useRef<number>(0);
 
@@ -239,159 +198,86 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
     setIsEditorOpen(true);
   };
 
-  const openEditEntry = (entry: JournalEntry) => {
-    setEditingId(entry.id);
-    setSelectedType(entry.type);
-    setContent(entry.content);
-    startTimeRef.current = Date.now();
-    setIsEditorOpen(true);
-  };
-
   const handleSave = () => {
     if (!content.trim()) return;
-    
     const isNew = editingId === null;
     const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
-    
     const entry: JournalEntry = {
       id: editingId || Date.now().toString(),
       date: isNew ? Date.now() : (entries.find(e => e.id === editingId)?.date || Date.now()),
       type: selectedType,
       content: content.trim()
     };
-    
     onSaveEntry(entry, isNew, duration);
-    setContent('');
-    setEditingId(null);
     setIsEditorOpen(false);
   };
 
-  const renderEditor = () => (
-    <div className="absolute inset-0 z-50 bg-white flex flex-col animate-fade-in">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-        <button onClick={() => setIsEditorOpen(false)} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50">
-          <X size={24} />
-        </button>
-        <span className="font-bold text-slate-800">{editingId ? 'Редактировать' : 'Новая запись'}</span>
-        <button onClick={handleSave} disabled={!content.trim()} className="text-indigo-600 font-bold text-sm disabled:opacity-40 disabled:cursor-not-allowed">
-          Сохранить
-        </button>
-      </div>
-
-      <div className="flex p-4 space-x-2 bg-slate-50/50 overflow-x-auto no-scrollbar">
-        {(Object.keys(TYPE_CONFIG) as JournalEntryType[]).map((type) => {
-          const config = TYPE_CONFIG[type];
-          const isSelected = selectedType === type;
-          const Icon = config.icon;
-          return (
-            <button key={type} onClick={() => setSelectedType(type)} className={`flex-1 flex items-center justify-center space-x-2 py-3 px-2 rounded-xl text-sm font-semibold transition-all min-w-[100px] ${isSelected ? 'bg-white shadow-md text-slate-800 ring-1 ring-black/5' : 'text-slate-400 hover:bg-white/50'}`}>
-              <Icon size={16} className={isSelected ? config.color : ''} />
-              <span>{config.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex-1 p-6">
-        <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder={TYPE_CONFIG[selectedType].placeholder} className="w-full h-full resize-none text-lg text-slate-700 placeholder:text-slate-300 focus:outline-none leading-relaxed" autoFocus />
-      </div>
-    </div>
-  );
-
   return (
     <div className="flex flex-col h-full bg-[#F8FAFC] relative overflow-hidden">
-      {isEditorOpen && renderEditor()}
-
-      <div className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20 shadow-sm">
-        <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex items-center">
-                <button onClick={onBack} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
-                <ArrowLeft size={20} />
-                </button>
-                <h2 className="ml-2 text-xl font-bold text-slate-800 tracking-tight">Моё Пространство</h2>
-            </div>
+      {isEditorOpen && (
+        <div className="absolute inset-0 z-50 bg-white flex flex-col animate-fade-in">
+           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <button onClick={() => setIsEditorOpen(false)} className="p-2 text-slate-400"><X size={24} /></button>
+            <span className="font-bold text-slate-800">Запись</span>
+            <button onClick={handleSave} className="text-indigo-600 font-bold">Ок</button>
+          </div>
+          <div className="flex-1 p-6">
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} className="w-full h-full resize-none text-lg outline-none" autoFocus />
+          </div>
         </div>
+      )}
 
-        <div className="px-6 pb-4 space-y-4">
-          <div className="relative">
-             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-             <input 
-               type="text" 
-               placeholder="Поиск по заметкам..."
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full bg-slate-50 border border-slate-100 rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:bg-white focus:ring-1 focus:ring-indigo-100 transition-all"
-             />
-          </div>
-
-          <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-1">
-             <button 
-               onClick={() => setActiveFilter('ALL')}
-               className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeFilter === 'ALL' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-             >
-               Все
-             </button>
-             {(Object.keys(TYPE_CONFIG) as JournalEntryType[]).map(type => (
-               <button 
-                 key={type}
-                 onClick={() => setActiveFilter(type)}
-                 className={`whitespace-nowrap px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeFilter === type ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
-               >
-                 {TYPE_CONFIG[type].label}
-               </button>
-             ))}
-          </div>
+      <div className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20 px-6 py-4">
+        <div className="flex items-center">
+            <button onClick={onBack} className="p-2 -ml-2 text-slate-500"><ArrowLeft size={20} /></button>
+            <h2 className="ml-2 text-xl font-bold text-slate-800">Дневник</h2>
+        </div>
+        <div className="mt-4">
+           <input 
+             type="text" 
+             placeholder="Поиск..."
+             value={searchQuery}
+             onChange={(e) => setSearchQuery(e.target.value)}
+             className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 px-4 text-sm focus:outline-none"
+           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 pb-24 scroll-smooth overscroll-contain">
-        {filteredEntries.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-60">
-            <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center">
-              <Search size={32} className="text-indigo-300" />
-            </div>
-            <div className="max-w-[240px]">
-              <h3 className="text-lg font-bold text-slate-700 mb-2">
-                {searchQuery ? 'Ничего не найдено' : 'Ваш Дневник'}
-              </h3>
-              <p className="text-slate-500 leading-relaxed">
-                {searchQuery ? 'Попробуйте изменить параметры поиска или фильтра.' : 'Сохраняйте инсайты, благодарите мир и формируйте намерения.'}
-              </p>
-            </div>
-          </div>
-        ) : (
+      <div 
+        className={`flex-1 p-5 pb-24 ${isAnyCardLongPressed ? 'overflow-hidden' : 'overflow-y-auto'}`}
+        style={{ touchAction: isAnyCardLongPressed ? 'none' : 'auto' }}
+      >
+        {filteredEntries.length > 0 ? (
           <Reorder.Group 
             axis="y" 
             values={filteredEntries} 
-            onReorder={(newOrder) => {
-              if (activeFilter === 'ALL' && !searchQuery) {
-                onUpdateOrder(newOrder);
-              }
-            }} 
+            onReorder={onUpdateOrder} 
             className="flex flex-col"
           >
              {filteredEntries.map((entry) => (
                <JournalCard 
                  key={entry.id} 
                  entry={entry} 
-                 onEdit={openEditEntry}
+                 onEdit={(e) => {
+                    setEditingId(e.id);
+                    setSelectedType(e.type);
+                    setContent(e.content);
+                    startTimeRef.current = Date.now();
+                    setIsEditorOpen(true);
+                 }}
                  onDelete={onDeleteEntry}
+                 onLongPressStart={() => setIsAnyCardLongPressed(true)}
+                 onLongPressEnd={() => setIsAnyCardLongPressed(false)}
                />
              ))}
-             
-             {activeFilter === 'ALL' && !searchQuery && (
-               <div className="text-center pt-8 pb-4 opacity-50">
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-                    Удерживайте для сортировки
-                  </p>
-               </div>
-             )}
           </Reorder.Group>
+        ) : (
+          <div className="h-full flex items-center justify-center opacity-40">Пусто</div>
         )}
       </div>
 
       <div className="absolute bottom-8 right-6 z-30">
-        <button onClick={openNewEntry} className="w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl shadow-slate-400/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform">
+        <button onClick={openNewEntry} className="w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl flex items-center justify-center active:scale-95 transition-transform">
           <Plus size={28} />
         </button>
       </div>
