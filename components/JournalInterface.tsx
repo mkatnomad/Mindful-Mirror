@@ -57,8 +57,11 @@ const JournalCard: React.FC<{
   const config = TYPE_CONFIG[entry.type] || TYPE_CONFIG['INSIGHT'];
   const Icon = config.icon;
   const dragControls = useDragControls();
+  
+  // Состояния для управления жестами
   const [isLongPressed, setIsLongPressed] = useState(false);
   const [isDraggingActive, setIsDraggingActive] = useState(false);
+  
   const timerRef = useRef<number | null>(null);
   const startPosRef = useRef<{ x: number, y: number } | null>(null);
   const isActuallyDragging = useRef(false);
@@ -68,38 +71,40 @@ const JournalCard: React.FC<{
     : entry.content;
 
   const handlePointerDown = (event: React.PointerEvent) => {
-    // Не запускаем таймер, если нажата кнопка удаления
     if ((event.target as HTMLElement).closest('.delete-btn')) return;
 
     startPosRef.current = { x: event.clientX, y: event.clientY };
     isActuallyDragging.current = false;
 
+    // Таймер только для визуальной активации и вибро
     timerRef.current = window.setTimeout(() => {
-      // Это долгое нажатие
       setIsLongPressed(true);
-      setIsDraggingActive(true);
-      isActuallyDragging.current = true;
-      
-      // Инициируем перетаскивание через dragControls
-      dragControls.start(event);
-      
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
       }
-    }, 350); // 350мс — оптимально для мобилок, чтобы отличить скролл от лонгпресса
+    }, 300); 
   };
 
   const handlePointerMove = (event: React.PointerEvent) => {
-    if (!startPosRef.current || isActuallyDragging.current) return;
+    if (!startPosRef.current) return;
 
     const dx = Math.abs(event.clientX - startPosRef.current.x);
     const dy = Math.abs(event.clientY - startPosRef.current.y);
 
-    // Если палец сместился больше чем на 10px до срабатывания таймера — это скролл
-    if (dx > 10 || dy > 10) {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
+    if (isLongPressed) {
+      // Если лонг-пресс уже случился, и пользователь начал движение — захватываем драг
+      if (!isActuallyDragging.current && (dx > 2 || dy > 2)) {
+        isActuallyDragging.current = true;
+        setIsDraggingActive(true);
+        dragControls.start(event);
+      }
+    } else {
+      // Если лонг-пресс еще не случился, но палец сильно двинулся — это скролл, отменяем таймер
+      if (dx > 10 || dy > 10) {
+        if (timerRef.current) {
+          clearTimeout(timerRef.current);
+          timerRef.current = null;
+        }
       }
     }
   };
@@ -111,7 +116,7 @@ const JournalCard: React.FC<{
     }
     startPosRef.current = null;
     
-    // Сбрасываем состояния с небольшой задержкой, чтобы не сработал клик
+    // Сбрасываем состояния с задержкой, чтобы handleCardClick успел их прочитать
     setTimeout(() => {
       setIsLongPressed(false);
       setIsDraggingActive(false);
@@ -119,7 +124,7 @@ const JournalCard: React.FC<{
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Если мы перетаскивали или собирались — не открываем редактор
+    // Если мы зафиксировали перетаскивание — блокируем открытие редактора
     if (isActuallyDragging.current) {
       e.preventDefault();
       e.stopPropagation();
@@ -165,11 +170,11 @@ const JournalCard: React.FC<{
       dragControls={dragControls}
       style={{ 
         borderRadius: '24px',
-        touchAction: isDraggingActive ? 'none' : 'pan-y'
+        touchAction: isLongPressed ? 'none' : 'pan-y'
       }}
       whileDrag={{ 
         scale: 1.04, 
-        boxShadow: "0px 25px 50px -12px rgba(99, 102, 241, 0.5)",
+        boxShadow: "0px 25px 50px -12px rgba(99, 102, 241, 0.4)",
         zIndex: 50 
       }}
       className="relative mb-4 bg-transparent select-none"
@@ -180,14 +185,15 @@ const JournalCard: React.FC<{
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onClick={handleCardClick}
+        onContextMenu={(e) => e.preventDefault()}
         className={`
            relative rounded-[24px] p-5 bg-gradient-to-br ${config.gradient} 
            border border-white/70 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] 
            transition-all duration-300 group
-           ${isLongPressed ? 'ring-2 ring-indigo-500 shadow-[0_0_25px_rgba(99,102,241,0.4)] scale-[1.02]' : 'hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)]'}
+           ${isLongPressed ? 'ring-2 ring-indigo-500 shadow-[0_0_25px_rgba(99,102,241,0.4)] scale-[1.01]' : 'hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)]'}
         `}
       >
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-2 pointer-events-none">
             <div className="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-white/60 backdrop-blur-md shadow-sm border border-white/50">
               <Icon size={12} className={config.color} />
               <span className={`text-[9px] font-bold uppercase tracking-wider ${config.color}`}>{config.label}</span>
@@ -200,13 +206,13 @@ const JournalCard: React.FC<{
                 
                 <button 
                   onClick={handleDelete}
-                  className="delete-btn w-10 h-10 -mr-2 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors rounded-full hover:bg-white/40 active:scale-90"
+                  className="delete-btn pointer-events-auto w-10 h-10 -mr-2 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors rounded-full hover:bg-white/40 active:scale-90"
                 >
                   <Trash2 size={16} />
                 </button>
             </div>
         </div>
-        <p className="text-slate-700 text-[14px] leading-relaxed font-medium break-words">
+        <p className="text-slate-700 text-[14px] leading-relaxed font-medium break-words pointer-events-none">
           {previewText}
         </p>
       </div>
@@ -366,7 +372,6 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
             axis="y" 
             values={filteredEntries} 
             onReorder={(newOrder) => {
-              // Разрешаем сортировку только когда нет фильтров и поиска
               if (activeFilter === 'ALL' && !searchQuery) {
                 onUpdateOrder(newOrder);
               }
