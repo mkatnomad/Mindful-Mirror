@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo } from 'react';
 import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2 } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
@@ -62,37 +61,41 @@ const JournalCard: React.FC<{
   const [isDraggingActive, setIsDraggingActive] = useState(false);
   const timerRef = useRef<number | null>(null);
   const startPosRef = useRef<{ x: number, y: number } | null>(null);
-  const dragStartedRef = useRef(false);
+  const isActuallyDragging = useRef(false);
 
   const previewText = entry.content.length > 80 
     ? entry.content.slice(0, 80) + '...' 
     : entry.content;
 
   const handlePointerDown = (event: React.PointerEvent) => {
-    // Ignore if clicking delete button
+    // Не запускаем таймер, если нажата кнопка удаления
     if ((event.target as HTMLElement).closest('.delete-btn')) return;
 
     startPosRef.current = { x: event.clientX, y: event.clientY };
+    isActuallyDragging.current = false;
 
     timerRef.current = window.setTimeout(() => {
+      // Это долгое нажатие
       setIsLongPressed(true);
       setIsDraggingActive(true);
-      dragStartedRef.current = true;
+      isActuallyDragging.current = true;
+      
+      // Инициируем перетаскивание через dragControls
       dragControls.start(event);
       
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
       }
-    }, 300); // Increased to 300ms to better distinguish from scroll start
+    }, 350); // 350мс — оптимально для мобилок, чтобы отличить скролл от лонгпресса
   };
 
   const handlePointerMove = (event: React.PointerEvent) => {
-    if (!startPosRef.current || isDraggingActive) return;
+    if (!startPosRef.current || isActuallyDragging.current) return;
 
     const dx = Math.abs(event.clientX - startPosRef.current.x);
     const dy = Math.abs(event.clientY - startPosRef.current.y);
 
-    // If moved more than 10px, it's likely a scroll, not a long press
+    // Если палец сместился больше чем на 10px до срабатывания таймера — это скролл
     if (dx > 10 || dy > 10) {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -108,17 +111,16 @@ const JournalCard: React.FC<{
     }
     startPosRef.current = null;
     
-    // Small delay to ensure click handler knows it was a drag
+    // Сбрасываем состояния с небольшой задержкой, чтобы не сработал клик
     setTimeout(() => {
       setIsLongPressed(false);
       setIsDraggingActive(false);
-      dragStartedRef.current = false;
-    }, 150);
+    }, 50);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent opening editor if we were just dragging or it was a move/scroll
-    if (dragStartedRef.current || isDraggingActive) {
+    // Если мы перетаскивали или собирались — не открываем редактор
+    if (isActuallyDragging.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -161,7 +163,10 @@ const JournalCard: React.FC<{
       id={entry.id}
       dragListener={false}
       dragControls={dragControls}
-      style={{ borderRadius: '24px' }}
+      style={{ 
+        borderRadius: '24px',
+        touchAction: isDraggingActive ? 'none' : 'pan-y'
+      }}
       whileDrag={{ 
         scale: 1.04, 
         boxShadow: "0px 25px 50px -12px rgba(99, 102, 241, 0.5)",
@@ -179,7 +184,6 @@ const JournalCard: React.FC<{
            relative rounded-[24px] p-5 bg-gradient-to-br ${config.gradient} 
            border border-white/70 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] 
            transition-all duration-300 group
-           ${isDraggingActive ? 'touch-none' : 'touch-pan-y'}
            ${isLongPressed ? 'ring-2 ring-indigo-500 shadow-[0_0_25px_rgba(99,102,241,0.4)] scale-[1.02]' : 'hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)]'}
         `}
       >
@@ -362,6 +366,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
             axis="y" 
             values={filteredEntries} 
             onReorder={(newOrder) => {
+              // Разрешаем сортировку только когда нет фильтров и поиска
               if (activeFilter === 'ALL' && !searchQuery) {
                 onUpdateOrder(newOrder);
               }
