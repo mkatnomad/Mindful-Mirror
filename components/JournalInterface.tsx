@@ -58,13 +58,11 @@ const JournalCard: React.FC<{
   const Icon = config.icon;
   const dragControls = useDragControls();
   
-  // Состояния для управления жестами
   const [isLongPressed, setIsLongPressed] = useState(false);
-  const [isDraggingActive, setIsDraggingActive] = useState(false);
   
   const timerRef = useRef<number | null>(null);
   const startPosRef = useRef<{ x: number, y: number } | null>(null);
-  const isActuallyDragging = useRef(false);
+  const isDraggingStarted = useRef(false);
 
   const previewText = entry.content.length > 80 
     ? entry.content.slice(0, 80) + '...' 
@@ -73,38 +71,37 @@ const JournalCard: React.FC<{
   const handlePointerDown = (event: React.PointerEvent) => {
     if ((event.target as HTMLElement).closest('.delete-btn')) return;
 
+    // Сохраняем начальную позицию для детекции скролла
     startPosRef.current = { x: event.clientX, y: event.clientY };
-    isActuallyDragging.current = false;
+    isDraggingStarted.current = false;
 
-    // Таймер только для визуальной активации и вибро
+    // Запускаем таймер активации режима перетаскивания
     timerRef.current = window.setTimeout(() => {
       setIsLongPressed(true);
-      if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+      
+      // Отключаем системные жесты Telegram (важно для Android/iOS)
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.disableVerticalSwipes?.();
+        window.Telegram.WebApp.HapticFeedback?.impactOccurred('medium');
       }
-    }, 300); 
+
+      // Инициируем перетаскивание Framer Motion
+      dragControls.start(event);
+      isDraggingStarted.current = true;
+    }, 450); // Увеличиваем до 450мс для стабильности в Mini App
   };
 
   const handlePointerMove = (event: React.PointerEvent) => {
-    if (!startPosRef.current) return;
+    if (!startPosRef.current || isDraggingStarted.current) return;
 
     const dx = Math.abs(event.clientX - startPosRef.current.x);
     const dy = Math.abs(event.clientY - startPosRef.current.y);
 
-    if (isLongPressed) {
-      // Если лонг-пресс уже случился, и пользователь начал движение — захватываем драг
-      if (!isActuallyDragging.current && (dx > 2 || dy > 2)) {
-        isActuallyDragging.current = true;
-        setIsDraggingActive(true);
-        dragControls.start(event);
-      }
-    } else {
-      // Если лонг-пресс еще не случился, но палец сильно двинулся — это скролл, отменяем таймер
-      if (dx > 10 || dy > 10) {
-        if (timerRef.current) {
-          clearTimeout(timerRef.current);
-          timerRef.current = null;
-        }
+    // Если палец сдвинулся больше чем на 10px до срабатывания таймера — пользователь просто скроллит
+    if (dx > 10 || dy > 10) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
     }
   };
@@ -114,18 +111,23 @@ const JournalCard: React.FC<{
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    
+    // Возвращаем Telegram возможность свайпа вниз
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.enableVerticalSwipes?.();
+    }
+
     startPosRef.current = null;
     
-    // Сбрасываем состояния с задержкой, чтобы handleCardClick успел их прочитать
+    // Сбрасываем визуальный лонг-пресс через небольшую паузу
     setTimeout(() => {
       setIsLongPressed(false);
-      setIsDraggingActive(false);
-    }, 50);
+    }, 100);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Если мы зафиксировали перетаскивание — блокируем открытие редактора
-    if (isActuallyDragging.current) {
+    // Если мы перетаскивали карточку — не открываем редактор
+    if (isDraggingStarted.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -140,21 +142,10 @@ const JournalCard: React.FC<{
     const confirmText = 'Вы уверены, что хотите удалить эту заметку?';
     const webApp = window.Telegram?.WebApp;
     
-    if (webApp && webApp.isVersionAtLeast && webApp.isVersionAtLeast('6.2')) {
+    if (webApp?.isVersionAtLeast?.('6.2')) {
       webApp.showConfirm(confirmText, (confirmed: boolean) => {
         if (confirmed) onDelete(entry.id);
       });
-    } else if (webApp && webApp.showPopup && webApp.isVersionAtLeast && webApp.isVersionAtLeast('6.0')) {
-        webApp.showPopup({
-            title: 'Удаление',
-            message: confirmText,
-            buttons: [
-                { id: 'delete', type: 'destructive', text: 'Удалить' },
-                { id: 'cancel', type: 'cancel', text: 'Отмена' }
-            ]
-        }, (buttonId: string) => {
-            if (buttonId === 'delete') onDelete(entry.id);
-        });
     } else {
       if (window.confirm(confirmText)) {
         onDelete(entry.id);
@@ -170,14 +161,15 @@ const JournalCard: React.FC<{
       dragControls={dragControls}
       style={{ 
         borderRadius: '24px',
-        touchAction: isLongPressed ? 'none' : 'pan-y'
+        // Если лонг-пресс активен — запрещаем браузерный скролл совсем
+        touchAction: isLongPressed ? 'none' : 'auto' 
       }}
       whileDrag={{ 
-        scale: 1.04, 
+        scale: 1.05, 
         boxShadow: "0px 25px 50px -12px rgba(99, 102, 241, 0.4)",
-        zIndex: 50 
+        zIndex: 100 
       }}
-      className="relative mb-4 bg-transparent select-none"
+      className="relative mb-4 bg-transparent select-none outline-none"
     >
       <div 
         onPointerDown={handlePointerDown}
@@ -189,7 +181,7 @@ const JournalCard: React.FC<{
         className={`
            relative rounded-[24px] p-5 bg-gradient-to-br ${config.gradient} 
            border border-white/70 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] 
-           transition-all duration-300 group
+           transition-all duration-300 active:opacity-90
            ${isLongPressed ? 'ring-2 ring-indigo-500 shadow-[0_0_25px_rgba(99,102,241,0.4)] scale-[1.01]' : 'hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)]'}
         `}
       >
@@ -206,7 +198,7 @@ const JournalCard: React.FC<{
                 
                 <button 
                   onClick={handleDelete}
-                  className="delete-btn pointer-events-auto w-10 h-10 -mr-2 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors rounded-full hover:bg-white/40 active:scale-90"
+                  className="delete-btn pointer-events-auto w-10 h-10 -mr-2 flex items-center justify-center text-slate-300 hover:text-rose-500 transition-colors rounded-full hover:bg-white/40"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -352,7 +344,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 pb-24 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-5 pb-24 scroll-smooth overscroll-contain">
         {filteredEntries.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-60">
             <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center">
