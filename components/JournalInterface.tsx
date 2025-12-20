@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2 } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
@@ -49,14 +50,10 @@ const JournalCard: React.FC<{
   entry: JournalEntry; 
   onEdit: (entry: JournalEntry) => void; 
   onDelete: (id: string) => void;
-  onLongPressStart: () => void;
-  onLongPressEnd: () => void;
 }> = ({ 
   entry, 
   onEdit,
-  onDelete,
-  onLongPressStart,
-  onLongPressEnd
+  onDelete
 }) => {
   const config = TYPE_CONFIG[entry.type] || TYPE_CONFIG['INSIGHT'];
   const Icon = config.icon;
@@ -64,7 +61,8 @@ const JournalCard: React.FC<{
   
   const [isLongPressed, setIsLongPressed] = useState(false);
   const timerRef = useRef<number | null>(null);
-  const isDraggingStarted = useRef(false);
+  const startPosRef = useRef<{ x: number, y: number } | null>(null);
+  const isDraggingActive = useRef(false);
 
   const previewText = entry.content.length > 80 
     ? entry.content.slice(0, 80) + '...' 
@@ -73,21 +71,36 @@ const JournalCard: React.FC<{
   const handlePointerDown = (event: React.PointerEvent) => {
     if ((event.target as HTMLElement).closest('.delete-btn')) return;
 
-    isDraggingStarted.current = false;
+    startPosRef.current = { x: event.clientX, y: event.clientY };
+    isDraggingActive.current = false;
     
     timerRef.current = window.setTimeout(() => {
       setIsLongPressed(true);
-      onLongPressStart();
+      isDraggingActive.current = true;
       
       if (window.Telegram?.WebApp) {
         window.Telegram.WebApp.disableVerticalSwipes?.();
         window.Telegram.WebApp.HapticFeedback?.impactOccurred('medium');
       }
 
-      // Немедленно передаем управление Framer Motion
+      // Начинаем перетаскивание
       dragControls.start(event);
-      isDraggingStarted.current = true;
-    }, 400);
+    }, 450);
+  };
+
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (!startPosRef.current || isDraggingActive.current) return;
+
+    const dx = Math.abs(event.clientX - startPosRef.current.x);
+    const dy = Math.abs(event.clientY - startPosRef.current.y);
+
+    // Если палец сдвинулся больше чем на 5px до срабатывания таймера — это скролл
+    if (dx > 5 || dy > 5) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
   };
 
   const handlePointerUp = () => {
@@ -100,14 +113,17 @@ const JournalCard: React.FC<{
       window.Telegram.WebApp.enableVerticalSwipes?.();
     }
 
-    if (isLongPressed) {
-      setIsLongPressed(false);
-      onLongPressEnd();
-    }
+    setIsLongPressed(false);
+    startPosRef.current = null;
+    
+    // Сбрасываем флаг перетаскивания с задержкой, чтобы не сработал клик
+    setTimeout(() => {
+      isDraggingActive.current = false;
+    }, 100);
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    if (isDraggingStarted.current || isLongPressed) {
+    if (isDraggingActive.current) {
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -123,16 +139,19 @@ const JournalCard: React.FC<{
       dragControls={dragControls}
       style={{ 
         borderRadius: '24px',
-        touchAction: 'none' // Полностью отключаем браузерные жесты для этого элемента
+        // 'pan-y' разрешает системный скролл по вертикали
+        touchAction: isLongPressed ? 'none' : 'pan-y'
       }}
       whileDrag={{ 
         scale: 1.05, 
-        zIndex: 100 
+        zIndex: 999, // Всегда поверх всех
+        boxShadow: "0px 20px 40px rgba(0,0,0,0.15)"
       }}
       className="relative mb-4 bg-transparent select-none outline-none"
     >
       <div 
         onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onClick={handleCardClick}
@@ -141,7 +160,7 @@ const JournalCard: React.FC<{
            relative rounded-[24px] p-5 bg-gradient-to-br ${config.gradient} 
            border border-white/70 shadow-sm
            transition-all duration-200
-           ${isLongPressed ? 'ring-2 ring-indigo-500 scale-[1.02] shadow-xl' : ''}
+           ${isLongPressed ? 'ring-2 ring-indigo-500 scale-[1.02] shadow-lg' : ''}
         `}
       >
         <div className="flex items-center justify-between mb-2 pointer-events-none">
@@ -176,9 +195,6 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
   const [content, setContent] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<JournalEntryType | 'ALL'>('ALL');
-  
-  // Состояние для временного отключения скролла всего контейнера
-  const [isAnyCardLongPressed, setIsAnyCardLongPressed] = useState(false);
   
   const startTimeRef = useRef<number>(0);
 
@@ -243,10 +259,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
         </div>
       </div>
 
-      <div 
-        className={`flex-1 p-5 pb-24 ${isAnyCardLongPressed ? 'overflow-hidden' : 'overflow-y-auto'}`}
-        style={{ touchAction: isAnyCardLongPressed ? 'none' : 'auto' }}
-      >
+      <div className="flex-1 p-5 pb-24 overflow-y-auto">
         {filteredEntries.length > 0 ? (
           <Reorder.Group 
             axis="y" 
@@ -266,8 +279,6 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                     setIsEditorOpen(true);
                  }}
                  onDelete={onDeleteEntry}
-                 onLongPressStart={() => setIsAnyCardLongPressed(true)}
-                 onLongPressEnd={() => setIsAnyCardLongPressed(false)}
                />
              ))}
           </Reorder.Group>
