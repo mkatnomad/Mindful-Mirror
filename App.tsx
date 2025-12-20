@@ -73,7 +73,6 @@ const App: React.FC = () => {
   // User Profile State - Load from LocalStorage
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-    // Default isSetup to true to skip onboarding
     return saved ? JSON.parse(saved) : { name: '', avatarUrl: null, isSetup: true, isRegistered: false };
   });
 
@@ -81,12 +80,6 @@ const App: React.FC = () => {
 
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
-  
-  // Registration/Login State
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [isAuthLoading, setIsAuthLoading] = useState(false);
   
   // State for History and Stats - Load from LocalStorage
   const [history, setHistory] = useState<ChatSession[]>(() => {
@@ -107,11 +100,10 @@ const App: React.FC = () => {
   // Journal Entries State
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.JOURNAL);
-    // Legacy migration: if type is NOTE, change to INTENTION or keep as is and handle in component
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Default weekly activity (random previous days, last index is 'Today')
+  // Default weekly activity
   const [weeklyActivity, setWeeklyActivity] = useState<number[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
     return saved ? JSON.parse(saved) : [40, 60, 30, 80, 55, 30, 10];
@@ -124,7 +116,6 @@ const App: React.FC = () => {
       tg.ready();
       tg.expand();
 
-      // Configure Telegram Web App Appearance
       try {
         if (tg.setHeaderColor) tg.setHeaderColor('#F8FAFC');
         if (tg.setBackgroundColor) tg.setBackgroundColor('#F8FAFC');
@@ -132,7 +123,6 @@ const App: React.FC = () => {
         console.error("Error setting Telegram colors:", e);
       }
 
-      // Auto-configure user from Telegram data if profile is empty
       const user = tg.initDataUnsafe?.user;
       if (user) {
         setUserProfile(prev => {
@@ -141,7 +131,6 @@ const App: React.FC = () => {
              return {
                ...prev,
                name: fullName,
-               // Treat Telegram users as "registered" in context of this app
                isRegistered: true 
              };
           }
@@ -177,11 +166,6 @@ const App: React.FC = () => {
   }, [journalEntries]);
 
 
-  // Helpers
-  // New Metric: Steps = Sessions + Minutes + Journal Entries count
-  // Since "Creating one entry is one session" (per request), we increment totalSessions when creating entry.
-  // So here 'Steps' definition simplifies, we don't need to double count entries if we count them as sessions.
-  // However, for backward compatibility of 'Steps', let's stick to the visual formula but relying on the updated variables.
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
 
@@ -191,20 +175,15 @@ const App: React.FC = () => {
 
   const startMode = (mode: JournalMode) => {
     setSelectedMode(mode);
-    setCurrentView('CHAT'); // 'CHAT' acts as the container view, logic inside handles Reflection specifically if needed
+    setCurrentView('CHAT');
   };
 
   const handleSaveJournalEntry = (entry: JournalEntry, isNew: boolean, duration: number) => {
-    // Always add time spent writing/editing
     setTotalTimeSeconds(prev => prev + duration);
 
     if (isNew) {
       setJournalEntries(prev => [entry, ...prev]);
-      
-      // Creating one entry is one session
       setTotalSessions(prev => prev + 1);
-      
-      // Update Activity
       setWeeklyActivity(prev => {
         const newActivity = [...prev];
         const todayIndex = 6;
@@ -212,9 +191,12 @@ const App: React.FC = () => {
         return newActivity;
       });
     } else {
-      // Update existing
       setJournalEntries(prev => prev.map(e => e.id === entry.id ? entry : e));
     }
+  };
+
+  const handleDeleteJournalEntry = (id: string) => {
+    setJournalEntries(prev => prev.filter(e => e.id !== id));
   };
   
   const handleReorderJournalEntries = (newOrder: JournalEntry[]) => {
@@ -222,7 +204,6 @@ const App: React.FC = () => {
   };
 
   const handleSessionComplete = (messages: Message[], duration: number) => {
-    // 1. Update History
     const firstUserMessage = messages.find(m => m.role === 'user');
     const previewText = firstUserMessage ? firstUserMessage.content : 'Сессия без сообщений';
     
@@ -236,63 +217,34 @@ const App: React.FC = () => {
     };
     
     setHistory(prev => [newSession, ...prev]);
-
-    // 2. Update Stats
     setTotalSessions(prev => prev + 1);
     setTotalTimeSeconds(prev => prev + duration);
-    
-    // 3. Update Graph (Increment today's bar)
     setWeeklyActivity(prev => {
       const newActivity = [...prev];
-      const todayIndex = 6; // Assuming last bar is today
-      newActivity[todayIndex] = Math.min(newActivity[todayIndex] + 15, 100); // Cap at 100%
+      const todayIndex = 6;
+      newActivity[todayIndex] = Math.min(newActivity[todayIndex] + 15, 100);
       return newActivity;
     });
   };
 
-  // Avatar Upload Handler
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       const reader = new FileReader();
       reader.onloadend = () => {
-         // Save base64 string to storage
          setUserProfile(prev => ({ ...prev, avatarUrl: reader.result as string }));
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleAuth = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!regEmail || !regPassword) return;
-    
-    setIsAuthLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, this would check credentials or create user
-      setUserProfile(prev => ({ ...prev, isRegistered: true, email: regEmail }));
-      setIsAuthLoading(false);
-      setRegEmail('');
-      setRegPassword('');
-    }, 1500);
-  };
-
-  const handleLogout = () => {
-    setUserProfile(prev => ({ ...prev, isRegistered: false, email: undefined }));
-    setAuthMode('login'); // Default to login screen on logout
-  };
-
-  // Get Quote of the Day based on date
   const today = new Date();
   const quoteIndex = (today.getDate() + today.getMonth()) % QUOTES.length;
   const quoteOfTheDay = QUOTES[quoteIndex];
   const currentRank = getCurrentRank(totalSteps);
 
-  // Calculate progress to next rank
   const ascendingRanks = [...RANKS].reverse();
   const nextRank = ascendingRanks.find(r => r.threshold > totalSteps);
-  const nextThreshold = nextRank ? nextRank.threshold : totalSteps; // if max rank, no next threshold
   const prevThreshold = ascendingRanks.find(r => r.threshold <= totalSteps)?.threshold || 0;
   
   let progressPercent = 100;
@@ -302,16 +254,11 @@ const App: React.FC = () => {
       progressPercent = (progressInGap / totalGap) * 100;
   }
   
-  // Safe guard
   if (isNaN(progressPercent)) progressPercent = 0;
 
   const formatDuration = (seconds: number) => {
-    if (seconds < 60) {
-      return { value: '< 1', unit: 'мин' };
-    }
-    if (seconds < 3600) {
-      return { value: Math.round(seconds / 60).toString(), unit: 'мин' };
-    }
+    if (seconds < 60) return { value: '< 1', unit: 'мин' };
+    if (seconds < 3600) return { value: Math.round(seconds / 60).toString(), unit: 'мин' };
     const hours = seconds / 3600;
     return { value: hours.toFixed(1), unit: 'ч' };
   };
@@ -328,43 +275,27 @@ const App: React.FC = () => {
         </h1>
       </header>
 
-      {/* Mood Section Buttons */}
       <div className="mb-10">
         <div className="grid grid-cols-3 gap-4">
-          {/* Decision */}
-          <button 
-            onClick={() => startMode('DECISION')}
-            className="flex flex-col items-center space-y-3 group"
-          >
+          <button onClick={() => startMode('DECISION')} className="flex flex-col items-center space-y-3 group">
             <div className="w-full aspect-square rounded-[24px] bg-white border border-slate-100 shadow-[0_8px_20px_-6px_rgba(192,132,252,0.2)] flex items-center justify-center relative overflow-hidden group-hover:-translate-y-1 transition-transform duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 to-purple-50 opacity-50"></div>
-              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-indigo-200 to-purple-200 blur-xl absolute top-2 right-2 opacity-60"></div>
               <Zap size={28} className="text-indigo-500 relative z-10" fill="currentColor" strokeWidth={0} />
             </div>
             <span className="text-[11px] font-semibold text-slate-600">Решение</span>
           </button>
 
-          {/* Emotions */}
-          <button 
-             onClick={() => startMode('EMOTIONS')}
-             className="flex flex-col items-center space-y-3 group"
-          >
+          <button onClick={() => startMode('EMOTIONS')} className="flex flex-col items-center space-y-3 group">
             <div className="w-full aspect-square rounded-[24px] bg-white border border-slate-100 shadow-[0_8px_20px_-6px_rgba(244,114,182,0.2)] flex items-center justify-center relative overflow-hidden group-hover:-translate-y-1 transition-transform duration-300">
               <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-pink-50 opacity-50"></div>
-               <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-rose-200 to-pink-200 blur-xl absolute bottom-2 left-2 opacity-60"></div>
               <Heart size={28} className="text-rose-500 relative z-10" strokeWidth={2} />
             </div>
              <span className="text-[11px] font-semibold text-slate-600">Эмоции</span>
           </button>
 
-          {/* Reflection / Journal */}
-          <button 
-             onClick={() => startMode('REFLECTION')}
-             className="flex flex-col items-center space-y-3 group"
-          >
+          <button onClick={() => startMode('REFLECTION')} className="flex flex-col items-center space-y-3 group">
             <div className="w-full aspect-square rounded-[24px] bg-white border border-slate-100 shadow-[0_8px_20px_-6px_rgba(52,211,153,0.2)] flex items-center justify-center relative overflow-hidden group-hover:-translate-y-1 transition-transform duration-300">
                <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 opacity-50"></div>
-               <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-100 to-cyan-100 blur-xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-60"></div>
               <BookOpen size={28} className="text-emerald-500 relative z-10" strokeWidth={2} />
             </div>
              <span className="text-[11px] font-semibold text-slate-600">Дневник</span>
@@ -372,16 +303,31 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Unified Stats Panel */}
+      {/* Quote of the Day (Moved Up) */}
+      <div className="space-y-4 mb-10">
+        <h3 className="text-lg font-semibold text-slate-700">Мудрость дня</h3>
+        <div className="p-6 rounded-[24px] bg-white border border-slate-50 shadow-sm relative overflow-hidden">
+           <div className="absolute top-0 left-0 w-16 h-16 bg-amber-50 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl"></div>
+           <Quote size={32} className="text-amber-100 absolute top-4 left-4" />
+           <div className="relative z-10 text-center px-2 py-2">
+              <p className="text-slate-700 italic font-medium leading-relaxed mb-4">
+                "{quoteOfTheDay.text}"
+              </p>
+              <div className="w-8 h-0.5 bg-amber-100 mx-auto mb-2"></div>
+              <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">
+                {quoteOfTheDay.author}
+              </p>
+           </div>
+        </div>
+      </div>
+
+      {/* Unified Stats Panel (Moved Down) */}
       <div className="mb-8">
          <div className="w-full bg-white rounded-[32px] p-6 shadow-[0_20px_40px_-10px_rgba(200,210,255,0.4)] border border-white relative overflow-hidden">
-            {/* Decorative blur blobs */}
             <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
             <div className="absolute bottom-0 left-0 w-40 h-40 bg-purple-50 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3"></div>
 
-            {/* Content */}
             <div className="relative z-10">
-              {/* Top: Rank Info */}
               <div className="flex justify-between items-start mb-6">
                 <div>
                   <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">ПУТЬ ОСОЗНАНИЯ</p>
@@ -394,7 +340,6 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Progress Bar */}
               <div className="mb-8">
                 <div className="flex justify-between text-xs text-slate-400 mb-2 font-medium">
                    <span>Прогресс (шаги)</span>
@@ -410,9 +355,7 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              {/* Stats Row */}
               <div className="flex items-center pt-6 border-t border-slate-50">
-                {/* Sessions */}
                 <div className="flex-1 flex items-center space-x-3">
                    <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">
                      <MessageSquare size={20} fill="currentColor" />
@@ -422,11 +365,7 @@ const App: React.FC = () => {
                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Сессии</div>
                    </div>
                 </div>
-                
-                {/* Divider */}
                 <div className="w-px h-10 bg-slate-100 mx-2"></div>
-
-                {/* Time */}
                 <div className="flex-1 flex items-center space-x-3 pl-4">
                    <div className="w-10 h-10 rounded-full bg-pink-50 flex items-center justify-center text-pink-500">
                      <Activity size={20} />
@@ -442,27 +381,6 @@ const App: React.FC = () => {
             </div>
          </div>
       </div>
-
-      {/* Quote of the Day */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-slate-700">Мудрость дня</h3>
-        
-        <div className="p-6 rounded-[24px] bg-white border border-slate-50 shadow-sm relative overflow-hidden">
-           <div className="absolute top-0 left-0 w-16 h-16 bg-amber-50 rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl"></div>
-           <Quote size={32} className="text-amber-100 absolute top-4 left-4" />
-           
-           <div className="relative z-10 text-center px-2 py-2">
-              <p className="text-slate-700 italic font-medium leading-relaxed mb-4">
-                "{quoteOfTheDay.text}"
-              </p>
-              <div className="w-8 h-0.5 bg-amber-100 mx-auto mb-2"></div>
-              <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">
-                {quoteOfTheDay.author}
-              </p>
-           </div>
-        </div>
-      </div>
-
     </div>
   );
 
@@ -564,105 +482,8 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Registration / Account Status Card */}
-      {!userProfile.isRegistered ? (
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[28px] p-6 text-white mb-6 shadow-xl shadow-indigo-200 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
-          
-          <div className="relative z-10">
-             {/* Header Toggle */}
-             <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-2">
-                   <div className="p-2 bg-white/20 rounded-xl backdrop-blur-sm">
-                     <Cloud size={20} className="text-white" />
-                   </div>
-                   <h3 className="font-bold text-lg">
-                     {authMode === 'register' ? 'Создать аккаунт' : 'Вход'}
-                   </h3>
-                </div>
-                <div className="flex bg-black/20 rounded-lg p-1">
-                  <button 
-                    onClick={() => setAuthMode('register')}
-                    className={`px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all ${authMode === 'register' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'}`}
-                  >
-                    Рег
-                  </button>
-                  <button 
-                    onClick={() => setAuthMode('login')}
-                    className={`px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all ${authMode === 'login' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-100 hover:text-white'}`}
-                  >
-                    Вход
-                  </button>
-                </div>
-             </div>
-             
-             {authMode === 'register' && (
-               <p className="text-indigo-100 text-sm mb-6 leading-relaxed">
-                 Регистрация позволит сохранить вашу статистику, историю сессий и достижения в облаке.
-               </p>
-             )}
-
-             <form onSubmit={handleAuth} className="space-y-3">
-               <div className="relative">
-                 <Mail size={16} className="absolute left-3.5 top-3.5 text-indigo-200" />
-                 <input 
-                   type="email" 
-                   value={regEmail}
-                   onChange={(e) => setRegEmail(e.target.value)}
-                   placeholder="Электронная почта"
-                   className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-indigo-200 focus:outline-none focus:bg-black/30 transition-colors"
-                 />
-               </div>
-               <div className="relative">
-                 <Lock size={16} className="absolute left-3.5 top-3.5 text-indigo-200" />
-                 <input 
-                   type="password" 
-                   value={regPassword}
-                   onChange={(e) => setRegPassword(e.target.value)}
-                   placeholder="Пароль"
-                   className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-indigo-200 focus:outline-none focus:bg-black/30 transition-colors"
-                 />
-               </div>
-               
-               <button 
-                 type="submit"
-                 disabled={!regEmail || !regPassword || isAuthLoading}
-                 className="w-full bg-white text-indigo-600 font-bold py-3 rounded-xl hover:bg-indigo-50 transition-colors flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed"
-               >
-                 {isAuthLoading ? 'Загрузка...' : (authMode === 'register' ? 'Зарегистрироваться' : 'Войти в аккаунт')}
-               </button>
-             </form>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4 mb-6">
-          <div className="bg-emerald-50 border border-emerald-100 rounded-[28px] p-6 flex items-center justify-between">
-             <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
-                  <CheckCircle size={20} />
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 text-sm">Аккаунт активен</h4>
-                  <p className="text-xs text-slate-500">{userProfile.email || 'Telegram'}</p>
-                </div>
-             </div>
-          </div>
-          
-          <button 
-            onClick={handleLogout}
-            className="w-full p-4 rounded-[24px] bg-white border border-rose-100 text-rose-500 flex items-center justify-center space-x-2 font-semibold text-sm hover:bg-rose-50 transition-colors shadow-sm"
-          >
-             <LogOut size={18} />
-             <span>Выйти из аккаунта</span>
-          </button>
-        </div>
-      )}
-
       <div className="space-y-4">
-        <button 
-          onClick={() => setCurrentView('SETTINGS')}
-          className="w-full p-5 rounded-[24px] bg-white border border-slate-50 shadow-sm text-slate-600 flex items-center justify-between transition-all active:scale-95"
-        >
+        <button onClick={() => setCurrentView('SETTINGS')} className="w-full p-5 rounded-[24px] bg-white border border-slate-50 shadow-sm text-slate-600 flex items-center justify-between transition-all active:scale-95">
           <div className="flex items-center space-x-4">
             <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500">
                <Settings size={20} />
@@ -671,10 +492,7 @@ const App: React.FC = () => {
           </div>
           <ChevronRight size={18} className="text-slate-300" />
         </button>
-        <button 
-          onClick={() => setCurrentView('ABOUT')}
-          className="w-full p-5 rounded-[24px] bg-white border border-slate-50 shadow-sm text-slate-600 flex items-center justify-between transition-all active:scale-95"
-        >
+        <button onClick={() => setCurrentView('ABOUT')} className="w-full p-5 rounded-[24px] bg-white border border-slate-50 shadow-sm text-slate-600 flex items-center justify-between transition-all active:scale-95">
           <div className="flex items-center space-x-4">
              <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500">
               <Info size={20} />
@@ -697,7 +515,6 @@ const App: React.FC = () => {
       </header>
 
       <div className="bg-white rounded-[32px] p-6 shadow-sm border border-slate-100 space-y-6">
-        {/* Avatar Upload */}
         <div className="flex flex-col items-center">
           <div className="relative">
              <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-lg">
@@ -717,7 +534,6 @@ const App: React.FC = () => {
           <p className="mt-4 text-sm text-slate-500">Нажмите на камеру, чтобы изменить фото</p>
         </div>
 
-        {/* Name Input */}
         <div className="space-y-2">
            <label className="text-sm font-bold text-slate-700 ml-1">Имя пользователя</label>
            <input 
@@ -729,10 +545,7 @@ const App: React.FC = () => {
            />
         </div>
 
-        <button 
-          onClick={() => setCurrentView('PROFILE')}
-          className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-200 mt-4 active:scale-98 transition-transform"
-        >
+        <button onClick={() => setCurrentView('PROFILE')} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-200 mt-4 active:scale-98 transition-transform">
           Сохранить
         </button>
       </div>
@@ -757,33 +570,15 @@ const App: React.FC = () => {
               <h2 className="text-xl font-bold text-slate-800">Mindful Mirror</h2>
            </div>
            <p className="text-slate-600 leading-relaxed text-sm">
-             Это не просто приложение, а ваш персональный инструмент для повышения качества жизни. 
              Mindful Mirror помогает вам принимать взвешенные решения, понимать свои истинные эмоции и 
              повышать уровень осознанности через ежедневную практику и рефлексию.
            </p>
-           <div className="mt-4 pt-4 border-t border-slate-50 flex flex-col space-y-2">
-             <div className="flex items-center text-sm text-slate-500">
-               <Zap size={16} className="text-indigo-400 mr-2" /> Помощь в принятии сложных решений
-             </div>
-             <div className="flex items-center text-sm text-slate-500">
-               <Heart size={16} className="text-rose-400 mr-2" /> Понимание эмоций и самочувствия
-             </div>
-             <div className="flex items-center text-sm text-slate-500">
-               <BookOpen size={16} className="text-emerald-400 mr-2" /> Дневник рефлексии и благодарности
-             </div>
-           </div>
         </div>
 
         <div className="bg-white rounded-[28px] p-6 shadow-sm border border-slate-50">
            <h3 className="text-lg font-bold text-slate-800 mb-4">Путь Осознания</h3>
-           <p className="text-sm text-slate-500 mb-6">
-             Ваш путь измеряется в Шагах — это сумма сессий и минут практики.
-             Пример: 10 сессий + 29 минут = 39 шагов.
-           </p>
-           
            <div className="space-y-6 relative">
              <div className="absolute left-[11px] top-2 bottom-2 w-[2px] bg-slate-100"></div>
-             
              {[...RANKS].reverse().map((rank, idx) => {
                const isReached = totalSteps >= rank.threshold;
                return (
@@ -809,11 +604,9 @@ const App: React.FC = () => {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-[#F8FAFC] flex flex-col font-sans relative">
-      {/* Light Gradient Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[50%] bg-blue-100 rounded-full blur-[100px] opacity-60"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[50%] bg-purple-100 rounded-full blur-[100px] opacity-60"></div>
-        <div className="absolute top-[40%] left-[20%] w-[40%] h-[30%] bg-pink-50 rounded-full blur-[80px] opacity-40"></div>
       </div>
 
       <main className="flex-1 relative overflow-hidden z-10">
@@ -823,6 +616,7 @@ const App: React.FC = () => {
            <JournalInterface 
              entries={journalEntries}
              onSaveEntry={handleSaveJournalEntry}
+             onDeleteEntry={handleDeleteJournalEntry}
              onUpdateOrder={handleReorderJournalEntries}
              onBack={() => setCurrentView('HOME')}
            />
@@ -850,7 +644,6 @@ const App: React.FC = () => {
         {currentView === 'ABOUT' && renderAbout()}
       </main>
       
-      {/* Show Bottom Nav only on main screens */}
       {(currentView === 'HOME' || currentView === 'HISTORY' || currentView === 'PROFILE') && (
         <BottomNav currentView={currentView} onChangeView={setCurrentView} />
       )}
