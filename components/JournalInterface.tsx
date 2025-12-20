@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2 } from 'lucide-react';
 import { Reorder, useDragControls } from 'framer-motion';
@@ -60,6 +61,7 @@ const JournalCard: React.FC<{
   const [isLongPressed, setIsLongPressed] = useState(false);
   const [isDraggingActive, setIsDraggingActive] = useState(false);
   const timerRef = useRef<number | null>(null);
+  const startPosRef = useRef<{ x: number, y: number } | null>(null);
   const dragStartedRef = useRef(false);
 
   const previewText = entry.content.length > 80 
@@ -70,6 +72,8 @@ const JournalCard: React.FC<{
     // Ignore if clicking delete button
     if ((event.target as HTMLElement).closest('.delete-btn')) return;
 
+    startPosRef.current = { x: event.clientX, y: event.clientY };
+
     timerRef.current = window.setTimeout(() => {
       setIsLongPressed(true);
       setIsDraggingActive(true);
@@ -79,7 +83,22 @@ const JournalCard: React.FC<{
       if (window.Telegram?.WebApp?.HapticFeedback) {
         window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
       }
-    }, 200); // Set to 200ms (0.2 seconds) as requested
+    }, 300); // Increased to 300ms to better distinguish from scroll start
+  };
+
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (!startPosRef.current || isDraggingActive) return;
+
+    const dx = Math.abs(event.clientX - startPosRef.current.x);
+    const dy = Math.abs(event.clientY - startPosRef.current.y);
+
+    // If moved more than 10px, it's likely a scroll, not a long press
+    if (dx > 10 || dy > 10) {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    }
   };
 
   const handlePointerUp = () => {
@@ -87,6 +106,8 @@ const JournalCard: React.FC<{
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    startPosRef.current = null;
+    
     // Small delay to ensure click handler knows it was a drag
     setTimeout(() => {
       setIsLongPressed(false);
@@ -96,7 +117,7 @@ const JournalCard: React.FC<{
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Prevent opening editor if we were just dragging or about to drag
+    // Prevent opening editor if we were just dragging or it was a move/scroll
     if (dragStartedRef.current || isDraggingActive) {
       e.preventDefault();
       e.stopPropagation();
@@ -112,8 +133,6 @@ const JournalCard: React.FC<{
     const confirmText = 'Вы уверены, что хотите удалить эту заметку?';
     const webApp = window.Telegram?.WebApp;
     
-    // Version 6.2+ supports showConfirm. Version 6.0+ supports showPopup. 
-    // If neither or old version, use native confirm.
     if (webApp && webApp.isVersionAtLeast && webApp.isVersionAtLeast('6.2')) {
       webApp.showConfirm(confirmText, (confirmed: boolean) => {
         if (confirmed) onDelete(entry.id);
@@ -148,10 +167,11 @@ const JournalCard: React.FC<{
         boxShadow: "0px 25px 50px -12px rgba(99, 102, 241, 0.5)",
         zIndex: 50 
       }}
-      className="relative mb-4 bg-transparent select-none touch-none"
+      className="relative mb-4 bg-transparent select-none"
     >
       <div 
         onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onClick={handleCardClick}
@@ -159,6 +179,7 @@ const JournalCard: React.FC<{
            relative rounded-[24px] p-5 bg-gradient-to-br ${config.gradient} 
            border border-white/70 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] 
            transition-all duration-300 group
+           ${isDraggingActive ? 'touch-none' : 'touch-pan-y'}
            ${isLongPressed ? 'ring-2 ring-indigo-500 shadow-[0_0_25px_rgba(99,102,241,0.4)] scale-[1.02]' : 'hover:shadow-[0_8px_20px_-8px_rgba(0,0,0,0.1)]'}
         `}
       >
