@@ -38,6 +38,7 @@ export interface UserProfile {
 export interface SiteConfig {
   appTitle: string;
   logoText: string;
+  customLogoUrl?: string | null;
   aboutParagraphs: string[];
   quotes: { text: string; author: string }[];
   adminPasscode: string;
