@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, RefreshCw, Lock } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon } from 'lucide-react';
 import { SiteConfig } from '../types';
 
 interface AdminInterfaceProps {
@@ -44,6 +44,25 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
     setEditedConfig({ ...editedConfig, aboutParagraphs: newParagraphs });
   };
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Файл слишком большой. Максимальный размер - 2МБ');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setEditedConfig({ ...editedConfig, customLogoUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeLogo = () => {
+    setEditedConfig({ ...editedConfig, customLogoUrl: null });
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#F8FAFC] animate-fade-in relative z-[200]">
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100 sticky top-0 z-10">
@@ -65,14 +84,14 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
       <div className="flex p-4 space-x-2 bg-white border-b border-slate-100 overflow-x-auto no-scrollbar">
         {[
           { id: 'GENERAL', label: 'Общее' },
-          { id: 'ABOUT', label: 'О нас' },
+          { id: 'ABOUT', label: 'О приложении' },
           { id: 'QUOTES', label: 'Цитаты' },
-          { id: 'SECURITY', label: 'Доступ' }
+          { id: 'SECURITY', label: 'Безопасность' }
         ].map(tab => (
           <button 
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200' : 'text-slate-400'}`}
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-200' : 'text-slate-400 hover:text-slate-600'}`}
           >
             {tab.label}
           </button>
@@ -89,24 +108,57 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
                 value={editedConfig.appTitle}
                 onChange={(e) => setEditedConfig({ ...editedConfig, appTitle: e.target.value })}
                 className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500"
+                placeholder="Mindful Mirror"
               />
             </div>
+            
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Текст логотипа (водяной знак)</label>
+              <label className="block text-sm font-bold text-slate-700 mb-4">Логотип (About)</label>
+              <div className="flex flex-col space-y-4">
+                <div className="relative w-full aspect-video bg-slate-50 border border-slate-200 rounded-3xl flex items-center justify-center overflow-hidden">
+                  {editedConfig.customLogoUrl ? (
+                    <>
+                      <img src={editedConfig.customLogoUrl} className="max-w-full max-h-full object-contain p-4" alt="Custom Logo" />
+                      <button 
+                        onClick={removeLogo}
+                        className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full text-rose-500 shadow-sm"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  ) : (
+                    <div className="text-center">
+                      <ImageIcon size={40} className="mx-auto text-slate-200 mb-1" />
+                      <span className="text-xl font-bold italic text-indigo-200 uppercase tracking-tighter">{editedConfig.logoText}</span>
+                    </div>
+                  )}
+                </div>
+                
+                <label className="w-full flex items-center justify-center space-x-2 p-4 bg-white border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-500 transition-all cursor-pointer">
+                  <Camera size={18} />
+                  <span className="text-xs font-bold uppercase tracking-wider">Выбрать изображение</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
+                </label>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Текст водяного знака</label>
               <input 
                 type="text" 
                 value={editedConfig.logoText}
                 onChange={(e) => setEditedConfig({ ...editedConfig, logoText: e.target.value })}
                 className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500"
+                maxLength={4}
               />
-              <p className="mt-2 text-[10px] text-slate-400 italic px-1">Текст, который отображается как 'mm' в фоне</p>
+              <p className="mt-2 text-[10px] text-slate-400 italic px-1">До 4 символов</p>
             </div>
           </div>
         )}
 
         {activeTab === 'ABOUT' && (
           <div className="space-y-6">
-            <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3">Абзацы описания</h3>
+            <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Описание</h3>
             {editedConfig.aboutParagraphs.map((p, i) => (
               <div key={i} className="relative">
                 <textarea 
@@ -121,13 +173,13 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
                   }}
                   className="absolute top-2 right-2 text-slate-300 hover:text-rose-500 p-1"
                 >
-                  <Trash2 size={14} />
+                  <X size={14} strokeWidth={3} />
                 </button>
               </div>
             ))}
             <button 
               onClick={() => setEditedConfig({ ...editedConfig, aboutParagraphs: [...editedConfig.aboutParagraphs, ''] })}
-              className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-sm font-medium flex items-center justify-center space-x-2"
+              className="w-full py-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 text-sm font-bold flex items-center justify-center space-x-2"
             >
               <Plus size={16} />
               <span>Добавить абзац</span>
@@ -138,7 +190,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
         {activeTab === 'QUOTES' && (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3">Цитаты дня</h3>
+              <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Цитаты</h3>
               <button onClick={addQuote} className="text-indigo-600 text-xs font-bold flex items-center space-x-1">
                 <Plus size={14} />
                 <span>Добавить</span>
@@ -161,7 +213,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
                 />
                 <button 
                   onClick={() => removeQuote(i)}
-                  className="absolute -top-2 -right-2 bg-white border border-slate-100 text-slate-300 hover:text-rose-500 p-1.5 rounded-full shadow-sm"
+                  className="absolute -top-2 -right-2 bg-white border border-slate-200 text-rose-500 p-1.5 rounded-full shadow-sm"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -173,7 +225,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
         {activeTab === 'SECURITY' && (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Админ-пароль для входа</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Админ-пароль</label>
               <div className="relative">
                 <Lock size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
@@ -181,7 +233,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
                   value={editedConfig.adminPasscode}
                   onChange={(e) => setEditedConfig({ ...editedConfig, adminPasscode: e.target.value })}
                   className="w-full p-4 pl-12 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500"
-                  placeholder="Например: 1234"
+                  placeholder="0000"
                 />
               </div>
             </div>
