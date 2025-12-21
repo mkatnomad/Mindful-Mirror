@@ -17,6 +17,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   appTitle: "Mindful Mirror",
   logoText: "mm",
   customLogoUrl: null,
+  customWatermarkUrl: null,
   aboutParagraphs: [
     "Mindful Mirror — это ваш персональный спутник в мире осознанности. Мы объединили возможности современных технологий и психологических практик, чтобы помочь вам находить ответы внутри себя.",
     "Это пространство для вашего внутреннего диалога. Оно не для того, чтобы давать советы, а чтобы помочь вам услышать самих себя.",
@@ -360,12 +361,20 @@ const App: React.FC = () => {
         <div className="w-full relative overflow-hidden flex flex-row items-center justify-between pt-10 pb-20 px-8 bg-gradient-to-b from-indigo-50/80 to-[#F8FAFC]">
           {/* Logo Watermark with Admin Trigger */}
           <div 
-            className="absolute right-0 bottom-[10%] pointer-events-auto transform translate-x-1/4 select-none opacity-10 cursor-pointer active:opacity-20"
+            className="absolute right-0 bottom-[10%] pointer-events-auto transform translate-x-1/4 select-none cursor-pointer active:opacity-40"
             onPointerDown={handleAdminTriggerStart}
             onPointerUp={handleAdminTriggerEnd}
             onPointerLeave={handleAdminTriggerEnd}
           >
-             <StylizedMMText text={siteConfig.logoText} className="text-[140px]" color="#6366f1" />
+             {siteConfig.customWatermarkUrl ? (
+               <img 
+                 src={siteConfig.customWatermarkUrl} 
+                 className="h-[140px] object-contain opacity-10 grayscale brightness-125" 
+                 alt="Watermark" 
+               />
+             ) : (
+               <StylizedMMText text={siteConfig.logoText} className="text-[140px]" color="#6366f1" opacity="0.1" />
+             )}
           </div>
 
           <div className="absolute inset-0 opacity-20 pointer-events-none">
