@@ -357,37 +357,36 @@ const App: React.FC = () => {
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
       <header className="mb-8 w-full">
-        <div className="w-full relative overflow-hidden flex flex-row items-center justify-between py-6 px-8 bg-gradient-to-r from-[#A78BFA] to-[#818CF8]">
+        <div className="w-full relative overflow-hidden flex flex-row items-center justify-between pt-10 pb-20 px-8 bg-gradient-to-b from-indigo-50/80 to-[#F8FAFC]">
           {/* Logo Watermark with Admin Trigger */}
           <div 
-            className="absolute right-0 bottom-[-20%] pointer-events-auto transform translate-x-1/4 select-none opacity-20 cursor-pointer active:opacity-40"
+            className="absolute right-0 bottom-[10%] pointer-events-auto transform translate-x-1/4 select-none opacity-10 cursor-pointer active:opacity-20"
             onPointerDown={handleAdminTriggerStart}
             onPointerUp={handleAdminTriggerEnd}
             onPointerLeave={handleAdminTriggerEnd}
           >
-             <StylizedMMText text={siteConfig.logoText} className="text-[140px]" color="white" />
+             <StylizedMMText text={siteConfig.logoText} className="text-[140px]" color="#6366f1" />
           </div>
 
-          <div className="absolute inset-0 opacity-40 pointer-events-none">
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
             <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
-              <path d="M0 200 C 50 150, 150 150, 200 200" fill="white" opacity="0.15" />
-              <path d="M200 200 C 250 120, 350 120, 400 200" fill="white" opacity="0.1" />
-              <ellipse cx="200" cy="190" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(-40 200 190)" />
-              <ellipse cx="200" cy="190" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(40 200 190)" />
-              <ellipse cx="200" cy="190" rx="50" ry="130" fill="white" opacity="0.2" />
+              <path d="M0 200 C 50 150, 150 150, 200 200" fill="#6366f1" opacity="0.1" />
+              <path d="M200 200 C 250 120, 350 120, 400 200" fill="#6366f1" opacity="0.05" />
+              <ellipse cx="200" cy="190" rx="80" ry="160" fill="#6366f1" opacity="0.05" transform="rotate(-40 200 190)" />
+              <ellipse cx="200" cy="190" rx="80" ry="160" fill="#6366f1" opacity="0.05" transform="rotate(40 200 190)" />
             </svg>
           </div>
           
           <div className="relative z-10 flex-1">
-            <h1 className="text-4xl font-extrabold tracking-tight leading-none text-white mb-1.5">
+            <h1 className="text-4xl font-extrabold tracking-tight leading-none text-slate-800 mb-2">
               Привет{userProfile.name ? `, ${userProfile.name}` : ''}
             </h1>
-            <p className="text-white/85 font-semibold text-lg">Как твое настроение?</p>
+            <p className="text-slate-500 font-semibold text-lg">Как твое настроение?</p>
           </div>
         </div>
       </header>
 
-      <div className="px-6 mb-12">
+      <div className="px-6 mb-12 -mt-10 relative z-20">
         <div className="grid grid-cols-3 gap-5">
           {[
             { id: 'DECISION', label: 'Решение', icon: Zap, color: 'indigo', iconColor: 'text-indigo-500', bgGrad: 'from-indigo-50 to-purple-50' },
