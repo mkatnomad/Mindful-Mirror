@@ -16,7 +16,7 @@ const QUOTES = [
   { text: "Счастье — это не что-то готовое. Оно происходит из ваших собственных действий.", author: "Далай-лама" },
   { text: "Ваше время ограничено, не тратьте его, живя чужой жизнью.", author: "Стив Джобс" },
   { text: "Единственный способ делать великие дела — любить то, что вы делаете.", author: "Стив Джобс" },
-  { text: "Начинать всегда стоит with того, что сеет сомнения.", author: "Борис Стругацкий" },
+  { text: "Начинать всегда стоит с того, что сеет сомнения.", author: "Борис Стругацкий" },
   { text: "Не позволяйте шуму чужих мнений перебить ваш внутренний голос.", author: "Стив Джобс" },
   { text: "Лучший способ предсказать будущее — создать его.", author: "Питер Друкер" },
   { text: "Успех — это способность шагать от одной неудачи к другой, не теряя энтузиазма.", author: "Уинстон Черчилль" },
@@ -42,22 +42,14 @@ const STORAGE_KEYS = {
   JOURNAL: 'mm_journal_entries'
 };
 
-const Logo = ({ className = "w-20 h-20" }: { className?: string }) => (
+const Logo = ({ className = "w-20 h-20", color = "#A78BFA", bg = "transparent" }: { className?: string, color?: string, bg?: string }) => (
   <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    <defs>
-      <linearGradient id="mirror_grad" x1="0" y1="0" x2="200" y2="200" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#818cf8" />
-        <stop offset="1" stopColor="#c084fc" />
-      </linearGradient>
-      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-        <feGaussianBlur stdDeviation="5" result="blur" />
-        <feComposite in="SourceGraphic" in2="blur" operator="over" />
-      </filter>
-    </defs>
-    <rect x="55" y="35" width="90" height="130" rx="45" stroke="url(#mirror_grad)" strokeWidth="8" fill="white" />
-    <rect x="55" y="35" width="90" height="130" rx="45" fill="url(#mirror_grad)" fillOpacity="0.03" />
-    <path d="M75 60 C 75 60 90 50 120 58" stroke="url(#mirror_grad)" strokeWidth="4" strokeLinecap="round" strokeOpacity="0.4" />
-    <path d="M132 48 L134 45 L136 48 L139 50 L136 52 L134 55 L132 52 L129 50 Z" fill="#c084fc" filter="url(#glow)" />
+    {/* Exact stadium shape from reference */}
+    <rect x="50" y="15" width="100" height="170" rx="50" stroke={color} strokeWidth="12" fill={bg === "transparent" ? "none" : bg} />
+    {/* Inner highlight arc */}
+    <path d="M70 45 Q 85 32 120 42" stroke={color} strokeWidth="7" strokeLinecap="round" opacity="0.9" />
+    {/* Lowercase italic mm */}
+    <text x="50%" y="108" dominantBaseline="middle" textAnchor="middle" fill={color} fontSize="68" fontWeight="800" fontStyle="italic" style={{ fontFamily: 'Manrope, sans-serif' }}>mm</text>
   </svg>
 );
 
@@ -240,7 +232,6 @@ const App: React.FC = () => {
       </header>
 
       <div className="space-y-4">
-        {/* Ranks displayed in ascending order: Initial to Master */}
         {[...RANKS].reverse().map((rank) => (
           <div 
             key={rank.title} 
@@ -280,35 +271,35 @@ const App: React.FC = () => {
       </header>
       
       <div className={`${isSpaceTheme ? 'bg-[#1C2128] border-slate-800' : 'bg-white shadow-sm border-slate-100'} rounded-[32px] p-8 border flex flex-col items-center text-center`}>
-        <div className="flex justify-center mb-6">
-          <Logo className="w-32 h-32" />
+        <div className="flex justify-center mb-10">
+          <Logo className="w-48 h-48 drop-shadow-xl" bg="white" />
         </div>
-        <h2 className={`text-2xl font-bold ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>Mindful Mirror</h2>
+        <h2 className={`text-3xl font-bold mb-6 ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>Mindful Mirror</h2>
         
-        <div className="space-y-4 mt-6 text-left">
-          <p className={`text-[15px] leading-relaxed ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>
+        <div className="space-y-6 text-left">
+          <p className={`text-[16px] leading-relaxed ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>
             Mindful Mirror — это ваш персональный спутник в мире осознанности. Мы объединили возможности современных технологий и психологических практик, чтобы помочь вам находить ответы внутри себя.
           </p>
-          <p className={`text-[15px] leading-relaxed ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`text-[16px] leading-relaxed ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>
             Это пространство для вашего внутреннего диалога. Оно не для того, чтобы давать советы, а чтобы помочь вам услышать самих себя.
           </p>
-          <p className={`text-[15px] leading-relaxed ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`text-[16px] leading-relaxed ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>
             Каждая сессия, каждая запись в дневнике — это шаг по пути самопознания. Набирайте баллы осознанности, открывайте новые ранги и изучайте ландшафт своей души.
           </p>
         </div>
 
-        <div className={`w-full pt-6 mt-8 border-t ${isSpaceTheme ? 'border-slate-800' : 'border-slate-100'} flex justify-around`}>
+        <div className={`w-full pt-8 mt-10 border-t ${isSpaceTheme ? 'border-slate-800' : 'border-slate-100'} flex justify-around`}>
            <div className="text-center">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
-              <p className={`text-sm font-semibold ${isSpaceTheme ? 'text-slate-200' : 'text-slate-700'}`}>1.2.0</p>
+              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
+              <p className={`text-base font-semibold ${isSpaceTheme ? 'text-slate-200' : 'text-slate-700'}`}>1.2.0</p>
            </div>
            <div className="text-center">
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
-              <p className={`text-sm font-semibold ${isSpaceTheme ? 'text-slate-200' : 'text-slate-700'}`}>09-2025</p>
+              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
+              <p className={`text-base font-semibold ${isSpaceTheme ? 'text-slate-200' : 'text-slate-700'}`}>09-2025</p>
            </div>
         </div>
         
-        <p className="text-[11px] text-slate-400 font-medium italic mt-10">
+        <p className="text-[12px] text-slate-400 font-medium italic mt-12">
           "Познай самого себя, и ты познаешь мир."
         </p>
       </div>
@@ -316,56 +307,83 @@ const App: React.FC = () => {
   );
 
   const renderHome = () => (
-    <div className="p-6 pt-12 pb-32 h-full overflow-y-auto animate-fade-in relative z-10">
-      <header className="mb-8">
-        <h1 className={`text-3xl font-bold tracking-tight leading-tight ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>
-          Привет{userProfile.name ? `, ${userProfile.name}` : ''} <br/>
-          <span className={`${isSpaceTheme ? 'text-slate-400' : 'text-slate-400'} font-light`}>Как твое настроение?</span>
-        </h1>
+    <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
+      <header className="mb-10 w-full">
+        <div className={`w-full relative overflow-hidden flex flex-row items-center justify-between py-6 px-8 ${
+          isSpaceTheme 
+            ? 'bg-[#1C2128]' 
+            : 'bg-gradient-to-r from-[#A78BFA] to-[#818CF8]'
+        }`}>
+          {/* Abstract petal-like patterns centered and refined */}
+          {!isSpaceTheme && (
+            <div className="absolute inset-0 opacity-40 pointer-events-none">
+              <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
+                <path d="M0 200 C 50 150, 150 150, 200 200" fill="white" opacity="0.15" />
+                <path d="M200 200 C 250 120, 350 120, 400 200" fill="white" opacity="0.1" />
+                {/* Symmetrical petals spreading from the bottom center */}
+                <ellipse cx="200" cy="200" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(-45 200 200)" />
+                <ellipse cx="200" cy="200" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(45 200 200)" />
+                <ellipse cx="200" cy="200" rx="60" ry="180" fill="white" opacity="0.15" transform="rotate(-15 200 200)" />
+                <ellipse cx="200" cy="200" rx="60" ry="180" fill="white" opacity="0.15" transform="rotate(15 200 200)" />
+                <ellipse cx="200" cy="200" rx="45" ry="140" fill="white" opacity="0.2" />
+              </svg>
+            </div>
+          )}
+          
+          <div className="relative z-10 flex-1">
+            <h1 className="text-4xl font-extrabold tracking-tight leading-none text-white mb-1">
+              Привет{userProfile.name ? `, ${userProfile.name}` : ''}
+            </h1>
+            <p className="text-white/85 font-semibold text-lg">Как твое настроение?</p>
+          </div>
+          {/* Logo without container as requested */}
+          <div className="relative z-10 shrink-0 transform translate-y-1">
+             <Logo className="w-14 h-14" color={isSpaceTheme ? "#A78BFA" : "white"} bg="transparent" />
+          </div>
+        </div>
       </header>
 
-      <div className="mb-10">
-        <div className="grid grid-cols-3 gap-4">
+      <div className="px-6 mb-12">
+        <div className="grid grid-cols-3 gap-5">
           {[
             { id: 'DECISION', label: 'Решение', icon: Zap, color: 'indigo', iconColor: 'text-indigo-500', bgGrad: 'from-indigo-50 to-purple-50' },
             { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'rose', iconColor: 'text-rose-500', bgGrad: 'from-rose-50 to-pink-50' },
             { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'emerald', iconColor: 'text-emerald-500', bgGrad: 'from-emerald-50 to-teal-50' }
           ].map((m) => (
             <button key={m.id} onClick={() => startMode(m.id as JournalMode)} className="flex flex-col items-center space-y-3 group">
-              <div className={`w-full aspect-square rounded-[24px] ${isSpaceTheme ? 'bg-[#1C2128] border-slate-800' : 'bg-white border-slate-100'} border shadow-sm flex items-center justify-center relative overflow-hidden group-hover:-translate-y-1 transition-transform duration-300`}>
+              <div className={`w-full aspect-square rounded-[30px] ${isSpaceTheme ? 'bg-[#1C2128] border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-sm'} border flex items-center justify-center relative overflow-hidden group-hover:-translate-y-2 transition-all duration-300`}>
                 <div className={`absolute inset-0 bg-gradient-to-br ${m.bgGrad} ${isSpaceTheme ? 'opacity-5' : 'opacity-50'}`}></div>
-                <m.icon size={28} className={`${m.iconColor} relative z-10`} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} />
+                <m.icon size={32} className={`${m.iconColor} relative z-10`} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} />
               </div>
-              <span className={`text-[11px] font-semibold ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>{m.label}</span>
+              <span className={`text-[12px] font-bold ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>{m.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="space-y-4 mb-10">
-        <h3 className={`text-lg font-semibold ${isSpaceTheme ? 'text-slate-300' : 'text-slate-700'}`}>Мудрость дня</h3>
-        <div className={`${isSpaceTheme ? 'bg-[#1C2128] border-slate-800' : 'bg-white border-slate-50'} p-6 rounded-[24px] border shadow-sm relative overflow-hidden`}>
-           <div className={`absolute top-0 left-0 w-16 h-16 ${isSpaceTheme ? 'bg-indigo-900/20' : 'bg-amber-50'} rounded-full -translate-x-1/2 -translate-y-1/2 blur-xl`}></div>
-           <Quote size={32} className={`${isSpaceTheme ? 'text-indigo-900/40' : 'text-amber-100'} absolute top-4 left-4`} />
-           <div className="relative z-10 text-center px-2 py-2">
-              <p className={`${isSpaceTheme ? 'text-slate-300' : 'text-slate-700'} italic font-medium leading-relaxed mb-4`}>
+      <div className="px-6 space-y-4 mb-10">
+        <h3 className={`text-lg font-bold ml-2 ${isSpaceTheme ? 'text-slate-300' : 'text-slate-700'}`}>Мудрость дня</h3>
+        <div className={`${isSpaceTheme ? 'bg-[#1C2128] border-slate-800' : 'bg-white border-slate-50'} p-6 rounded-[32px] border shadow-sm relative overflow-hidden`}>
+           <div className={`absolute top-0 left-0 w-24 h-24 ${isSpaceTheme ? 'bg-indigo-900/20' : 'bg-amber-50'} rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl`}></div>
+           <Quote size={32} className={`${isSpaceTheme ? 'text-indigo-900/40' : 'text-amber-100'} absolute top-5 left-5`} />
+           <div className="relative z-10 text-center px-4 py-4">
+              <p className={`${isSpaceTheme ? 'text-slate-300' : 'text-slate-700'} italic font-semibold text-[17px] leading-relaxed mb-6`}>
                 "{quoteOfTheDay.text}"
               </p>
-              <div className={`w-8 h-0.5 ${isSpaceTheme ? 'bg-indigo-500/30' : 'bg-amber-100'} mx-auto mb-2`}></div>
-              <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">{quoteOfTheDay.author}</p>
+              <div className={`w-12 h-1 ${isSpaceTheme ? 'bg-indigo-500/30' : 'bg-amber-200'} mx-auto mb-3 rounded-full`}></div>
+              <p className="text-[11px] text-slate-400 uppercase tracking-[0.2em] font-black">{quoteOfTheDay.author}</p>
            </div>
         </div>
       </div>
 
-      <div className="mb-8">
-         {/* Clickable Progress Card leads to Ranks */}
+      <div className="px-6 mb-8">
          <button 
            onClick={() => setCurrentView('RANKS_INFO')}
-           className={`w-full text-left outline-none active:scale-[0.98] transition-all group ${isSpaceTheme ? 'bg-gradient-to-br from-[#1C2128] to-[#0D1117] border-slate-800 shadow-indigo-900/10' : 'bg-white border-white shadow-[0_20px_40px_-10px_rgba(200,210,255,0.4)]'} rounded-[32px] p-6 border relative overflow-hidden`}
+           className={`w-full text-left outline-none active:scale-[0.98] transition-all group ${isSpaceTheme ? 'bg-gradient-to-br from-[#1C2128] to-[#0D1117] border-slate-800 shadow-indigo-900/10' : 'bg-white border-white shadow-[0_25px_50px_-15px_rgba(200,210,255,0.4)]'} rounded-[40px] p-8 border relative overflow-hidden`}
          >
             {isSpaceTheme && (
                <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
-                 {[...Array(20)].map((_, i) => (
+                 {[...Array(25)].map((_, i) => (
                    <div key={i} className="absolute bg-white rounded-full" style={{
                      width: Math.random() * 2 + 'px',
                      height: Math.random() * 2 + 'px',
@@ -376,58 +394,58 @@ const App: React.FC = () => {
                  ))}
                </div>
             )}
-            <div className={`absolute top-0 right-0 w-40 h-40 ${isSpaceTheme ? 'bg-indigo-500/10' : 'bg-indigo-50'} rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 group-hover:scale-110 transition-transform`}></div>
+            <div className={`absolute top-0 right-0 w-48 h-48 ${isSpaceTheme ? 'bg-indigo-500/10' : 'bg-indigo-50'} rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 group-hover:scale-125 transition-transform duration-700`}></div>
 
             <div className="relative z-10">
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-8">
                 <div>
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1 flex items-center">
-                    ПУТЬ ОСОЗНАНИЯ <ChevronRight size={10} className="ml-1 opacity-50" />
+                  <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.15em] mb-2 flex items-center">
+                    ПУТЬ ОСОЗНАНИЯ <ChevronRight size={12} className="ml-1 opacity-50" />
                   </p>
-                  <h4 className={`text-3xl font-bold text-transparent bg-clip-text ${isSpaceTheme ? 'bg-gradient-to-r from-indigo-400 to-cyan-400' : 'bg-gradient-to-r from-indigo-600 to-purple-600'}`}>
+                  <h4 className={`text-4xl font-black text-transparent bg-clip-text ${isSpaceTheme ? 'bg-gradient-to-r from-indigo-400 to-cyan-400' : 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700'}`}>
                     {currentRank.title}
                   </h4>
                 </div>
-                <div className={`w-12 h-12 rounded-2xl ${isSpaceTheme ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-50 text-indigo-500'} flex items-center justify-center shadow-sm border ${isSpaceTheme ? 'border-indigo-500/20' : 'border-indigo-100/50'}`}>
-                  <Star size={24} fill="currentColor" />
+                <div className={`w-14 h-14 rounded-3xl ${isSpaceTheme ? 'bg-indigo-500/20 text-indigo-400' : 'bg-indigo-50 text-indigo-600'} flex items-center justify-center shadow-lg border ${isSpaceTheme ? 'border-indigo-500/20' : 'border-indigo-100/50'} transform group-hover:rotate-12 transition-transform`}>
+                  <Star size={28} fill="currentColor" />
                 </div>
               </div>
 
-              <div className="mb-8">
-                <div className="flex justify-between text-xs text-slate-400 mb-2 font-medium">
+              <div className="mb-10">
+                <div className="flex justify-between text-[11px] text-slate-400 mb-3 font-black uppercase tracking-wider">
                    <span>Прогресс</span>
                    <span>{totalSteps} / {nextRank ? nextRank.threshold : 'MAX'}</span>
                 </div>
-                <div className={`w-full h-3 ${isSpaceTheme ? 'bg-slate-800' : 'bg-slate-100'} rounded-full overflow-hidden`}>
+                <div className={`w-full h-4 ${isSpaceTheme ? 'bg-slate-800' : 'bg-slate-100'} rounded-full overflow-hidden shadow-inner`}>
                   <div 
-                    className={`h-full ${isSpaceTheme ? 'bg-gradient-to-r from-indigo-500 to-cyan-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'} rounded-full relative transition-all duration-1000 ease-out`}
+                    className={`h-full ${isSpaceTheme ? 'bg-gradient-to-r from-indigo-500 to-cyan-500' : 'bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600'} rounded-full relative transition-all duration-1000 ease-out`}
                     style={{ width: `${progressPercent}%` }}
                   >
-                     <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
+                     <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
                   </div>
                 </div>
               </div>
 
-              <div className={`flex items-center pt-6 border-t ${isSpaceTheme ? 'border-slate-800' : 'border-slate-50'}`}>
-                <div className="flex-1 flex items-center space-x-3">
-                   <div className={`w-10 h-10 rounded-full ${isSpaceTheme ? 'bg-indigo-500/10 text-indigo-400' : 'bg-purple-50 text-purple-500'} flex items-center justify-center`}>
-                     <MessageSquare size={20} fill="currentColor" />
+              <div className={`flex items-center pt-8 border-t ${isSpaceTheme ? 'border-slate-800' : 'border-slate-100'}`}>
+                <div className="flex-1 flex items-center space-x-4">
+                   <div className={`w-12 h-12 rounded-2xl ${isSpaceTheme ? 'bg-indigo-500/10 text-indigo-400' : 'bg-purple-50 text-purple-600'} flex items-center justify-center shadow-sm`}>
+                     <MessageSquare size={24} fill="currentColor" />
                    </div>
                    <div>
-                     <div className={`text-xl font-bold ${isSpaceTheme ? 'text-white' : 'text-slate-700'}`}>{totalSessions}</div>
-                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Сессии</div>
+                     <div className={`text-2xl font-black ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>{totalSessions}</div>
+                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">Сессии</div>
                    </div>
                 </div>
-                <div className={`w-px h-10 ${isSpaceTheme ? 'bg-slate-800' : 'bg-slate-100'} mx-2`}></div>
-                <div className="flex-1 flex items-center space-x-3 pl-4">
-                   <div className={`w-10 h-10 rounded-full ${isSpaceTheme ? 'bg-cyan-500/10 text-cyan-400' : 'bg-pink-50 text-pink-500'} flex items-center justify-center`}>
-                     <Activity size={20} />
+                <div className={`w-px h-12 ${isSpaceTheme ? 'bg-slate-800' : 'bg-slate-100'} mx-4`}></div>
+                <div className="flex-1 flex items-center space-x-4 pl-4">
+                   <div className={`w-12 h-12 rounded-2xl ${isSpaceTheme ? 'bg-cyan-500/10 text-cyan-400' : 'bg-pink-50 text-pink-600'} flex items-center justify-center shadow-sm`}>
+                     <Activity size={24} />
                    </div>
                    <div>
-                     <div className={`text-xl font-bold ${isSpaceTheme ? 'text-white' : 'text-slate-700'}`}>
-                        {practiceTime.value}<span className="text-sm font-normal text-slate-400 ml-0.5">{practiceTime.unit}</span>
+                     <div className={`text-2xl font-black ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>
+                        {practiceTime.value}<span className="text-sm font-bold text-slate-400 ml-1">{practiceTime.unit}</span>
                      </div>
-                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Практика</div>
+                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">Практика</div>
                    </div>
                 </div>
               </div>
@@ -491,7 +509,6 @@ const App: React.FC = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Ranks Section Button */}
         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full p-5 rounded-[24px] ${isSpaceTheme ? 'bg-[#1C2128] border-slate-800 text-slate-300' : 'bg-white border-slate-50 shadow-sm text-slate-600'} border flex items-center justify-between transition-all active:scale-95`}>
           <div className="flex items-center space-x-4">
             <div className={`p-2.5 rounded-xl ${isSpaceTheme ? 'bg-slate-800' : 'bg-slate-50'} text-slate-500`}><Medal size={20} /></div>
@@ -500,7 +517,6 @@ const App: React.FC = () => {
           <ChevronRight size={18} className="text-slate-300" />
         </button>
 
-        {/* Settings Button */}
         <button onClick={() => setCurrentView('SETTINGS')} className={`w-full p-5 rounded-[24px] ${isSpaceTheme ? 'bg-[#1C2128] border-slate-800 text-slate-300' : 'bg-white border-slate-50 shadow-sm text-slate-600'} border flex items-center justify-between transition-all active:scale-95`}>
           <div className="flex items-center space-x-4">
             <div className={`p-2.5 rounded-xl ${isSpaceTheme ? 'bg-slate-800' : 'bg-slate-50'} text-slate-500`}><Settings size={20} /></div>
@@ -509,7 +525,6 @@ const App: React.FC = () => {
           <ChevronRight size={18} className="text-slate-300" />
         </button>
 
-        {/* About App Button */}
         <button onClick={() => setCurrentView('ABOUT')} className={`w-full p-5 rounded-[24px] ${isSpaceTheme ? 'bg-[#1C2128] border-slate-800 text-slate-300' : 'bg-white border-slate-50 shadow-sm text-slate-600'} border flex items-center justify-between transition-all active:scale-95`}>
           <div className="flex items-center space-x-4">
             <div className={`p-2.5 rounded-xl ${isSpaceTheme ? 'bg-slate-800' : 'bg-slate-50'} text-slate-500`}><Info size={20} /></div>
