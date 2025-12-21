@@ -305,16 +305,16 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFC] dark:bg-[#0B0E14] relative overflow-hidden">
+    <div className="flex flex-col h-full bg-[#F8FAFC] relative overflow-hidden">
       {isEditorOpen && renderEditor()}
 
-      <div className="bg-white/80 backdrop-blur-xl dark:bg-[#161B22]/80 border-b border-slate-100 dark:border-slate-800 sticky top-0 z-20 px-6 py-4">
+      <div className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20 px-6 py-4">
         <div className="flex items-center justify-between">
             <div className="flex items-center">
-                <button onClick={onBack} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+                <button onClick={onBack} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
                   <ArrowLeft size={20} />
                 </button>
-                <h2 className="ml-2 text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Дневник</h2>
+                <h2 className="ml-2 text-xl font-bold text-slate-800 tracking-tight">Дневник</h2>
             </div>
         </div>
         <div className="mt-4 flex items-center space-x-2">
@@ -325,25 +325,25 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                placeholder="Поиск..."
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full bg-slate-50 dark:bg-[#0D1117] border border-slate-100 dark:border-slate-800 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:bg-white dark:focus:bg-[#161B22] transition-all dark:text-slate-200"
+               className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:bg-white transition-all text-slate-700"
              />
            </div>
            <div className="flex space-x-1 overflow-x-auto no-scrollbar max-w-[140px]">
               <button 
                 onClick={() => setActiveFilter(activeFilter === 'INSIGHT' ? 'ALL' : 'INSIGHT')}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'INSIGHT' ? 'bg-amber-100 text-amber-600 shadow-sm' : 'bg-slate-50 dark:bg-[#0D1117] text-slate-400'}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'INSIGHT' ? 'bg-amber-100 text-amber-600 shadow-sm' : 'bg-slate-50 text-slate-400'}`}
               >
                 <Lightbulb size={14} strokeWidth={activeFilter === 'INSIGHT' ? 2.5 : 2} />
               </button>
               <button 
                 onClick={() => setActiveFilter(activeFilter === 'GRATITUDE' ? 'ALL' : 'GRATITUDE')}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'GRATITUDE' ? 'bg-rose-100 text-rose-600 shadow-sm' : 'bg-slate-50 dark:bg-[#0D1117] text-slate-400'}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'GRATITUDE' ? 'bg-rose-100 text-rose-600 shadow-sm' : 'bg-slate-50 text-slate-400'}`}
               >
                 <Heart size={14} strokeWidth={activeFilter === 'GRATITUDE' ? 2.5 : 2} />
               </button>
               <button 
                 onClick={() => setActiveFilter(activeFilter === 'INTENTION' ? 'ALL' : 'INTENTION')}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'INTENTION' ? 'bg-indigo-100 text-indigo-600 shadow-sm' : 'bg-slate-50 dark:bg-[#0D1117] text-slate-400'}`}
+                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'INTENTION' ? 'bg-indigo-100 text-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-400'}`}
               >
                 <Target size={14} strokeWidth={activeFilter === 'INTENTION' ? 2.5 : 2} />
               </button>
@@ -376,7 +376,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
           </Reorder.Group>
         ) : (
           <div className="h-full flex flex-col items-center justify-center opacity-40 space-y-4 text-slate-400">
-             <div className="w-16 h-16 bg-slate-100 dark:bg-[#161B22] rounded-full flex items-center justify-center">
+             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
                 <Search size={32} />
              </div>
              <p className="text-sm font-medium">Ничего не найдено</p>
@@ -387,7 +387,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
       <div className="absolute bottom-8 right-6 z-30">
         <button 
           onClick={openNewEntry} 
-          className="w-14 h-14 rounded-full bg-slate-900 dark:bg-indigo-600 text-white shadow-xl shadow-slate-900/20 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+          className="w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl shadow-slate-900/20 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
         >
           <Plus size={28} />
         </button>
