@@ -354,34 +354,34 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-3 w-full relative overflow-hidden">
+      <header className="mb-2 w-full relative overflow-hidden">
         {/* Narrow refined header with dot pattern and gradient */}
         <div className="absolute inset-0 bg-[#F8FAFC]">
-           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `radial-gradient(#6366f1 0.8px, transparent 0.8px)`, backgroundSize: '16px 16px' }}></div>
-           <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[120%] bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full blur-[50px] opacity-30"></div>
-           <div className="absolute -top-[5%] -right-[5%] w-[40%] h-[100%] bg-gradient-to-bl from-purple-100/15 to-transparent rounded-full blur-[60px] opacity-20"></div>
+           <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: `radial-gradient(#6366f1 0.8px, transparent 0.8px)`, backgroundSize: '16px 16px' }}></div>
+           <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[120%] bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full blur-[40px] opacity-20"></div>
+           <div className="absolute -top-[5%] -right-[5%] w-[40%] h-[100%] bg-gradient-to-bl from-purple-100/15 to-transparent rounded-full blur-[50px] opacity-15"></div>
         </div>
 
-        <div className="relative flex flex-row items-center pt-6 pb-6 px-8 min-h-[110px]">
-          {/* Large Area-Filling Avatar Watermark */}
+        <div className="relative flex flex-row items-center pt-4 pb-4 px-8 min-h-[90px]">
+          {/* Large Area-Filling Avatar Watermark - Brighter and Larger */}
           <div 
-            className="absolute right-[-5%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
+            className="absolute right-[-10%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
             onPointerDown={handleAdminTriggerStart}
             onPointerUp={handleAdminTriggerEnd}
             onPointerLeave={handleAdminTriggerEnd}
           >
              {userProfile.avatarUrl ? (
-               <div className="relative w-[180px] h-[180px] rounded-full overflow-hidden opacity-[0.04] grayscale brightness-125 pointer-events-none blur-[2px]">
+               <div className="relative w-[240px] h-[240px] rounded-full overflow-hidden opacity-[0.14] grayscale brightness-110 pointer-events-none">
                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
                </div>
              ) : siteConfig.customWatermarkUrl ? (
                <img 
                  src={siteConfig.customWatermarkUrl} 
-                 className="h-[80px] object-contain opacity-[0.03] grayscale pointer-events-none" 
+                 className="h-[80px] object-contain opacity-[0.05] grayscale pointer-events-none" 
                  alt="Watermark" 
                />
              ) : (
-                <div className="w-[120px] h-[120px] flex items-center justify-center opacity-[0.02]">
+                <div className="w-[100px] h-[100px] flex items-center justify-center opacity-[0.02]">
                   <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="40" stroke="#6366f1" strokeWidth="1"/>
                     <path d="M50 10V90M10 50H90" stroke="#6366f1" strokeWidth="1"/>
@@ -391,16 +391,16 @@ const App: React.FC = () => {
           </div>
           
           <div className="relative z-10 flex-1 pr-16">
-            <h1 className="text-[20px] font-light tracking-tight text-slate-800/90 leading-tight">
+            <h1 className="text-[19px] font-light tracking-tight text-slate-800/95 leading-tight">
               Привет, <span className="font-bold text-slate-900">{userProfile.name || 'Странник'}</span>
             </h1>
-            <p className="text-[12px] font-medium text-slate-400 tracking-tight opacity-75 border-l-2 border-indigo-200/40 pl-2 mt-1">
+            <p className="text-[11px] font-medium text-slate-400 tracking-tight opacity-75 border-l border-indigo-200/50 pl-2 mt-0.5">
               Как твое настроение?
             </p>
           </div>
         </div>
         
-        <div className="absolute bottom-0 left-0 w-full h-px bg-slate-100/40"></div>
+        <div className="absolute bottom-0 left-0 w-full h-px bg-slate-100/30"></div>
       </header>
 
       <div className="px-6 mb-7 relative z-20">
