@@ -16,6 +16,7 @@ declare global {
 const DEFAULT_CONFIG: SiteConfig = {
   appTitle: "Mindful Mirror",
   logoText: "mm",
+  customLogoUrl: null,
   aboutParagraphs: [
     "Mindful Mirror — это ваш персональный спутник в мире осознанности. Мы объединили возможности современных технологий и психологических практик, чтобы помочь вам находить ответы внутри себя.",
     "Это пространство для вашего внутреннего диалога. Оно не для того, чтобы давать советы, а чтобы помочь вам услышать самих себя.",
@@ -98,8 +99,24 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const versionClickCount = useRef(0);
-  const versionClickTimer = useRef<number | null>(null);
+  const longPressTimer = useRef<number | null>(null);
+
+  // Special entrance for admin via URL param ?admin=true
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin') === 'true') {
+      setTimeout(() => {
+        const pass = prompt('Вход администратора. Введите пароль:');
+        if (pass === siteConfig.adminPasscode) {
+          setCurrentView('ADMIN');
+        } else if (pass !== null) {
+          alert('Неверный пароль');
+        }
+        // Clean URL after attempt
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }, 500);
+    }
+  }, [siteConfig.adminPasscode]);
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -158,22 +175,24 @@ const App: React.FC = () => {
     setCurrentView('CHAT');
   };
 
-  const handleVersionClick = () => {
-    versionClickCount.current += 1;
-    if (versionClickTimer.current) clearTimeout(versionClickTimer.current);
-    
-    versionClickTimer.current = window.setTimeout(() => {
-      versionClickCount.current = 0;
-    }, 1000);
-
-    if (versionClickCount.current >= 3) {
-      versionClickCount.current = 0;
-      const pass = prompt('Введите пароль администратора:');
+  const handleAdminTriggerStart = () => {
+    longPressTimer.current = window.setTimeout(() => {
+      const pass = prompt('Режим администратора. Введите пароль:');
       if (pass === siteConfig.adminPasscode) {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
         setCurrentView('ADMIN');
       } else if (pass !== null) {
         alert('Неверный пароль');
       }
+    }, 2000); // 2 seconds long press
+  };
+
+  const handleAdminTriggerEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
     }
   };
 
@@ -220,8 +239,8 @@ const App: React.FC = () => {
   };
 
   const today = new Date();
-  const quoteIndex = (today.getDate() + today.getMonth()) % siteConfig.quotes.length;
-  const quoteOfTheDay = siteConfig.quotes[quoteIndex];
+  const quoteIndex = (today.getDate() + today.getMonth()) % Math.max(1, siteConfig.quotes.length);
+  const quoteOfTheDay = siteConfig.quotes[quoteIndex] || { text: "Тишина — лучший ответ.", author: "Мудрость" };
   const currentRank = getCurrentRank(totalSteps);
 
   const ascendingRanks = [...RANKS].reverse();
@@ -259,7 +278,7 @@ const App: React.FC = () => {
             key={rank.title} 
             className={`p-5 rounded-[24px] border transition-all ${
               totalSteps >= rank.threshold 
-                ? 'bg-indigo-50 border-indigo-100'
+                ? 'bg-indigo-50 border-indigo-100 shadow-sm'
                 : 'bg-slate-50/50 border-slate-100 opacity-50'
             }`}
           >
@@ -298,13 +317,17 @@ const App: React.FC = () => {
            <StylizedMMText text={siteConfig.logoText} className="text-[200px]" color="#A78BFA" opacity="0.05" />
         </div>
 
-        <div className="relative z-10 flex flex-col items-center">
-          <div className="mb-10 p-6 rounded-full bg-indigo-500/10 flex items-center justify-center">
-            <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />
+        <div className="relative z-10 flex flex-col items-center w-full">
+          <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">
+            {siteConfig.customLogoUrl ? (
+              <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" alt="App Logo" />
+            ) : (
+              <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />
+            )}
           </div>
-          <h2 className="text-3xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
+          <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           
-          <div className="space-y-6 text-left">
+          <div className="space-y-6 text-left w-full px-2">
             {siteConfig.aboutParagraphs.map((p, i) => (
               <p key={i} className="text-[16px] leading-relaxed text-slate-600">
                 {p}
@@ -313,9 +336,9 @@ const App: React.FC = () => {
           </div>
 
           <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
-             <div className="text-center" onClick={handleVersionClick}>
+             <div className="text-center">
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
-                <p className="text-base font-semibold text-slate-700">1.2.0</p>
+                <p className="text-base font-semibold text-slate-700">1.3.0</p>
              </div>
              <div className="text-center">
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
@@ -335,8 +358,13 @@ const App: React.FC = () => {
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
       <header className="mb-8 w-full">
         <div className="w-full relative overflow-hidden flex flex-row items-center justify-between py-6 px-8 bg-gradient-to-r from-[#A78BFA] to-[#818CF8]">
-          {/* Logo Watermark in Background */}
-          <div className="absolute right-0 bottom-[-20%] pointer-events-none transform translate-x-1/4 select-none opacity-20">
+          {/* Logo Watermark with Admin Trigger */}
+          <div 
+            className="absolute right-0 bottom-[-20%] pointer-events-auto transform translate-x-1/4 select-none opacity-20 cursor-pointer active:opacity-40"
+            onPointerDown={handleAdminTriggerStart}
+            onPointerUp={handleAdminTriggerEnd}
+            onPointerLeave={handleAdminTriggerEnd}
+          >
              <StylizedMMText text={siteConfig.logoText} className="text-[140px]" color="white" />
           </div>
 
@@ -387,7 +415,7 @@ const App: React.FC = () => {
                 "{quoteOfTheDay.text}"
               </p>
               <div className="w-12 h-1 bg-amber-200 mx-auto mb-3 rounded-full"></div>
-              <p className="text-[11px] text-slate-400 uppercase tracking-[0.2em] font-black">{quoteOfTheDay.author}</p>
+              <p className="text-[11px] text-slate-400 uppercase tracking-[0.2em] font-bold">{quoteOfTheDay.author}</p>
            </div>
         </div>
       </div>
@@ -402,10 +430,10 @@ const App: React.FC = () => {
             <div className="relative z-10">
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <p className="text-[11px] text-slate-400 font-black uppercase tracking-[0.15em] mb-2 flex items-center">
+                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em] mb-2 flex items-center">
                     ПУТЬ ОСОЗНАНИЯ <ChevronRight size={12} className="ml-1 opacity-50" />
                   </p>
-                  <h4 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">
+                  <h4 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">
                     {currentRank.title}
                   </h4>
                 </div>
@@ -415,7 +443,7 @@ const App: React.FC = () => {
               </div>
 
               <div className="mb-10">
-                <div className="flex justify-between text-[11px] text-slate-400 mb-3 font-black uppercase tracking-wider">
+                <div className="flex justify-between text-[11px] text-slate-400 mb-3 font-bold uppercase tracking-wider">
                    <span>Прогресс</span>
                    <span>{totalSteps} / {nextRank ? nextRank.threshold : 'MAX'}</span>
                 </div>
@@ -435,8 +463,8 @@ const App: React.FC = () => {
                      <MessageSquare size={24} fill="currentColor" />
                    </div>
                    <div>
-                     <div className="text-2xl font-black text-slate-800">{totalSessions}</div>
-                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">Сессии</div>
+                     <div className="text-2xl font-bold text-slate-800">{totalSessions}</div>
+                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">Сессии</div>
                    </div>
                 </div>
                 <div className="w-px h-12 bg-slate-100 mx-4"></div>
@@ -445,10 +473,10 @@ const App: React.FC = () => {
                      <Activity size={24} />
                    </div>
                    <div>
-                     <div className="text-2xl font-black text-slate-800">
+                     <div className="text-2xl font-bold text-slate-800">
                         {practiceTime.value}<span className="text-sm font-bold text-slate-400 ml-1">{practiceTime.unit}</span>
                      </div>
-                     <div className="text-[10px] text-slate-400 font-black uppercase tracking-[0.1em]">Практика</div>
+                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">Практика</div>
                    </div>
                 </div>
               </div>
@@ -502,7 +530,7 @@ const App: React.FC = () => {
          <h1 className="text-3xl font-bold text-slate-800">Профиль</h1>
       </header>
       
-      <div className="bg-white shadow-indigo-100/50 rounded-[32px] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border">
+      <div className="bg-white shadow-sm rounded-[32px] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border border-slate-50">
         <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-50"></div>
         <div className="w-24 h-24 rounded-full bg-white p-1 shadow-sm relative z-10 -mt-2 overflow-hidden border border-slate-100">
            {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}
@@ -548,19 +576,25 @@ const App: React.FC = () => {
          <h1 className="text-3xl font-bold text-slate-800">Настройки</h1>
       </header>
 
-      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-6 border space-y-6">
+      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border border-slate-50 space-y-8">
         <div className="flex flex-col items-center">
           <div className="relative">
-             <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-lg">
-                {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300"><UserIcon size={40} /></div>}
+             <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md transition-transform active:scale-95">
+                {userProfile.avatarUrl ? (
+                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
+                    <UserIcon size={40} />
+                  </div>
+                )}
              </div>
-             <label className="absolute bottom-0 right-0 p-2 bg-indigo-500 rounded-full text-white cursor-pointer shadow-md"><Camera size={16} /><input type="file" className="hidden" onChange={handleAvatarChange} /></label>
+             <label className="absolute bottom-0 right-0 p-2 bg-indigo-500 rounded-full text-white cursor-pointer shadow-md"><Camera size={16} /><input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} /></label>
           </div>
         </div>
 
         <div className="space-y-2">
            <label className="text-sm font-bold text-slate-700">Имя</label>
-           <input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-200 border focus:outline-none focus:border-indigo-500" />
+           <input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-100 border focus:outline-none focus:border-indigo-500 focus:bg-white transition-all font-semibold" />
         </div>
 
         <button onClick={() => setCurrentView('PROFILE')} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold shadow-lg mt-4 active:scale-98 transition-transform">Сохранить</button>
