@@ -306,29 +306,21 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-10 w-full">
-        <div className={`w-full relative overflow-hidden flex flex-row items-center justify-between py-6 px-8 ${
-          isSpaceTheme 
-            ? 'bg-[#1C2128]' 
-            : 'bg-gradient-to-r from-[#A78BFA] to-[#818CF8]'
-        }`}>
-          {/* Abstract petal-like patterns centered and refined */}
-          
-            <Logo className="w-16 h-16" />
-          
-          
-          <div className="relative z-10 flex-1">
-            <h1 className="text-4xl font-extrabold tracking-tight leading-none text-white mb-1">
+     {/* --- НАЧАЛО ИСПРАВЛЕННОЙ ШАПКИ --- */}
+        <div className="flex justify-between items-start mb-8 relative z-20 pt-4 px-1">
+          <div className="flex-1 mr-4">
+            <h1 className={`text-4xl font-extrabold tracking-tight leading-none mb-2 ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>
               Привет{userProfile.name ? `, ${userProfile.name}` : ''}
             </h1>
-            <p className="text-white/85 font-semibold text-lg">Как твое настроение?</p>
+            <p className={`text-lg font-medium ${isSpaceTheme ? 'text-blue-100/90' : 'text-slate-500'}`}>
+              Как твое настроение?
+            </p>
           </div>
-          {/* Logo without container as requested */}
-          <div className="relative z-10 shrink-0 transform translate-y-1">
-             <Logo className="w-14 h-14" color={isSpaceTheme ? "#A78BFA" : "white"} bg="transparent" />
-          </div>
+          
+          {/* Логотип теперь один, в белом квадратике, всегда виден */}
+          <Logo className="w-16 h-16 shadow-lg bg-white rounded-2xl flex-shrink-0" />
         </div>
-      </header>
+        {/* --- КОНЕЦ ШАПКИ --- */}
 
       <div className="px-6 mb-12">
         <div className="grid grid-cols-3 gap-5">
