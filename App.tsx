@@ -313,9 +313,9 @@ const App: React.FC = () => {
             : 'bg-gradient-to-r from-[#A78BFA] to-[#818CF8]'
         }`}>
           {/* Abstract petal-like patterns centered and refined */}
-          {!isSpaceTheme && (
+          
             <Logo className="w-16 h-16" />
-          )}
+          
           
           <div className="relative z-10 flex-1">
             <h1 className="text-4xl font-extrabold tracking-tight leading-none text-white mb-1">
