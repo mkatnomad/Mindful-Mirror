@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
-import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry } from './types';
+import React, { useState, useEffect, useRef } from 'react';
+import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
+import { AdminInterface } from './components/AdminInterface';
 import { Heart, BookOpen, ChevronRight, Settings, Info, Bell, User as UserIcon, Activity, Calendar, Quote, Clock, Zap, Camera, Star, ArrowLeft, Footprints, MessageSquare, ArrowRight, Cloud, Lock, CheckCircle, Edit2, Mail, LogOut, LogIn, PenTool, Moon, Sun, Sparkles, ChevronUp, ChevronDown, Award, Medal } from 'lucide-react';
 
 declare global {
@@ -12,15 +13,25 @@ declare global {
   }
 }
 
-const QUOTES = [
-  { text: "Счастье — это не что-то готовое. Оно происходит из ваших собственных действий.", author: "Далай-лама" },
-  { text: "Ваше время ограничено, не тратьте его, живя чужой жизнью.", author: "Стив Джобс" },
-  { text: "Единственный способ делать великие дела — любить то, что вы делаете.", author: "Стив Джобс" },
-  { text: "Начинать всегда стоит с того, что сеет сомнения.", author: "Борис Стругацкий" },
-  { text: "Не позволяйте шуму чужих мнений перебить ваш внутренний голос.", author: "Стив Джобс" },
-  { text: "Лучший способ предсказать будущее — создать его.", author: "Питер Друкер" },
-  { text: "Успех — это способность шагать от одной неудачи к другой, не теряя энтузиазма.", author: "Уинстон Черчилль" },
-];
+const DEFAULT_CONFIG: SiteConfig = {
+  appTitle: "Mindful Mirror",
+  logoText: "mm",
+  aboutParagraphs: [
+    "Mindful Mirror — это ваш персональный спутник в мире осознанности. Мы объединили возможности современных технологий и психологических практик, чтобы помочь вам находить ответы внутри себя.",
+    "Это пространство для вашего внутреннего диалога. Оно не для того, чтобы давать советы, а чтобы помочь вам услышать самих себя.",
+    "Каждая сессия, каждая запись в дневнике — это шаг по пути самопознания. Набирайте баллы осознанности, открывайте новые ранги и изучайте ландшафт своей души."
+  ],
+  quotes: [
+    { text: "Счастье — это не что-то готовое. Оно происходит из ваших собственных действий.", author: "Далай-лама" },
+    { text: "Ваше время ограничено, не тратьте его, живя чужой жизнью.", author: "Стив Джобс" },
+    { text: "Единственный способ делать великие дела — любить то, что вы делаете.", author: "Стив Джобс" },
+    { text: "Начинать всегда стоит с того, что сеет сомнения.", author: "Борис Стругацкий" },
+    { text: "Не позволяйте шуму чужих мнений перебить ваш внутренний голос.", author: "Стив Джобс" },
+    { text: "Лучший способ предсказать будущее — создать его.", author: "Питер Друкер" },
+    { text: "Успех — это способность шагать от одной неудачи к другой, не теряя энтузиазма.", author: "Уинстон Черчилль" },
+  ],
+  adminPasscode: "0000"
+};
 
 const RANKS = [
   { threshold: 50000, title: "Дзен-Мастер", desc: "Путь и путник стали одним целым. Вы достигли вершины самопознания." },
@@ -39,19 +50,25 @@ const STORAGE_KEYS = {
   SESSIONS: 'mm_total_sessions',
   TIME: 'mm_total_time',
   ACTIVITY: 'mm_weekly_activity',
-  JOURNAL: 'mm_journal_entries'
+  JOURNAL: 'mm_journal_entries',
+  CONFIG: 'mm_site_config'
 };
 
-const StylizedMMText = ({ className = "", color = "white", opacity = "1" }: { className?: string, color?: string, opacity?: string }) => (
+const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
   <span 
-    className={`${className} font-extrabold italic select-none pointer-events-none`} 
+    className={`${className} font-extrabold italic select-none pointer-events-none uppercase`} 
     style={{ color, opacity, fontFamily: 'Manrope, sans-serif' }}
   >
-    mm
+    {text}
   </span>
 );
 
 const App: React.FC = () => {
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
+    const saved = localStorage.getItem(STORAGE_KEYS.CONFIG);
+    return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+  });
+
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
     return saved ? JSON.parse(saved) : { name: '', avatarUrl: null, isSetup: true, isRegistered: false };
@@ -81,10 +98,8 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [weeklyActivity, setWeeklyActivity] = useState<number[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
-    return saved ? JSON.parse(saved) : [40, 60, 30, 80, 55, 30, 10];
-  });
+  const versionClickCount = useRef(0);
+  const versionClickTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (window.Telegram?.WebApp) {
@@ -124,12 +139,12 @@ const App: React.FC = () => {
   }, [totalTimeSeconds]);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(weeklyActivity));
-  }, [weeklyActivity]);
-
-  useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.JOURNAL, JSON.stringify(journalEntries));
   }, [journalEntries]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(siteConfig));
+  }, [siteConfig]);
 
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
@@ -141,6 +156,25 @@ const App: React.FC = () => {
   const startMode = (mode: JournalMode) => {
     setSelectedMode(mode);
     setCurrentView('CHAT');
+  };
+
+  const handleVersionClick = () => {
+    versionClickCount.current += 1;
+    if (versionClickTimer.current) clearTimeout(versionClickTimer.current);
+    
+    versionClickTimer.current = window.setTimeout(() => {
+      versionClickCount.current = 0;
+    }, 1000);
+
+    if (versionClickCount.current >= 3) {
+      versionClickCount.current = 0;
+      const pass = prompt('Введите пароль администратора:');
+      if (pass === siteConfig.adminPasscode) {
+        setCurrentView('ADMIN');
+      } else if (pass !== null) {
+        alert('Неверный пароль');
+      }
+    }
   };
 
   const handleSaveJournalEntry = (entry: JournalEntry, isNew: boolean, duration: number) => {
@@ -186,8 +220,8 @@ const App: React.FC = () => {
   };
 
   const today = new Date();
-  const quoteIndex = (today.getDate() + today.getMonth()) % QUOTES.length;
-  const quoteOfTheDay = QUOTES[quoteIndex];
+  const quoteIndex = (today.getDate() + today.getMonth()) % siteConfig.quotes.length;
+  const quoteOfTheDay = siteConfig.quotes[quoteIndex];
   const currentRank = getCurrentRank(totalSteps);
 
   const ascendingRanks = [...RANKS].reverse();
@@ -261,29 +295,25 @@ const App: React.FC = () => {
       <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center relative overflow-hidden">
         {/* About Watermark */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
-           <StylizedMMText className="text-[200px]" color="#A78BFA" opacity="0.05" />
+           <StylizedMMText text={siteConfig.logoText} className="text-[200px]" color="#A78BFA" opacity="0.05" />
         </div>
 
         <div className="relative z-10 flex flex-col items-center">
           <div className="mb-10 p-6 rounded-full bg-indigo-500/10 flex items-center justify-center">
-            <StylizedMMText className="text-7xl" color="#6366f1" />
+            <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />
           </div>
-          <h2 className="text-3xl font-bold mb-6 text-slate-800">Mindful Mirror</h2>
+          <h2 className="text-3xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           
           <div className="space-y-6 text-left">
-            <p className="text-[16px] leading-relaxed text-slate-600">
-              Mindful Mirror — это ваш персональный спутник в мире осознанности. Мы объединили возможности современных технологий и психологических практик, чтобы помочь вам находить ответы внутри себя.
-            </p>
-            <p className="text-[16px] leading-relaxed text-slate-600">
-              Это пространство для вашего внутреннего диалога. Оно не для того, чтобы давать советы, а чтобы помочь вам услышать самих себя.
-            </p>
-            <p className="text-[16px] leading-relaxed text-slate-600">
-              Каждая сессия, каждая запись в дневнике — это шаг по пути самопознания. Набирайте баллы осознанности, открывайте новые ранги и изучайте ландшафт своей души.
-            </p>
+            {siteConfig.aboutParagraphs.map((p, i) => (
+              <p key={i} className="text-[16px] leading-relaxed text-slate-600">
+                {p}
+              </p>
+            ))}
           </div>
 
           <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
-             <div className="text-center">
+             <div className="text-center" onClick={handleVersionClick}>
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
                 <p className="text-base font-semibold text-slate-700">1.2.0</p>
              </div>
@@ -307,14 +337,13 @@ const App: React.FC = () => {
         <div className="w-full relative overflow-hidden flex flex-row items-center justify-between py-6 px-8 bg-gradient-to-r from-[#A78BFA] to-[#818CF8]">
           {/* Logo Watermark in Background */}
           <div className="absolute right-0 bottom-[-20%] pointer-events-none transform translate-x-1/4 select-none opacity-20">
-             <StylizedMMText className="text-[140px]" color="white" />
+             <StylizedMMText text={siteConfig.logoText} className="text-[140px]" color="white" />
           </div>
 
           <div className="absolute inset-0 opacity-40 pointer-events-none">
             <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
               <path d="M0 200 C 50 150, 150 150, 200 200" fill="white" opacity="0.15" />
               <path d="M200 200 C 250 120, 350 120, 400 200" fill="white" opacity="0.1" />
-              {/* Symmetrical petals */}
               <ellipse cx="200" cy="190" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(-40 200 190)" />
               <ellipse cx="200" cy="190" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(40 200 190)" />
               <ellipse cx="200" cy="190" rx="50" ry="130" fill="white" opacity="0.2" />
@@ -530,7 +559,7 @@ const App: React.FC = () => {
         </div>
 
         <div className="space-y-2">
-           <label className="text-sm font-bold ml-1 text-slate-700">Имя</label>
+           <label className="text-sm font-bold text-slate-700">Имя</label>
            <input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-200 border focus:outline-none focus:border-indigo-500" />
         </div>
 
@@ -556,9 +585,16 @@ const App: React.FC = () => {
         {currentView === 'SETTINGS' && renderSettings()}
         {currentView === 'ABOUT' && renderAbout()}
         {currentView === 'RANKS_INFO' && renderRanksInfo()}
+        {currentView === 'ADMIN' && (
+          <AdminInterface 
+            config={siteConfig} 
+            onSave={(newCfg) => setSiteConfig(newCfg)} 
+            onBack={() => setCurrentView('ABOUT')} 
+          />
+        )}
       </main>
       
-      {(currentView === 'HOME' || currentView === 'HISTORY' || currentView === 'PROFILE' || currentView === 'ABOUT' || currentView === 'RANKS_INFO' || currentView === 'SETTINGS') && <BottomNav currentView={currentView} onChangeView={setCurrentView} />}
+      {(['HOME', 'HISTORY', 'PROFILE', 'ABOUT', 'RANKS_INFO', 'SETTINGS'].includes(currentView)) && <BottomNav currentView={currentView} onChangeView={setCurrentView} />}
     </div>
   );
 };
