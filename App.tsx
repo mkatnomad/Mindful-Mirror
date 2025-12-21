@@ -358,14 +358,16 @@ const App: React.FC = () => {
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
       <header className="mb-4 w-full relative overflow-hidden">
-        {/* Refined layered background with soft minimalistic gradient */}
+        {/* Refined background with subtle minimal gradient and geometric pattern */}
         <div className="absolute inset-0 bg-[#F8FAFC]">
-           <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[120%] bg-gradient-to-br from-indigo-50/60 to-transparent rounded-full blur-[80px] opacity-50"></div>
-           <div className="absolute -top-[10%] -right-[10%] w-[50%] h-[100%] bg-gradient-to-bl from-purple-50/40 to-transparent rounded-full blur-[100px] opacity-40"></div>
+           {/* Pattern overlay */}
+           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `radial-gradient(#6366f1 1px, transparent 1px)`, backgroundSize: '24px 24px' }}></div>
+           <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[120%] bg-gradient-to-br from-indigo-100/40 to-transparent rounded-full blur-[60px] opacity-40"></div>
+           <div className="absolute -top-[10%] -right-[10%] w-[50%] h-[100%] bg-gradient-to-bl from-purple-100/30 to-transparent rounded-full blur-[80px] opacity-30"></div>
         </div>
 
-        <div className="relative flex flex-row items-center pt-10 pb-12 px-8">
-          {/* Subtle Watermark with Admin Trigger */}
+        <div className="relative flex flex-row items-center pt-8 pb-8 px-8">
+          {/* Subtle hidden Admin Trigger */}
           <div 
             className="absolute right-[-2%] top-[10%] pointer-events-auto select-none transition-all duration-700 hover:scale-110 active:opacity-30"
             onPointerDown={handleAdminTriggerStart}
@@ -375,26 +377,32 @@ const App: React.FC = () => {
              {siteConfig.customWatermarkUrl ? (
                <img 
                  src={siteConfig.customWatermarkUrl} 
-                 className="h-[120px] object-contain opacity-[0.03] grayscale pointer-events-none" 
+                 className="h-[100px] object-contain opacity-[0.03] grayscale pointer-events-none" 
                  alt="Watermark" 
                />
              ) : (
-               <StylizedMMText text={siteConfig.logoText} className="text-[150px]" color="#6366f1" opacity="0.03" />
+               <div className="w-[120px] h-[100px] flex items-center justify-center opacity-[0.02]">
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="40" stroke="#6366f1" strokeWidth="1"/>
+                    <circle cx="50" cy="50" r="25" stroke="#6366f1" strokeWidth="1"/>
+                    <path d="M50 10V90M10 50H90" stroke="#6366f1" strokeWidth="1"/>
+                  </svg>
+               </div>
              )}
           </div>
           
           <div className="relative z-10 flex-1">
-            <h1 className="text-2xl font-light tracking-tight text-slate-800/80 mb-2 leading-tight">
+            <h1 className="text-xl font-light tracking-tight text-slate-800/80 mb-1 leading-tight">
               Привет, <span className="font-bold text-slate-900">{userProfile.name || 'Странник'}</span>
             </h1>
-            <p className="text-base font-medium text-slate-400 tracking-tight opacity-80 border-l-2 border-indigo-200/40 pl-4 py-0.5">
+            <p className="text-[13px] font-medium text-slate-400 tracking-tight opacity-80 border-l-2 border-indigo-200/40 pl-3 py-0">
               Как твое настроение?
             </p>
           </div>
         </div>
         
-        {/* Fade-out transition to the content area */}
-        <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#F8FAFC] to-transparent"></div>
+        {/* Minimal fade-out */}
+        <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-[#F8FAFC] to-transparent"></div>
       </header>
 
       <div className="px-6 mb-8 relative z-20">
