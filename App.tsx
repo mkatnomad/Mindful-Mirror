@@ -42,10 +42,10 @@ const STORAGE_KEYS = {
   JOURNAL: 'mm_journal_entries'
 };
 
-// Заменяем SVG на твою картинку
+// Логотип: Чистый, без фона, сохраняет пропорции
 const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string, bg?: string }) => (
   <img 
-    src="/logo.png" 
+    src={logoImage} 
     alt="Mindful Mirror" 
     className={`${className} object-contain`} 
   />
@@ -306,9 +306,9 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-     {/* --- НАЧАЛО ИСПРАВЛЕННОЙ ШАПКИ --- */}
-        <div className="flex justify-between items-start mb-8 relative z-20 pt-4 px-1">
-          <div className="flex-1 mr-4">
+    {/* --- ЗАГОЛОВОК (ОТСТУПЫ И РАЗМЕР ИСПРАВЛЕНЫ) --- */}
+        <div className="flex justify-between items-center mb-8 relative z-20 pt-4 px-6">
+          <div className="flex-1 mr-2">
             <h1 className={`text-4xl font-extrabold tracking-tight leading-none mb-2 ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>
               Привет{userProfile.name ? `, ${userProfile.name}` : ''}
             </h1>
@@ -317,8 +317,8 @@ const App: React.FC = () => {
             </p>
           </div>
           
-          {/* Логотип теперь один, в белом квадратике, всегда виден */}
-          <Logo className="w-16 h-16 shadow-lg bg-white rounded-2xl flex-shrink-0" />
+          {/* Логотип: Стал больше (w-24) и без фона */}
+          <Logo className="w-24 h-24 flex-shrink-0" />
         </div>
         {/* --- КОНЕЦ ШАПКИ --- */}
 
