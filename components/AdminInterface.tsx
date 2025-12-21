@@ -11,7 +11,7 @@ interface AdminInterfaceProps {
 
 export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, onBack }) => {
   const [editedConfig, setEditedConfig] = useState<SiteConfig>({ ...config });
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'ABOUT' | 'QUOTES' | 'SECURITY'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'DESIGN' | 'ABOUT' | 'QUOTES' | 'SECURITY'>('GENERAL');
 
   const handleSave = () => {
     onSave(editedConfig);
@@ -44,7 +44,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
     setEditedConfig({ ...editedConfig, aboutParagraphs: newParagraphs });
   };
 
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, field: 'customLogoUrl' | 'customWatermarkUrl') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       if (file.size > 2 * 1024 * 1024) {
@@ -53,14 +53,14 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
       }
       const reader = new FileReader();
       reader.onloadend = () => {
-        setEditedConfig({ ...editedConfig, customLogoUrl: reader.result as string });
+        setEditedConfig({ ...editedConfig, [field]: reader.result as string });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const removeLogo = () => {
-    setEditedConfig({ ...editedConfig, customLogoUrl: null });
+  const removeImage = (field: 'customLogoUrl' | 'customWatermarkUrl') => {
+    setEditedConfig({ ...editedConfig, [field]: null });
   };
 
   return (
@@ -84,9 +84,10 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
       <div className="flex p-4 space-x-2 bg-white border-b border-slate-100 overflow-x-auto no-scrollbar">
         {[
           { id: 'GENERAL', label: 'Общее' },
-          { id: 'ABOUT', label: 'О приложении' },
+          { id: 'DESIGN', label: 'Брендинг' },
+          { id: 'ABOUT', label: 'Контент' },
           { id: 'QUOTES', label: 'Цитаты' },
-          { id: 'SECURITY', label: 'Безопасность' }
+          { id: 'SECURITY', label: 'Доступ' }
         ].map(tab => (
           <button 
             key={tab.id}
@@ -111,39 +112,8 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
                 placeholder="Mindful Mirror"
               />
             </div>
-            
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-4">Логотип (About)</label>
-              <div className="flex flex-col space-y-4">
-                <div className="relative w-full aspect-video bg-slate-50 border border-slate-200 rounded-3xl flex items-center justify-center overflow-hidden">
-                  {editedConfig.customLogoUrl ? (
-                    <>
-                      <img src={editedConfig.customLogoUrl} className="max-w-full max-h-full object-contain p-4" alt="Custom Logo" />
-                      <button 
-                        onClick={removeLogo}
-                        className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full text-rose-500 shadow-sm"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </>
-                  ) : (
-                    <div className="text-center">
-                      <ImageIcon size={40} className="mx-auto text-slate-200 mb-1" />
-                      <span className="text-xl font-bold italic text-indigo-200 uppercase tracking-tighter">{editedConfig.logoText}</span>
-                    </div>
-                  )}
-                </div>
-                
-                <label className="w-full flex items-center justify-center space-x-2 p-4 bg-white border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 hover:text-indigo-500 transition-all cursor-pointer">
-                  <Camera size={18} />
-                  <span className="text-xs font-bold uppercase tracking-wider">Выбрать изображение</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleLogoChange} />
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2">Текст водяного знака</label>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Текст водяного знака (по умолчанию)</label>
               <input 
                 type="text" 
                 value={editedConfig.logoText}
@@ -151,7 +121,65 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
                 className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500"
                 maxLength={4}
               />
-              <p className="mt-2 text-[10px] text-slate-400 italic px-1">До 4 символов</p>
+              <p className="mt-2 text-[10px] text-slate-400 italic px-1">До 4 символов. Будет показан, если не загружено изображение.</p>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'DESIGN' && (
+          <div className="space-y-8">
+            <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Визуальные элементы</h3>
+            
+            {/* Logo Upload */}
+            <div className="space-y-4">
+              <label className="block text-sm font-bold text-slate-700">Логотип ("О приложении")</label>
+              <div className="relative group w-full aspect-video bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-indigo-200">
+                {editedConfig.customLogoUrl ? (
+                  <>
+                    <img src={editedConfig.customLogoUrl} className="max-w-[120px] max-h-[120px] object-contain" alt="Current Logo" />
+                    <button 
+                      onClick={() => removeImage('customLogoUrl')}
+                      className="absolute top-4 right-4 p-2 bg-white text-rose-500 rounded-full shadow-lg hover:bg-rose-50"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center p-8">
+                    <ImageIcon size={48} className="mx-auto text-slate-300 mb-4" />
+                    <p className="text-sm text-slate-400 font-medium">PNG на прозрачном фоне</p>
+                  </div>
+                )}
+                <label className="absolute inset-0 cursor-pointer">
+                  <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => handleImageUpload(e, 'customLogoUrl')} />
+                </label>
+              </div>
+            </div>
+
+            {/* Watermark Upload */}
+            <div className="space-y-4">
+              <label className="block text-sm font-bold text-slate-700">Водяной знак (Шапка)</label>
+              <div className="relative group w-full aspect-video bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-indigo-200">
+                {editedConfig.customWatermarkUrl ? (
+                  <>
+                    <img src={editedConfig.customWatermarkUrl} className="max-w-[200px] max-h-[100px] object-contain opacity-40 grayscale" alt="Current Watermark" />
+                    <button 
+                      onClick={() => removeImage('customWatermarkUrl')}
+                      className="absolute top-4 right-4 p-2 bg-white text-rose-500 rounded-full shadow-lg hover:bg-rose-50"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </>
+                ) : (
+                  <div className="text-center p-8">
+                    <ImageIcon size={48} className="mx-auto text-slate-300 mb-4" />
+                    <p className="text-sm text-slate-400 font-medium">Рекомендуется PNG с белым контуром</p>
+                  </div>
+                )}
+                <label className="absolute inset-0 cursor-pointer">
+                  <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => handleImageUpload(e, 'customWatermarkUrl')} />
+                </label>
+              </div>
             </div>
           </div>
         )}
@@ -224,6 +252,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
 
         {activeTab === 'SECURITY' && (
           <div className="space-y-6">
+            <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Безопасность</h3>
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">Админ-пароль</label>
               <div className="relative">
