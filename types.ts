@@ -39,6 +39,7 @@ export interface SiteConfig {
   appTitle: string;
   logoText: string;
   customLogoUrl?: string | null;
+  customWatermarkUrl?: string | null;
   aboutParagraphs: string[];
   quotes: { text: string; author: string }[];
   adminPasscode: string;
