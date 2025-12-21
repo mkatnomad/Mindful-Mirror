@@ -42,15 +42,13 @@ const STORAGE_KEYS = {
   JOURNAL: 'mm_journal_entries'
 };
 
-const Logo = ({ className = "w-20 h-20", color = "#A78BFA", bg = "transparent" }: { className?: string, color?: string, bg?: string }) => (
-  <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-    {/* Exact stadium shape from reference */}
-    <rect x="50" y="15" width="100" height="170" rx="50" stroke={color} strokeWidth="12" fill={bg === "transparent" ? "none" : bg} />
-    {/* Inner highlight arc */}
-    <path d="M70 45 Q 85 32 120 42" stroke={color} strokeWidth="7" strokeLinecap="round" opacity="0.9" />
-    {/* Lowercase italic mm */}
-    <text x="50%" y="108" dominantBaseline="middle" textAnchor="middle" fill={color} fontSize="68" fontWeight="800" fontStyle="italic" style={{ fontFamily: 'Manrope, sans-serif' }}>mm</text>
-  </svg>
+// Заменяем SVG на твою картинку
+const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string, bg?: string }) => (
+  <img 
+    src="/logo.png" 
+    alt="Mindful Mirror" 
+    className={`${className} object-contain`} 
+  />
 );
 
 const App: React.FC = () => {
