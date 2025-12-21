@@ -102,7 +102,6 @@ const App: React.FC = () => {
 
   const longPressTimer = useRef<number | null>(null);
 
-  // Special entrance for admin via URL param ?admin=true
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('admin') === 'true') {
@@ -113,7 +112,6 @@ const App: React.FC = () => {
         } else if (pass !== null) {
           alert('Неверный пароль');
         }
-        // Clean URL after attempt
         window.history.replaceState({}, document.title, window.location.pathname);
       }, 500);
     }
@@ -187,7 +185,7 @@ const App: React.FC = () => {
       } else if (pass !== null) {
         alert('Неверный пароль');
       }
-    }, 2000); // 2 seconds long press
+    }, 2000); 
   };
 
   const handleAdminTriggerEnd = () => {
@@ -313,7 +311,6 @@ const App: React.FC = () => {
       </header>
       
       <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center relative overflow-hidden">
-        {/* About Watermark */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
            <StylizedMMText text={siteConfig.logoText} className="text-[200px]" color="#A78BFA" opacity="0.05" />
         </div>
@@ -357,115 +354,116 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-4 w-full relative overflow-hidden">
-        {/* Refined background with subtle minimal gradient and geometric pattern */}
+      <header className="mb-3 w-full relative overflow-hidden">
+        {/* Narrow refined header with dot pattern and gradient */}
         <div className="absolute inset-0 bg-[#F8FAFC]">
-           {/* Pattern overlay */}
-           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `radial-gradient(#6366f1 1px, transparent 1px)`, backgroundSize: '24px 24px' }}></div>
-           <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[120%] bg-gradient-to-br from-indigo-100/40 to-transparent rounded-full blur-[60px] opacity-40"></div>
-           <div className="absolute -top-[10%] -right-[10%] w-[50%] h-[100%] bg-gradient-to-bl from-purple-100/30 to-transparent rounded-full blur-[80px] opacity-30"></div>
+           <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `radial-gradient(#6366f1 0.8px, transparent 0.8px)`, backgroundSize: '16px 16px' }}></div>
+           <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[120%] bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full blur-[50px] opacity-30"></div>
+           <div className="absolute -top-[5%] -right-[5%] w-[40%] h-[100%] bg-gradient-to-bl from-purple-100/15 to-transparent rounded-full blur-[60px] opacity-20"></div>
         </div>
 
-        <div className="relative flex flex-row items-center pt-8 pb-8 px-8">
-          {/* Subtle hidden Admin Trigger */}
+        <div className="relative flex flex-row items-center pt-6 pb-6 px-8 min-h-[110px]">
+          {/* Large Area-Filling Avatar Watermark */}
           <div 
-            className="absolute right-[-2%] top-[10%] pointer-events-auto select-none transition-all duration-700 hover:scale-110 active:opacity-30"
+            className="absolute right-[-5%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
             onPointerDown={handleAdminTriggerStart}
             onPointerUp={handleAdminTriggerEnd}
             onPointerLeave={handleAdminTriggerEnd}
           >
-             {siteConfig.customWatermarkUrl ? (
+             {userProfile.avatarUrl ? (
+               <div className="relative w-[180px] h-[180px] rounded-full overflow-hidden opacity-[0.04] grayscale brightness-125 pointer-events-none blur-[2px]">
+                 <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
+               </div>
+             ) : siteConfig.customWatermarkUrl ? (
                <img 
                  src={siteConfig.customWatermarkUrl} 
-                 className="h-[100px] object-contain opacity-[0.03] grayscale pointer-events-none" 
+                 className="h-[80px] object-contain opacity-[0.03] grayscale pointer-events-none" 
                  alt="Watermark" 
                />
              ) : (
-               <div className="w-[120px] h-[100px] flex items-center justify-center opacity-[0.02]">
+                <div className="w-[120px] h-[120px] flex items-center justify-center opacity-[0.02]">
                   <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="50" cy="50" r="40" stroke="#6366f1" strokeWidth="1"/>
-                    <circle cx="50" cy="50" r="25" stroke="#6366f1" strokeWidth="1"/>
                     <path d="M50 10V90M10 50H90" stroke="#6366f1" strokeWidth="1"/>
                   </svg>
-               </div>
+                </div>
              )}
           </div>
           
-          <div className="relative z-10 flex-1">
-            <h1 className="text-xl font-light tracking-tight text-slate-800/80 mb-1 leading-tight">
+          <div className="relative z-10 flex-1 pr-16">
+            <h1 className="text-[20px] font-light tracking-tight text-slate-800/90 leading-tight">
               Привет, <span className="font-bold text-slate-900">{userProfile.name || 'Странник'}</span>
             </h1>
-            <p className="text-[13px] font-medium text-slate-400 tracking-tight opacity-80 border-l-2 border-indigo-200/40 pl-3 py-0">
+            <p className="text-[12px] font-medium text-slate-400 tracking-tight opacity-75 border-l-2 border-indigo-200/40 pl-2 mt-1">
               Как твое настроение?
             </p>
           </div>
         </div>
         
-        {/* Minimal fade-out */}
-        <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-[#F8FAFC] to-transparent"></div>
+        <div className="absolute bottom-0 left-0 w-full h-px bg-slate-100/40"></div>
       </header>
 
-      <div className="px-6 mb-8 relative z-20">
+      <div className="px-6 mb-7 relative z-20">
         <div className="grid grid-cols-3 gap-5">
           {[
             { id: 'DECISION', label: 'Решение', icon: Zap, color: 'indigo', iconColor: 'text-indigo-500', bgGrad: 'from-indigo-50 to-purple-50' },
             { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'rose', iconColor: 'text-rose-500', bgGrad: 'from-rose-50 to-pink-50' },
             { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'emerald', iconColor: 'text-emerald-500', bgGrad: 'from-emerald-50 to-teal-50' }
           ].map((m) => (
-            <button key={m.id} onClick={() => startMode(m.id as JournalMode)} className="flex flex-col items-center space-y-3 group">
-              <div className="w-full aspect-square rounded-[30px] bg-white border-slate-100 shadow-sm border flex items-center justify-center relative overflow-hidden group-hover:-translate-y-2 transition-all duration-300">
-                <div className={`absolute inset-0 bg-gradient-to-br ${m.bgGrad} opacity-50`}></div>
-                <m.icon size={32} className={`${m.iconColor} relative z-10`} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} />
+            <button key={m.id} onClick={() => startMode(m.id as JournalMode)} className="flex flex-col items-center space-y-2.5 group">
+              <div className="w-full aspect-square rounded-[28px] bg-white border-slate-100 shadow-sm border flex items-center justify-center relative overflow-hidden group-hover:-translate-y-1 transition-all duration-300">
+                <div className={`absolute inset-0 bg-gradient-to-br ${m.bgGrad} opacity-40`}></div>
+                <m.icon size={28} className={`${m.iconColor} relative z-10`} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} />
               </div>
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">{m.label}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em]">{m.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="px-6 space-y-4 mb-8">
-        <h3 className="text-base font-bold ml-2 text-slate-700/80 uppercase tracking-widest text-[11px]">Мудрость дня</h3>
-        <div className="bg-white border-slate-50 p-6 rounded-[32px] border shadow-sm relative overflow-hidden">
+      <div className="px-6 space-y-3.5 mb-7">
+        <h3 className="text-[10px] font-bold ml-2 text-slate-400 uppercase tracking-widest">Мудрость дня</h3>
+        <div className="bg-white border-slate-50 p-6 rounded-[28px] border shadow-sm relative overflow-hidden">
            <div className="absolute top-0 left-0 w-24 h-24 bg-amber-50 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl"></div>
-           <Quote size={28} className="text-amber-100 absolute top-5 left-5 opacity-60" />
-           <div className="relative z-10 text-center px-4 py-2">
-              <p className="text-slate-700 italic font-semibold text-[16px] leading-relaxed mb-5">
+           <Quote size={24} className="text-amber-100 absolute top-4 left-4 opacity-50" />
+           <div className="relative z-10 text-center px-2 py-1">
+              <p className="text-slate-700 italic font-semibold text-[15px] leading-relaxed mb-4">
                 "{quoteOfTheDay.text}"
               </p>
-              <div className="w-10 h-1 bg-amber-200/50 mx-auto mb-3 rounded-full"></div>
-              <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">{quoteOfTheDay.author}</p>
+              <div className="w-8 h-1 bg-amber-200/40 mx-auto mb-2.5 rounded-full"></div>
+              <p className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-bold">{quoteOfTheDay.author}</p>
            </div>
         </div>
       </div>
 
-      <div className="px-6 mb-8">
+      <div className="px-6 mb-6">
          <button 
            onClick={() => setCurrentView('RANKS_INFO')}
-           className="w-full text-left outline-none active:scale-[0.98] transition-all group bg-white border-white shadow-[0_20px_40px_-15px_rgba(200,210,255,0.3)] rounded-[32px] p-7 border relative overflow-hidden"
+           className="w-full text-left outline-none active:scale-[0.98] transition-all group bg-white border-white shadow-[0_15px_30px_-12px_rgba(200,210,255,0.25)] rounded-[28px] p-6 border relative overflow-hidden"
          >
-            <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-50 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 group-hover:scale-125 transition-transform duration-700"></div>
+            <div className="absolute top-0 right-0 w-40 h-40 bg-indigo-50 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/3 group-hover:scale-110 transition-transform duration-700"></div>
 
             <div className="relative z-10">
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-5">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em] mb-2 flex items-center">
+                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.15em] mb-1.5 flex items-center">
                     ПУТЬ ОСОЗНАНИЯ <ChevronRight size={10} className="ml-1 opacity-50" />
                   </p>
-                  <h4 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">
+                  <h4 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">
                     {currentRank.title}
                   </h4>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-md border border-indigo-100/30 transform group-hover:rotate-12 transition-transform">
-                  <Star size={24} fill="currentColor" />
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-md border border-indigo-100/20">
+                  <Star size={20} fill="currentColor" />
                 </div>
               </div>
 
-              <div className="mb-8">
-                <div className="flex justify-between text-[10px] text-slate-400 mb-2.5 font-bold uppercase tracking-wider">
+              <div className="mb-6">
+                <div className="flex justify-between text-[9px] text-slate-400 mb-2 font-bold uppercase tracking-wider">
                    <span>Прогресс</span>
                    <span>{totalSteps} / {nextRank ? nextRank.threshold : 'MAX'}</span>
                 </div>
-                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                   <div 
                     className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 rounded-full relative transition-all duration-1000 ease-out"
                     style={{ width: `${progressPercent}%` }}
@@ -475,26 +473,26 @@ const App: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center pt-6 border-t border-slate-50">
-                <div className="flex-1 flex items-center space-x-3">
-                   <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm">
-                     <MessageSquare size={20} fill="currentColor" />
+              <div className="flex items-center pt-5 border-t border-slate-50">
+                <div className="flex-1 flex items-center space-x-2.5">
+                   <div className="w-9 h-9 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm">
+                     <MessageSquare size={18} fill="currentColor" />
                    </div>
                    <div>
-                     <div className="text-xl font-bold text-slate-800">{totalSessions}</div>
-                     <div className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em]">Сессии</div>
+                     <div className="text-lg font-bold text-slate-800">{totalSessions}</div>
+                     <div className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.1em]">Сессии</div>
                    </div>
                 </div>
-                <div className="w-px h-10 bg-slate-100 mx-3"></div>
-                <div className="flex-1 flex items-center space-x-3 pl-2">
-                   <div className="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center shadow-sm">
-                     <Activity size={20} />
+                <div className="w-px h-9 bg-slate-100 mx-2"></div>
+                <div className="flex-1 flex items-center space-x-2.5 pl-1.5">
+                   <div className="w-9 h-9 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center shadow-sm">
+                     <Activity size={18} />
                    </div>
                    <div>
-                     <div className="text-xl font-bold text-slate-800">
-                        {practiceTime.value}<span className="text-xs font-bold text-slate-400 ml-1">{practiceTime.unit}</span>
+                     <div className="text-lg font-bold text-slate-800">
+                        {practiceTime.value}<span className="text-[10px] font-bold text-slate-400 ml-0.5">{practiceTime.unit}</span>
                      </div>
-                     <div className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em]">Практика</div>
+                     <div className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.1em]">Практика</div>
                    </div>
                 </div>
               </div>
