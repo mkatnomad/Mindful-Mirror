@@ -33,7 +33,6 @@ export interface UserProfile {
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
-  theme?: 'LIGHT' | 'SPACE';
 }
 
 export type JournalEntryType = 'INTENTION' | 'INSIGHT' | 'GRATITUDE';
