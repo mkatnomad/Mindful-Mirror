@@ -41,7 +41,7 @@ const STORAGE_KEYS = {
   JOURNAL: 'mm_journal_entries'
 };
 
-// --- ИСПРАВЛЕНИЕ: Прямая ссылка на файл, без import ---
+// --- ЛОГОТИП (ИСПРАВЛЕНО: Прямая ссылка, без импорта) ---
 const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string, bg?: string }) => (
   <img 
     src="/logo.png" 
@@ -288,81 +288,4 @@ const App: React.FC = () => {
         <div className={`w-full pt-8 mt-10 border-t ${isSpaceTheme ? 'border-slate-800' : 'border-slate-100'} flex justify-around`}>
            <div className="text-center">
               <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
-              <p className={`text-base font-semibold ${isSpaceTheme ? 'text-slate-200' : 'text-slate-700'}`}>1.2.0</p>
-           </div>
-           <div className="text-center">
-              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
-              <p className={`text-base font-semibold ${isSpaceTheme ? 'text-slate-200' : 'text-slate-700'}`}>09-2025</p>
-           </div>
-        </div>
-        
-        <p className="text-[12px] text-slate-400 font-medium italic mt-12">
-          "Познай самого себя, и ты познаешь мир."
-        </p>
-      </div>
-    </div>
-  );
-
-  const renderHome = () => (
-    <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-    {/* --- ЗАГОЛОВОК (ОТСТУПЫ И РАЗМЕР ИСПРАВЛЕНЫ) --- */}
-        <div className="flex justify-between items-center mb-8 relative z-20 pt-4 px-6">
-          <div className="flex-1 mr-2">
-            <h1 className={`text-4xl font-extrabold tracking-tight leading-none mb-2 ${isSpaceTheme ? 'text-white' : 'text-slate-800'}`}>
-              Привет{userProfile.name ? `, ${userProfile.name}` : ''}
-            </h1>
-            <p className={`text-lg font-medium ${isSpaceTheme ? 'text-blue-100/90' : 'text-slate-500'}`}>
-              Как твое настроение?
-            </p>
-          </div>
-          
-          {/* Логотип: Стал больше (w-24) и без фона */}
-          <Logo className="w-24 h-24 flex-shrink-0" />
-        </div>
-        {/* --- КОНЕЦ ШАПКИ --- */}
-
-      <div className="px-6 mb-12">
-        <div className="grid grid-cols-3 gap-5">
-          {[
-            { id: 'DECISION', label: 'Решение', icon: Zap, color: 'indigo', iconColor: 'text-indigo-500', bgGrad: 'from-indigo-50 to-purple-50' },
-            { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'rose', iconColor: 'text-rose-500', bgGrad: 'from-rose-50 to-pink-50' },
-            { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'emerald', iconColor: 'text-emerald-500', bgGrad: 'from-emerald-50 to-teal-50' }
-          ].map((m) => (
-            <button key={m.id} onClick={() => startMode(m.id as JournalMode)} className="flex flex-col items-center space-y-3 group">
-              <div className={`w-full aspect-square rounded-[30px] ${isSpaceTheme ? 'bg-[#1C2128] border-slate-800 shadow-xl' : 'bg-white border-slate-100 shadow-sm'} border flex items-center justify-center relative overflow-hidden group-hover:-translate-y-2 transition-all duration-300`}>
-                <div className={`absolute inset-0 bg-gradient-to-br ${m.bgGrad} ${isSpaceTheme ? 'opacity-5' : 'opacity-50'}`}></div>
-                <m.icon size={32} className={`${m.iconColor} relative z-10`} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} />
-              </div>
-              <span className={`text-[12px] font-bold ${isSpaceTheme ? 'text-slate-400' : 'text-slate-600'}`}>{m.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="px-6 space-y-4 mb-10">
-        <h3 className={`text-lg font-bold ml-2 ${isSpaceTheme ? 'text-slate-300' : 'text-slate-700'}`}>Мудрость дня</h3>
-        <div className={`${isSpaceTheme ? 'bg-[#1C2128] border-slate-800' : 'bg-white border-slate-50'} p-6 rounded-[32px] border shadow-sm relative overflow-hidden`}>
-           <div className={`absolute top-0 left-0 w-24 h-24 ${isSpaceTheme ? 'bg-indigo-900/20' : 'bg-amber-50'} rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl`}></div>
-           <Quote size={32} className={`${isSpaceTheme ? 'text-indigo-900/40' : 'text-amber-100'} absolute top-5 left-5`} />
-           <div className="relative z-10 text-center px-4 py-4">
-             <p className={`${isSpaceTheme ? 'text-slate-300' : 'text-slate-700'} italic font-semibold text-[17px] leading-relaxed mb-6`}>
-               "{quoteOfTheDay.text}"
-             </p>
-             <div className={`w-12 h-1 ${isSpaceTheme ? 'bg-indigo-500/30' : 'bg-amber-200'} mx-auto mb-3 rounded-full`}></div>
-             <p className="text-[11px] text-slate-400 uppercase tracking-[0.2em] font-black">{quoteOfTheDay.author}</p>
-           </div>
-        </div>
-      </div>
-
-      <div className="px-6 mb-8">
-         <button 
-           onClick={() => setCurrentView('RANKS_INFO')}
-           className={`w-full text-left outline-none active:scale-[0.98] transition-all group ${isSpaceTheme ? 'bg-gradient-to-br from-[#1C2128] to-[#0D1117] border-slate-800 shadow-indigo-900/10' : 'bg-white border-white shadow-[0_25px_50px_-15px_rgba(200,210,255,0.4)]'} rounded-[40px] p-8 border relative overflow-hidden`}
-         >
-            {isSpaceTheme && (
-               <div className="absolute inset-0 overflow-hidden opacity-30 pointer-events-none">
-                 {[...Array(25)].map((_, i) => (
-                   <div key={i} className="absolute bg-white rounded-full" style={{
-                     width: Math.random() * 2 + 'px',
-                     height: Math.random() * 2 + 'px',
-                     top: Math.random() * 100 + '%',
+              <p className={`text-base font-semibold ${isSpaceTheme ? 'text-slate-20
