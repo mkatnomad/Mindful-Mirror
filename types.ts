@@ -1,5 +1,5 @@
 
-export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO';
+export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN';
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
 
@@ -33,6 +33,14 @@ export interface UserProfile {
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
+}
+
+export interface SiteConfig {
+  appTitle: string;
+  logoText: string;
+  aboutParagraphs: string[];
+  quotes: { text: string; author: string }[];
+  adminPasscode: string;
 }
 
 export type JournalEntryType = 'INTENTION' | 'INSIGHT' | 'GRATITUDE';
