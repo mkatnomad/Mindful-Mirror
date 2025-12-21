@@ -42,8 +42,13 @@ const STORAGE_KEYS = {
   JOURNAL: 'mm_journal_entries'
 };
 
-const StylizedMM = ({ className = "text-5xl", color = "white" }: { className?: string, color?: string }) => (
-  <span className={`${className} font-extrabold italic select-none`} style={{ color, fontFamily: 'Manrope, sans-serif' }}>mm</span>
+const StylizedMMText = ({ className = "", color = "white", opacity = "1" }: { className?: string, color?: string, opacity?: string }) => (
+  <span 
+    className={`${className} font-extrabold italic select-none pointer-events-none`} 
+    style={{ color, opacity, fontFamily: 'Manrope, sans-serif' }}
+  >
+    mm
+  </span>
 );
 
 const App: React.FC = () => {
@@ -253,66 +258,74 @@ const App: React.FC = () => {
          <h1 className="text-3xl font-bold text-slate-800">О приложении</h1>
       </header>
       
-      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center">
-        <div className="flex justify-center mb-10 p-6 rounded-full bg-indigo-500/10">
-          <StylizedMM className="text-6xl" color="#6366f1" />
-        </div>
-        <h2 className="text-3xl font-bold mb-6 text-slate-800">Mindful Mirror</h2>
-        
-        <div className="space-y-6 text-left">
-          <p className="text-[16px] leading-relaxed text-slate-600">
-            Mindful Mirror — это ваш персональный спутник в мире осознанности. Мы объединили возможности современных технологий и психологических практик, чтобы помочь вам находить ответы внутри себя.
-          </p>
-          <p className="text-[16px] leading-relaxed text-slate-600">
-            Это пространство для вашего внутреннего диалога. Оно не для того, чтобы давать советы, а чтобы помочь вам услышать самих себя.
-          </p>
-          <p className="text-[16px] leading-relaxed text-slate-600">
-            Каждая сессия, каждая запись в дневнике — это шаг по пути самопознания. Набирайте баллы осознанности, открывайте новые ранги и изучайте ландшафт своей души.
-          </p>
+      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center relative overflow-hidden">
+        {/* About Watermark */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+           <StylizedMMText className="text-[200px]" color="#A78BFA" opacity="0.05" />
         </div>
 
-        <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
-           <div className="text-center">
-              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
-              <p className="text-base font-semibold text-slate-700">1.2.0</p>
-           </div>
-           <div className="text-center">
-              <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
-              <p className="text-base font-semibold text-slate-700">09-2025</p>
-           </div>
+        <div className="relative z-10 flex flex-col items-center">
+          <div className="mb-10 p-6 rounded-full bg-indigo-500/10 flex items-center justify-center">
+            <StylizedMMText className="text-7xl" color="#6366f1" />
+          </div>
+          <h2 className="text-3xl font-bold mb-6 text-slate-800">Mindful Mirror</h2>
+          
+          <div className="space-y-6 text-left">
+            <p className="text-[16px] leading-relaxed text-slate-600">
+              Mindful Mirror — это ваш персональный спутник в мире осознанности. Мы объединили возможности современных технологий и психологических практик, чтобы помочь вам находить ответы внутри себя.
+            </p>
+            <p className="text-[16px] leading-relaxed text-slate-600">
+              Это пространство для вашего внутреннего диалога. Оно не для того, чтобы давать советы, а чтобы помочь вам услышать самих себя.
+            </p>
+            <p className="text-[16px] leading-relaxed text-slate-600">
+              Каждая сессия, каждая запись в дневнике — это шаг по пути самопознания. Набирайте баллы осознанности, открывайте новые ранги и изучайте ландшафт своей души.
+            </p>
+          </div>
+
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
+             <div className="text-center">
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
+                <p className="text-base font-semibold text-slate-700">1.2.0</p>
+             </div>
+             <div className="text-center">
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
+                <p className="text-base font-semibold text-slate-700">09-2025</p>
+             </div>
+          </div>
+          
+          <p className="text-[12px] text-slate-400 font-medium italic mt-12">
+            "Познай самого себя, и ты познаешь мир."
+          </p>
         </div>
-        
-        <p className="text-[12px] text-slate-400 font-medium italic mt-12">
-          "Познай самого себя, и ты познаешь мир."
-        </p>
       </div>
     </div>
   );
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-10 w-full">
+      <header className="mb-8 w-full">
         <div className="w-full relative overflow-hidden flex flex-row items-center justify-between py-6 px-8 bg-gradient-to-r from-[#A78BFA] to-[#818CF8]">
+          {/* Logo Watermark in Background */}
+          <div className="absolute right-0 bottom-[-20%] pointer-events-none transform translate-x-1/4 select-none opacity-20">
+             <StylizedMMText className="text-[140px]" color="white" />
+          </div>
+
           <div className="absolute inset-0 opacity-40 pointer-events-none">
             <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
               <path d="M0 200 C 50 150, 150 150, 200 200" fill="white" opacity="0.15" />
               <path d="M200 200 C 250 120, 350 120, 400 200" fill="white" opacity="0.1" />
-              <ellipse cx="200" cy="200" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(-45 200 200)" />
-              <ellipse cx="200" cy="200" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(45 200 200)" />
-              <ellipse cx="200" cy="200" rx="60" ry="180" fill="white" opacity="0.15" transform="rotate(-15 200 200)" />
-              <ellipse cx="200" cy="200" rx="60" ry="180" fill="white" opacity="0.15" transform="rotate(15 200 200)" />
-              <ellipse cx="200" cy="200" rx="45" ry="140" fill="white" opacity="0.2" />
+              {/* Symmetrical petals */}
+              <ellipse cx="200" cy="190" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(-40 200 190)" />
+              <ellipse cx="200" cy="190" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(40 200 190)" />
+              <ellipse cx="200" cy="190" rx="50" ry="130" fill="white" opacity="0.2" />
             </svg>
           </div>
           
           <div className="relative z-10 flex-1">
-            <h1 className="text-4xl font-extrabold tracking-tight leading-none text-white mb-1">
+            <h1 className="text-4xl font-extrabold tracking-tight leading-none text-white mb-1.5">
               Привет{userProfile.name ? `, ${userProfile.name}` : ''}
             </h1>
             <p className="text-white/85 font-semibold text-lg">Как твое настроение?</p>
-          </div>
-          <div className="relative z-10 shrink-0 transform translate-y-1">
-             <StylizedMM color="white" className="text-5xl" />
           </div>
         </div>
       </header>
