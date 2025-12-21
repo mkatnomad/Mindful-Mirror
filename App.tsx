@@ -357,11 +357,17 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-8 w-full">
-        <div className="w-full relative overflow-hidden flex flex-row items-center justify-between pt-10 pb-20 px-8 bg-gradient-to-b from-indigo-50/80 to-[#F8FAFC]">
-          {/* Logo Watermark with Admin Trigger */}
+      <header className="mb-4 w-full relative overflow-hidden">
+        {/* Refined layered background with soft minimalistic gradient */}
+        <div className="absolute inset-0 bg-[#F8FAFC]">
+           <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[120%] bg-gradient-to-br from-indigo-50/60 to-transparent rounded-full blur-[80px] opacity-50"></div>
+           <div className="absolute -top-[10%] -right-[10%] w-[50%] h-[100%] bg-gradient-to-bl from-purple-50/40 to-transparent rounded-full blur-[100px] opacity-40"></div>
+        </div>
+
+        <div className="relative flex flex-row items-center pt-10 pb-12 px-8">
+          {/* Subtle Watermark with Admin Trigger */}
           <div 
-            className="absolute right-0 bottom-[10%] pointer-events-auto transform translate-x-1/4 select-none cursor-pointer active:opacity-40"
+            className="absolute right-[-2%] top-[10%] pointer-events-auto select-none transition-all duration-700 hover:scale-110 active:opacity-30"
             onPointerDown={handleAdminTriggerStart}
             onPointerUp={handleAdminTriggerEnd}
             onPointerLeave={handleAdminTriggerEnd}
@@ -369,33 +375,29 @@ const App: React.FC = () => {
              {siteConfig.customWatermarkUrl ? (
                <img 
                  src={siteConfig.customWatermarkUrl} 
-                 className="h-[140px] object-contain opacity-10 grayscale brightness-125" 
+                 className="h-[120px] object-contain opacity-[0.03] grayscale pointer-events-none" 
                  alt="Watermark" 
                />
              ) : (
-               <StylizedMMText text={siteConfig.logoText} className="text-[140px]" color="#6366f1" opacity="0.1" />
+               <StylizedMMText text={siteConfig.logoText} className="text-[150px]" color="#6366f1" opacity="0.03" />
              )}
-          </div>
-
-          <div className="absolute inset-0 opacity-20 pointer-events-none">
-            <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
-              <path d="M0 200 C 50 150, 150 150, 200 200" fill="#6366f1" opacity="0.1" />
-              <path d="M200 200 C 250 120, 350 120, 400 200" fill="#6366f1" opacity="0.05" />
-              <ellipse cx="200" cy="190" rx="80" ry="160" fill="#6366f1" opacity="0.05" transform="rotate(-40 200 190)" />
-              <ellipse cx="200" cy="190" rx="80" ry="160" fill="#6366f1" opacity="0.05" transform="rotate(40 200 190)" />
-            </svg>
           </div>
           
           <div className="relative z-10 flex-1">
-            <h1 className="text-4xl font-extrabold tracking-tight leading-none text-slate-800 mb-2">
-              Привет{userProfile.name ? `, ${userProfile.name}` : ''}
+            <h1 className="text-2xl font-light tracking-tight text-slate-800/80 mb-2 leading-tight">
+              Привет, <span className="font-bold text-slate-900">{userProfile.name || 'Странник'}</span>
             </h1>
-            <p className="text-slate-500 font-semibold text-lg">Как твое настроение?</p>
+            <p className="text-base font-medium text-slate-400 tracking-tight opacity-80 border-l-2 border-indigo-200/40 pl-4 py-0.5">
+              Как твое настроение?
+            </p>
           </div>
         </div>
+        
+        {/* Fade-out transition to the content area */}
+        <div className="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-[#F8FAFC] to-transparent"></div>
       </header>
 
-      <div className="px-6 mb-12 -mt-10 relative z-20">
+      <div className="px-6 mb-8 relative z-20">
         <div className="grid grid-cols-3 gap-5">
           {[
             { id: 'DECISION', label: 'Решение', icon: Zap, color: 'indigo', iconColor: 'text-indigo-500', bgGrad: 'from-indigo-50 to-purple-50' },
@@ -407,23 +409,23 @@ const App: React.FC = () => {
                 <div className={`absolute inset-0 bg-gradient-to-br ${m.bgGrad} opacity-50`}></div>
                 <m.icon size={32} className={`${m.iconColor} relative z-10`} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} />
               </div>
-              <span className="text-[12px] font-bold text-slate-600">{m.label}</span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.15em]">{m.label}</span>
             </button>
           ))}
         </div>
       </div>
 
-      <div className="px-6 space-y-4 mb-10">
-        <h3 className="text-lg font-bold ml-2 text-slate-700">Мудрость дня</h3>
+      <div className="px-6 space-y-4 mb-8">
+        <h3 className="text-base font-bold ml-2 text-slate-700/80 uppercase tracking-widest text-[11px]">Мудрость дня</h3>
         <div className="bg-white border-slate-50 p-6 rounded-[32px] border shadow-sm relative overflow-hidden">
            <div className="absolute top-0 left-0 w-24 h-24 bg-amber-50 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl"></div>
-           <Quote size={32} className="text-amber-100 absolute top-5 left-5" />
-           <div className="relative z-10 text-center px-4 py-4">
-              <p className="text-slate-700 italic font-semibold text-[17px] leading-relaxed mb-6">
+           <Quote size={28} className="text-amber-100 absolute top-5 left-5 opacity-60" />
+           <div className="relative z-10 text-center px-4 py-2">
+              <p className="text-slate-700 italic font-semibold text-[16px] leading-relaxed mb-5">
                 "{quoteOfTheDay.text}"
               </p>
-              <div className="w-12 h-1 bg-amber-200 mx-auto mb-3 rounded-full"></div>
-              <p className="text-[11px] text-slate-400 uppercase tracking-[0.2em] font-bold">{quoteOfTheDay.author}</p>
+              <div className="w-10 h-1 bg-amber-200/50 mx-auto mb-3 rounded-full"></div>
+              <p className="text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">{quoteOfTheDay.author}</p>
            </div>
         </div>
       </div>
@@ -431,60 +433,60 @@ const App: React.FC = () => {
       <div className="px-6 mb-8">
          <button 
            onClick={() => setCurrentView('RANKS_INFO')}
-           className="w-full text-left outline-none active:scale-[0.98] transition-all group bg-white border-white shadow-[0_25px_50px_-15px_rgba(200,210,255,0.4)] rounded-[40px] p-8 border relative overflow-hidden"
+           className="w-full text-left outline-none active:scale-[0.98] transition-all group bg-white border-white shadow-[0_20px_40px_-15px_rgba(200,210,255,0.3)] rounded-[32px] p-7 border relative overflow-hidden"
          >
             <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-50 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 group-hover:scale-125 transition-transform duration-700"></div>
 
             <div className="relative z-10">
-              <div className="flex justify-between items-start mb-8">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em] mb-2 flex items-center">
-                    ПУТЬ ОСОЗНАНИЯ <ChevronRight size={12} className="ml-1 opacity-50" />
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.15em] mb-2 flex items-center">
+                    ПУТЬ ОСОЗНАНИЯ <ChevronRight size={10} className="ml-1 opacity-50" />
                   </p>
-                  <h4 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">
+                  <h4 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">
                     {currentRank.title}
                   </h4>
                 </div>
-                <div className="w-14 h-14 rounded-3xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-lg border border-indigo-100/50 transform group-hover:rotate-12 transition-transform">
-                  <Star size={28} fill="currentColor" />
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-md border border-indigo-100/30 transform group-hover:rotate-12 transition-transform">
+                  <Star size={24} fill="currentColor" />
                 </div>
               </div>
 
-              <div className="mb-10">
-                <div className="flex justify-between text-[11px] text-slate-400 mb-3 font-bold uppercase tracking-wider">
+              <div className="mb-8">
+                <div className="flex justify-between text-[10px] text-slate-400 mb-2.5 font-bold uppercase tracking-wider">
                    <span>Прогресс</span>
                    <span>{totalSteps} / {nextRank ? nextRank.threshold : 'MAX'}</span>
                 </div>
-                <div className="w-full h-4 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                   <div 
                     className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 rounded-full relative transition-all duration-1000 ease-out"
                     style={{ width: `${progressPercent}%` }}
                   >
-                     <div className="absolute inset-0 bg-white/30 animate-pulse"></div>
+                     <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center pt-8 border-t border-slate-100">
-                <div className="flex-1 flex items-center space-x-4">
-                   <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm">
-                     <MessageSquare size={24} fill="currentColor" />
+              <div className="flex items-center pt-6 border-t border-slate-50">
+                <div className="flex-1 flex items-center space-x-3">
+                   <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm">
+                     <MessageSquare size={20} fill="currentColor" />
                    </div>
                    <div>
-                     <div className="text-2xl font-bold text-slate-800">{totalSessions}</div>
-                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">Сессии</div>
+                     <div className="text-xl font-bold text-slate-800">{totalSessions}</div>
+                     <div className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em]">Сессии</div>
                    </div>
                 </div>
-                <div className="w-px h-12 bg-slate-100 mx-4"></div>
-                <div className="flex-1 flex items-center space-x-4 pl-4">
-                   <div className="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center shadow-sm">
-                     <Activity size={24} />
+                <div className="w-px h-10 bg-slate-100 mx-3"></div>
+                <div className="flex-1 flex items-center space-x-3 pl-2">
+                   <div className="w-10 h-10 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center shadow-sm">
+                     <Activity size={20} />
                    </div>
                    <div>
-                     <div className="text-2xl font-bold text-slate-800">
-                        {practiceTime.value}<span className="text-sm font-bold text-slate-400 ml-1">{practiceTime.unit}</span>
+                     <div className="text-xl font-bold text-slate-800">
+                        {practiceTime.value}<span className="text-xs font-bold text-slate-400 ml-1">{practiceTime.unit}</span>
                      </div>
-                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.1em]">Практика</div>
+                     <div className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.1em]">Практика</div>
                    </div>
                 </div>
               </div>
