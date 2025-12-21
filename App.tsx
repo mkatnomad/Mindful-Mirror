@@ -314,18 +314,7 @@ const App: React.FC = () => {
         }`}>
           {/* Abstract petal-like patterns centered and refined */}
           {!isSpaceTheme && (
-            <div className="absolute inset-0 opacity-40 pointer-events-none">
-              <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid slice">
-                <path d="M0 200 C 50 150, 150 150, 200 200" fill="white" opacity="0.15" />
-                <path d="M200 200 C 250 120, 350 120, 400 200" fill="white" opacity="0.1" />
-                {/* Symmetrical petals spreading from the bottom center */}
-                <ellipse cx="200" cy="200" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(-45 200 200)" />
-                <ellipse cx="200" cy="200" rx="80" ry="160" fill="white" opacity="0.12" transform="rotate(45 200 200)" />
-                <ellipse cx="200" cy="200" rx="60" ry="180" fill="white" opacity="0.15" transform="rotate(-15 200 200)" />
-                <ellipse cx="200" cy="200" rx="60" ry="180" fill="white" opacity="0.15" transform="rotate(15 200 200)" />
-                <ellipse cx="200" cy="200" rx="45" ry="140" fill="white" opacity="0.2" />
-              </svg>
-            </div>
+            <Logo className="w-16 h-16" />
           )}
           
           <div className="relative z-10 flex-1">
