@@ -4,7 +4,7 @@
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 // Здесь указываем модель. 
-// Для OpenRouter модель Google обычно пишется так: "google/gemini-2.0-flash-lite-preview-02-05:free"
+// Для OpenRouter модель Google обычно пишется так: "google/gemini-2.0-flash-lite"
 // Если выйдет 2.5, просто поменяй название внутри кавычек.
 const MODEL_ID = "google/gemini-2.0-flash-lite-preview-02-05:free"; 
 
