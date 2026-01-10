@@ -1,409 +1,209 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, Loader2 } from 'lucide-react';
-import { JournalMode, Message, DecisionData } from '../types';
-import { InsightCard } from './InsightCard';
-import { sendMessageToGemini, analyzeDecision, refineDecision } from '../services/geminiService';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, User, Bot, Loader2, ArrowLeft, MoreVertical, Trash2 } from 'lucide-react';
+import { Message, JournalMode, ChatSession } from '../types';
+// 👇 Самая важная строка: Импортируем нашу функцию OpenRouter
+import { sendMessageToGemini } from '../services/geminiService';
 
 interface ChatInterfaceProps {
   mode: JournalMode;
   onBack: () => void;
-  onSessionComplete?: (messages: Message[], durationSeconds: number) => void;
+  onSessionComplete?: (messages: Message[], duration: number) => void;
   readOnly?: boolean;
   initialMessages?: Message[];
 }
 
-const PRO_VARIANTS = [
-  "Отлично. Что еще хорошего вы видите?",
-  "Принято. Какие еще есть плюсы?",
-  "Звучит убедительно. Есть ли что-то еще?",
-  "Хороший пункт. Продолжайте.",
-  "Записал. Что еще говорит 'за'?"
-];
-
-const CON_VARIANTS = [
-  "Понимаю. Что вас беспокоит?",
-  "Справедливо. Какие еще есть риски?",
-  "Это важный момент. Что еще смущает?",
-  "Учел. Есть ли другие минусы?",
-  "Ясно. Какие еще аргументы 'против'?"
-];
-
-// Define outside component to ensure reference stability
-const EMPTY_MESSAGES: Message[] = [];
-
-const getRandomResponse = (variants: string[]) => {
-  return variants[Math.floor(Math.random() * variants.length)];
-};
-
-const formatMessage = (content: string) => {
-  const parts = content.split(/(\*\*.*?\*\*)/g);
-  return parts.map((part, index) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={index} className="font-bold">{part.slice(2, -2)}</strong>;
-    }
-    return <span key={index}>{part}</span>;
-  });
-};
-
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
   mode, 
   onBack, 
-  onSessionComplete, 
+  onSessionComplete,
   readOnly = false,
-  initialMessages = EMPTY_MESSAGES
+  initialMessages = []
 }) => {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const startTimeRef = useRef<number>(Date.now());
+  const [sessionStartTime] = useState(Date.now());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Decision Flow State
-  // 0: Topic, 1: Pros, 2: Cons, 3: Initial Analysis, 4: Refinement Loop
-  const [decisionStep, setDecisionStep] = useState<number>(0); 
-  const [decisionData, setDecisionData] = useState<DecisionData>({ topic: '', pros: [], cons: [] });
-
-  // Initial Greeting or Load History
-  useEffect(() => {
-    // If reading history, load it and stop
-    if (readOnly && initialMessages.length > 0) {
-      setMessages(initialMessages);
-      return;
-    }
-
-    // Initialize fresh chat
-    let greeting = '';
-    if (mode === 'DECISION') {
-      greeting = "Сложный выбор? Давайте разложим всё по полочкам. Какое решение вы пытаетесь принять?";
-    } else if (mode === 'EMOTIONS') {
-      greeting = "Привет. Какие эмоции вы испытываете сейчас? Опишите свое состояние, и мы вместе попробуем его понять.";
-    } else {
-      greeting = "Давайте немного замедлимся. Расскажите, как прошел ваш день или что важного вы сегодня осознали?";
-    }
-
-    setMessages([{
-      id: 'init',
-      role: 'assistant',
-      content: greeting,
-      timestamp: Date.now()
-    }]);
-    
-    // Reset start time on mount
-    startTimeRef.current = Date.now();
-  }, [mode, readOnly, initialMessages]);
-
-  // Auto-scroll
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-  }, [messages, isLoading]);
-
-  const handleBack = () => {
-    if (!readOnly && onSessionComplete && messages.length > 1) {
-      const duration = (Date.now() - startTimeRef.current) / 1000;
-      onSessionComplete(messages, duration);
-    }
-    onBack();
+  // Автопрокрутка вниз
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleDecisionFlowStep = (userText: string, currentData: DecisionData): { text: string, done: boolean, latestData: DecisionData } => {
-    // Copy data to modify it without waiting for state update
-    let nextData = { ...currentData };
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-    if (decisionStep === 0) {
-      nextData.topic = userText;
-      setDecisionData(nextData);
-      setDecisionStep(1);
-      return { 
-        text: `Хорошо. Давайте начнем с плюсов. Какие преимущества у этого варианта?\n\n(Напишите 'далее', когда перечислите всё)`, 
-        done: false,
-        latestData: nextData
-      };
+  // Приветственное сообщение, если чат пустой
+  useEffect(() => {
+    if (messages.length === 0 && !readOnly) {
+      let initialText = '';
+      switch (mode) {
+        case 'DECISION':
+          initialText = 'Привет! Я помогу тебе принять сложное решение. Опиши ситуацию: между чем и чем ты выбираешь?';
+          break;
+        case 'EMOTIONS':
+          initialText = 'Здравствуй. Я здесь, чтобы выслушать. Что ты сейчас чувствуешь? Поделись своими эмоциями.';
+          break;
+        case 'REFLECTION':
+          initialText = 'Привет! Давай подведем итоги или просто поразмышляем. О чем ты думаешь прямо сейчас?';
+          break;
+        default:
+          initialText = 'Привет! Я готов слушать.';
+      }
+      setMessages([{
+        id: 'init-1',
+        role: 'assistant',
+        content: initialText,
+        timestamp: Date.now()
+      }]);
     }
-    
-    if (decisionStep === 1) {
-      const lower = userText.toLowerCase();
-      // Check for keywords
-      const isCommand = lower.includes('далее') || lower.includes('все') || lower.includes('готово');
-      
-      // Strip command words to see if there is content
-      const cleanText = userText.replace(/далее|все|всё|готово/gi, '').trim();
-      
-      // If there is meaningful text, add it
-      if (cleanText.length > 0) {
-        nextData.pros = [...nextData.pros, cleanText];
-        setDecisionData(nextData);
-      }
+  }, [mode, messages.length, readOnly]);
 
-      if (isCommand) {
-        setDecisionStep(2);
-        return { 
-          text: `Понял. Теперь давайте честно посмотрим на минусы и риски. Что вас смущает?\n\n(Напишите 'готово', когда перечислите всё)`, 
-          done: false,
-          latestData: nextData
-        };
-      } else {
-        const response = getRandomResponse(PRO_VARIANTS);
-        return { 
-          text: `${response}\n\n(Напишите 'далее', когда перечислите всё)`, 
-          done: false,
-          latestData: nextData
-        };
-      }
-    }
-
-    if (decisionStep === 2) {
-      const lower = userText.toLowerCase();
-      const isCommand = lower.includes('готово') || lower.includes('всё') || lower.includes('все') || lower.includes('закончил');
-      
-      const cleanText = userText.replace(/готово|всё|все|закончил/gi, '').trim();
-
-      if (cleanText.length > 0) {
-        nextData.cons = [...nextData.cons, cleanText];
-        setDecisionData(nextData);
-      }
-
-      if (isCommand) {
-        setDecisionStep(3); // Move to analysis
-        return { text: "", done: true, latestData: nextData }; 
-      } else {
-        const response = getRandomResponse(CON_VARIANTS);
-        return { 
-          text: `${response}\n\n(Напишите 'готово', когда перечислите всё)`, 
-          done: false,
-          latestData: nextData
-        };
-      }
-    }
-    
-    return { text: "", done: true, latestData: nextData };
-  };
-
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSendMessage = async () => {
+    if (!inputText.trim() || isLoading) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: inputText,
       timestamp: Date.now()
     };
 
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
+    setInputText('');
     setIsLoading(true);
 
     try {
-      if (mode === 'DECISION') {
-        // If we are already in refinement loop (Step 4)
-        if (decisionStep === 4) {
-           await new Promise(r => setTimeout(r, 600));
-           const { text, data } = await refineDecision(decisionData, userMsg.content);
-           
-           setDecisionData(data); // Update local state with new pros/cons
-           
-           setMessages(prev => [
-             ...prev,
-             {
-               id: (Date.now() + 1).toString(),
-               role: 'assistant',
-               content: text,
-               timestamp: Date.now()
-             },
-             {
-               id: (Date.now() + 2).toString(),
-               role: 'assistant',
-               content: '',
-               type: 'decision-card',
-               decisionData: data, // Use updated data
-               timestamp: Date.now() + 100
-             }
-           ]);
-           setIsLoading(false);
-           return;
-        }
+      // 👇 ЗДЕСЬ мы вызываем OpenRouter через наш сервис
+      // Формируем историю для контекста (последние 10 сообщений)
+      const historyForAi = messages.slice(-10).map(m => ({
+        role: m.role,
+        content: m.content
+      }));
 
-        // Standard flow (Steps 0-3)
-        await new Promise(r => setTimeout(r, 600)); 
-        
-        // Pass current decisionData state to the handler
-        const { text, done, latestData } = handleDecisionFlowStep(userMsg.content, decisionData);
-        
-        if (!done) {
-          const botMsg: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: text,
-            timestamp: Date.now()
-          };
-          setMessages(prev => [...prev, botMsg]);
-        } else {
-          // Finalizing decision - Generate Initial Analysis
-          const analysisMsg: Message = {
-            id: (Date.now() + 1).toString(),
-            role: 'assistant',
-            content: "Анализирую ваши данные... Минутку.",
-            timestamp: Date.now()
-          };
-          setMessages(prev => [...prev, analysisMsg]);
-          
-          // Use latestData returned from logic, NOT decisionData state (which might be stale)
-          const analysisText = await analyzeDecision(latestData);
-          
-          setDecisionStep(4); // Enable refinement mode
+      const responseText = await sendMessageToGemini(userMsg.content, historyForAi);
 
-          // Replace loading msg with actual analysis
-          setMessages(prev => {
-             const newArr = [...prev];
-             newArr.pop(); // remove 'analyzing...'
-             return [
-               ...newArr,
-               {
-                 id: (Date.now() + 2).toString(),
-                 role: 'assistant',
-                 content: analysisText,
-                 timestamp: Date.now()
-               },
-               {
-                 id: (Date.now() + 3).toString(),
-                 role: 'assistant',
-                 content: '',
-                 type: 'decision-card',
-                 decisionData: latestData, // Ensure card uses the full data
-                 timestamp: Date.now() + 100
-               },
-               {
-                 id: (Date.now() + 4).toString(),
-                 role: 'assistant',
-                 content: "Если хотите что-то добавить или изменить, просто напишите мне об этом (например, 'добавь плюс...').",
-                 timestamp: Date.now() + 200
-               }
-             ];
-          });
-        }
-      } else {
-        // Normal chat modes
-        const botResponseText = await sendMessageToGemini(messages, userMsg.content, mode as 'EMOTIONS' | 'REFLECTION');
-        const botMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: botResponseText,
-          timestamp: Date.now()
-        };
-        setMessages(prev => [...prev, botMsg]);
-      }
-
-    } catch (e) {
-      console.error(e);
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+      const aiMsg: Message = {
+        id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "Произошла ошибка связи. Пожалуйста, попробуйте еще раз.",
+        content: responseText,
         timestamp: Date.now()
-      }]);
+      };
+
+      setMessages(prev => [...prev, aiMsg]);
+    } catch (error) {
+      console.error('Ошибка отправки:', error);
+      const errorMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Извини, связь с космосом прервалась. Попробуй еще раз.',
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, errorMsg]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSendMessage();
     }
   };
 
+  const handleEndSession = () => {
+    if (onSessionComplete && messages.length > 1) {
+      const duration = Math.round((Date.now() - sessionStartTime) / 1000);
+      onSessionComplete(messages, duration);
+    }
+    onBack();
+  };
+
   return (
-    <div className="flex flex-col h-full bg-white/50 backdrop-blur-sm animate-fade-in relative z-10">
-      {/* Header */}
-      <div className="flex items-center px-6 py-4 bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20 shadow-sm">
-        <button onClick={handleBack} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
-          <ArrowLeft size={20} />
+    <div className="flex flex-col h-full bg-slate-50 relative z-20">
+      {/* Шапка чата */}
+      <div className="flex items-center justify-between p-4 bg-white border-b border-slate-100 shadow-sm z-30">
+        <button onClick={onBack} className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+          <ArrowLeft size={24} />
         </button>
-        <div className="ml-4">
-          <h2 className="text-base font-bold text-slate-800 tracking-tight">
-            {readOnly ? 'Просмотр истории' : (
-              mode === 'DECISION' ? 'Сложное решение' : mode === 'EMOTIONS' ? 'Эмоции' : 'Рефлексия'
-            )}
-          </h2>
-          {!readOnly && (
-            <div className="flex items-center space-x-1.5">
-               <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-               <p className="text-xs text-slate-400 font-medium">Онлайн</p>
-            </div>
-          )}
+        <div className="flex flex-col items-center">
+          <span className="font-bold text-slate-800">
+            {mode === 'DECISION' ? 'Решение' : mode === 'EMOTIONS' ? 'Эмоции' : 'Размышление'}
+          </span>
+          <span className="text-xs text-slate-400">Ментор осознанности</span>
         </div>
+        {!readOnly ? (
+          <button onClick={handleEndSession} className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 px-3 py-1 bg-indigo-50 rounded-lg">
+            Завершить
+          </button>
+        ) : (
+          <div className="w-10" /> 
+        )}
       </div>
 
-      {/* Messages */}
-      <div ref={scrollRef} className={`flex-1 overflow-y-auto p-5 space-y-6 scroll-smooth ${readOnly ? 'pb-10' : 'pb-24'}`}>
+      {/* Список сообщений */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-24 bg-slate-50/50">
         {messages.map((msg) => (
-          <div 
-            key={msg.id} 
+          <div
+            key={msg.id}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
-              {msg.type === 'decision-card' && msg.decisionData ? (
-                <InsightCard data={msg.decisionData} />
-              ) : (
-                <div 
-                  className={`
-                    px-5 py-4 rounded-[20px] text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap
-                    ${msg.role === 'user' 
-                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-sm shadow-indigo-200' 
-                      : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-slate-200'}
-                  `}
-                >
-                  {formatMessage(msg.content)}
-                </div>
-              )}
-              <span className="text-[10px] text-slate-400 mt-1.5 px-2 font-medium">
-                {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </span>
+            <div className={`flex items-end max-w-[85%] gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm ${msg.role === 'user' ? 'bg-indigo-500 text-white' : 'bg-white border border-slate-100 text-indigo-500'}`}>
+                {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+              </div>
+              
+              <div
+                className={`p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${
+                  msg.role === 'user'
+                    ? 'bg-indigo-500 text-white rounded-br-none'
+                    : 'bg-white border border-slate-100 text-slate-700 rounded-bl-none'
+                }`}
+              >
+                {msg.content}
+              </div>
             </div>
           </div>
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white px-5 py-4 rounded-[20px] rounded-bl-sm border border-slate-100 shadow-sm">
-              <div className="flex space-x-1.5">
-                <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            <div className="flex items-end gap-2">
+              <div className="w-8 h-8 rounded-full bg-white border border-slate-100 text-indigo-500 flex items-center justify-center shrink-0">
+                <Loader2 size={16} className="animate-spin" />
+              </div>
+              <div className="bg-white border border-slate-100 p-4 rounded-2xl rounded-bl-none text-slate-500 text-sm italic">
+                Печатает...
               </div>
             </div>
           </div>
         )}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area - Only show if not Read Only */}
+      {/* Поле ввода (скрыто в режиме чтения) */}
       {!readOnly && (
-        <div className="absolute bottom-0 w-full p-4 safe-area-bottom z-20 bg-gradient-to-t from-white via-white/95 to-transparent">
-          <div className="relative flex items-center bg-white rounded-[24px] border border-slate-200 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all focus-within:shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] focus-within:border-indigo-200">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                decisionStep === 1 ? "Добавить плюс..." : 
-                decisionStep === 2 ? "Добавить минус..." : 
-                decisionStep === 4 ? "Добавить плюс/минус или уточнить..." : 
-                "Напишите сообщение..."
-              }
-              className="flex-1 bg-transparent text-slate-800 text-[15px] px-6 py-4 focus:outline-none placeholder:text-slate-400"
-              disabled={isLoading}
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white/90 backdrop-blur-md border-t border-slate-100 z-30">
+          <div className="flex items-center gap-3 bg-slate-50 p-2 pr-2 rounded-[24px] border border-slate-200 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-100 transition-all shadow-sm">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={handleKeyPress}
+              placeholder="Напиши сообщение..."
+              className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[44px] py-2.5 px-3 text-slate-700 placeholder:text-slate-400"
+              rows={1}
             />
-            <button 
-              onClick={handleSend}
-              disabled={!input.trim() || isLoading}
-              className="p-3 mr-2 text-indigo-500 hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded-full hover:bg-indigo-50"
+            <button
+              onClick={handleSendMessage}
+              disabled={!inputText.trim() || isLoading}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
+                !inputText.trim() || isLoading
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-indigo-500 text-white hover:bg-indigo-600 active:scale-95'
+              }`}
             >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+              <Send size={18} className={inputText.trim() && !isLoading ? 'ml-0.5' : ''} />
             </button>
           </div>
         </div>
