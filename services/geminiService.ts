@@ -1,12 +1,10 @@
 // src/services/geminiService.ts
 
-// Получаем ключ (теперь тут лежит ключ от OpenRouter)
+// Получаем ключ
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
-// Здесь указываем модель. 
-// Для OpenRouter модель Google обычно пишется так: "google/gemini-2.0-flash-lite"
-// Если выйдет 2.5, просто поменяй название внутри кавычек.
-const MODEL_ID = "gpt-oss-120b:free"; 
+// Модель для OpenRouter
+const MODEL_ID = "google/gemini-2.0-flash-lite-preview-02-05:free"; 
 
 export const sendMessageToGemini = async (
   message: string,
@@ -18,8 +16,6 @@ export const sendMessageToGemini = async (
       return "Ошибка: Не найден API ключ. Проверьте настройки Vercel.";
     }
 
-    // 1. Формируем историю переписки для OpenRouter (формат OpenAI)
-    // Превращаем твою историю в понятный для OpenRouter формат
     const messages = [
       {
         role: "system",
@@ -29,30 +25,27 @@ export const sendMessageToGemini = async (
       },
       ...history.map(msg => ({
         role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content // В твоем коде это может быть text или content, OpenRouter ждет content
+        content: msg.content
       })),
       { role: "user", content: message }
     ];
 
-    // 2. Делаем запрос на OpenRouter
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${API_KEY}`,
         "Content-Type": "application/json",
-        // Эти заголовки просит OpenRouter для статистики (не обязательно, но полезно)
         "HTTP-Referer": "https://mindful-mirror.app", 
         "X-Title": "Mindful Mirror"
       },
       body: JSON.stringify({
         model: MODEL_ID,
         messages: messages,
-        temperature: 0.7, // Креативность (0.7 - золотая середина)
-        max_tokens: 1000, // Максимальная длина ответа
+        temperature: 0.7, 
+        max_tokens: 1000, 
       })
     });
 
-    // 3. Обрабатываем ответ
     if (!response.ok) {
       const errorData = await response.json();
       console.error("OpenRouter Error:", errorData);
@@ -60,14 +53,12 @@ export const sendMessageToGemini = async (
     }
 
     const data = await response.json();
-    
-    // Достаем текст ответа
     const reply = data.choices[0]?.message?.content || "Извини, я задумался и не смог сформулировать мысль.";
     
     return reply;
 
   } catch (error) {
     console.error("Error sending message:", error);
-    return "Произошла ошибка связи с космосом (OpenRouter). Попробуй позже.";
+    return "Произошла ошибка связи с космосом. Попробуй позже.";
   }
 };
