@@ -26,15 +26,6 @@ const DEFAULT_CONFIG: SiteConfig = {
   adminPasscode: "0000"
 };
 
-// СТАДИИ ДЕРЕВА (БЕЗОПАСНЫЕ ИКОНКИ)
-const TREE_STAGES = [
-  { threshold: 1500, title: "Мудрое Древо", icon: Award, color: "text-emerald-700", desc: "Глубокие корни и мощная крона." },
-  { threshold: 500, title: "Крепкое Древо", icon: Shield, color: "text-emerald-600", desc: "Вы уверенно стоите на ногах." },
-  { threshold: 200, title: "Молодое Дерево", icon: Leaf, color: "text-emerald-500", desc: "Вы быстро растете." },
-  { threshold: 50, title: "Росток", icon: Leaf, color: "text-emerald-400", desc: "Первые всходы ваших усилий." },
-  { threshold: 0, title: "Семя", icon: Sun, color: "text-amber-400", desc: "Потенциал, готовый к пробуждению." },
-];
-
 const STORAGE_KEYS = {
   PROFILE: 'mm_profile',
   HISTORY: 'mm_history',
@@ -53,6 +44,67 @@ const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity 
 const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string, bg?: string }) => (
   <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} />
 );
+
+// --- ДЕРЕВЬЯ (SVG) ---
+const TreeIllustration: React.FC<{ stage: number, className?: string }> = ({ stage, className }) => {
+  if (stage === 0) return ( // Семя
+    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" fill="#FEF3C7" />
+      <path d="M50 70C50 70 30 70 30 70" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M50 70C50 70 70 70 70 70" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="50" cy="65" r="8" fill="#B45309" />
+    </svg>
+  );
+  if (stage === 1) return ( // Росток
+    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" fill="#D1FAE5" />
+      <path d="M50 75V55" stroke="#059669" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M50 55C50 55 35 50 35 35C35 45 50 55 50 55Z" fill="#10B981" />
+      <path d="M50 55C50 55 65 50 65 35C65 45 50 55 50 55Z" fill="#34D399" />
+    </svg>
+  );
+  if (stage === 2) return ( // Молодое
+    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" fill="#A7F3D0" />
+      <path d="M50 80V40" stroke="#92400E" strokeWidth="4" strokeLinecap="round"/>
+      <circle cx="50" cy="35" r="20" fill="#10B981" />
+      <circle cx="35" cy="45" r="12" fill="#34D399" />
+      <circle cx="65" cy="45" r="12" fill="#34D399" />
+    </svg>
+  );
+  if (stage === 3) return ( // Крепкое
+    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" fill="#6EE7B7" />
+      <path d="M50 85L50 40" stroke="#78350F" strokeWidth="6" strokeLinecap="round"/>
+      <path d="M50 60L30 50" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/>
+      <path d="M50 55L70 45" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/>
+      <circle cx="50" cy="35" r="25" fill="#059669" />
+      <circle cx="30" cy="45" r="15" fill="#10B981" />
+      <circle cx="70" cy="45" r="15" fill="#10B981" />
+      <circle cx="50" cy="20" r="12" fill="#34D399" />
+    </svg>
+  );
+  return ( // Мудрое
+    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="50" cy="50" r="45" fill="#34D399" />
+      <path d="M50 90L50 35" stroke="#451A03" strokeWidth="8" strokeLinecap="round"/>
+      <circle cx="50" cy="40" r="35" fill="#065F46" />
+      <circle cx="30" cy="50" r="20" fill="#047857" />
+      <circle cx="70" cy="50" r="20" fill="#047857" />
+      <circle cx="50" cy="25" r="15" fill="#10B981" />
+      <path d="M30 30L32 32M32 30L30 32" stroke="#FCD34D" strokeWidth="2" />
+      <path d="M70 30L72 32M72 30L70 32" stroke="#FCD34D" strokeWidth="2" />
+    </svg>
+  );
+};
+
+const TREE_STAGES = [
+  { threshold: 1500, title: "Мудрое Древо", stageIndex: 4, desc: "Глубокие корни и мощная крона." },
+  { threshold: 500, title: "Крепкое Древо", stageIndex: 3, desc: "Вы уверенно стоите на ногах." },
+  { threshold: 200, title: "Молодое Дерево", stageIndex: 2, desc: "Вы быстро растете." },
+  { threshold: 50, title: "Росток", stageIndex: 1, desc: "Первые всходы ваших усилий." },
+  { threshold: 0, title: "Семя", stageIndex: 0, desc: "Потенциал, готовый к пробуждению." },
+];
 
 // --- КОМПОНЕНТ ОПРОСА ---
 const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
@@ -206,38 +258,20 @@ const App: React.FC = () => {
   });
 
   const longPressTimer = useRef<number | null>(null);
+  const resetClicks = useRef<number>(0);
 
-  // --- TELEGRAM INIT (ВОССТАНОВЛЕНО ПОЛНОСТЬЮ) ---
+  // --- TELEGRAM INIT ---
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
-      tg.ready();
-      tg.expand();
-
-      try {
-        if (tg.setHeaderColor) tg.setHeaderColor('#F8FAFC');
-        if (tg.setBackgroundColor) tg.setBackgroundColor('#F8FAFC');
-      } catch (e) {
-        console.error("Error setting Telegram colors:", e);
-      }
-
+      tg.ready(); tg.expand();
       const user = tg.initDataUnsafe?.user;
       if (user) {
-        const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-        
         setUserProfile(prev => {
-          // Логика: если аватарки нет, или она не загружена вручную (не начинается с data:),
-          // то берем из телеграма.
           const tgPhoto = user.photo_url || null;
           const isManual = prev.avatarUrl?.startsWith('data:');
           const shouldUpdateAvatar = !isManual && prev.avatarUrl !== tgPhoto;
-
-          return { 
-            ...prev, 
-            name: prev.name || fullName, 
-            avatarUrl: shouldUpdateAvatar ? tgPhoto : prev.avatarUrl,
-            isRegistered: true 
-          };
+          return { ...prev, name: prev.name || [user.first_name, user.last_name].join(' '), avatarUrl: shouldUpdateAvatar ? tgPhoto : prev.avatarUrl, isRegistered: true };
         });
       }
     }
@@ -290,12 +324,8 @@ const App: React.FC = () => {
 
         setDailyInsight(newInsight);
         localStorage.setItem(STORAGE_KEYS.DAILY_INSIGHT, JSON.stringify(newInsight));
-
-      } catch (e) { } finally {
-        setIsInsightLoading(false);
-      }
+      } catch (e) { } finally { setIsInsightLoading(false); }
     };
-
     generateDailyAdvice();
   }, [userProfile.name, userProfile.currentMood, journalEntries, userProfile.onboardingCompleted]);
 
@@ -335,8 +365,6 @@ const App: React.FC = () => {
       reader.readAsDataURL(e.target.files[0]);
     }
   };
-  
-  // КНОПКА СБРОСА АВАТАРА (ВОССТАНОВЛЕНА)
   const resetToTelegramAvatar = () => {
     const tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
     if (tgPhoto) setUserProfile(prev => ({ ...prev, avatarUrl: tgPhoto }));
@@ -347,6 +375,18 @@ const App: React.FC = () => {
 
   const handleAdminTriggerStart = () => { longPressTimer.current = window.setTimeout(() => { if (prompt('Admin:') === siteConfig.adminPasscode) setCurrentView('ADMIN'); }, 2000); };
   const handleAdminTriggerEnd = () => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } };
+
+  // --- СЕКРЕТНЫЙ СБРОС: 5 КЛИКОВ ПО ВЕРСИИ ---
+  const handleVersionClick = () => {
+    resetClicks.current += 1;
+    if (resetClicks.current >= 5) {
+      if (window.confirm("ПОЛНЫЙ СБРОС ДАННЫХ ПРИЛОЖЕНИЯ? (Только для тестов)")) {
+        localStorage.clear();
+        window.location.reload();
+      }
+      resetClicks.current = 0;
+    }
+  };
 
   const renderBatteryModal = () => {
     if (!isBatteryModalOpen) return null;
@@ -430,17 +470,24 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО СОЗНАНИЯ */}
+      {/* ДРЕВО СОЗНАНИЯ (С SVG КАРТИНКАМИ) */}
       <div className="px-6 mb-6">
-         <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all">
-            <div className="flex justify-between items-center mb-4">
+         <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all relative overflow-hidden">
+            {/* SVG Background */}
+            <div className="absolute top-0 right-0 w-32 h-32 opacity-10 pointer-events-none translate-x-4 -translate-y-4">
+               <TreeIllustration stage={currentTree.stageIndex} className="w-full h-full" />
+            </div>
+
+            <div className="flex justify-between items-center mb-4 relative z-10">
                 <div className="flex items-center space-x-4">
-                   <div className="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-2xl flex items-center justify-center"><currentTree.icon size={24} /></div>
+                   <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center overflow-hidden">
+                      <TreeIllustration stage={currentTree.stageIndex} className="w-10 h-10" />
+                   </div>
                    <div className="text-left"><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Древо сознания</p><h4 className="text-base font-bold text-slate-800">{currentTree.title}</h4></div>
                 </div>
                 <ChevronRight size={20} className="text-slate-300" />
             </div>
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50 relative z-10">
                <div className="text-center border-r border-slate-50"><p className="text-lg font-bold text-slate-800">{totalSessions}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Сессий</p></div>
                <div className="text-center"><p className="text-lg font-bold text-slate-800">{totalMinutes}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Минут</p></div>
             </div>
@@ -454,13 +501,13 @@ const App: React.FC = () => {
       <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Древо сознания</h1></header>
       <div className="space-y-4">
         {[...TREE_STAGES].reverse().map((stage) => (
-          <div key={stage.title} className={`p-5 rounded-[24px] border transition-all ${totalSteps >= stage.threshold ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-slate-50/50 border-slate-100 opacity-50'}`}>
-            <div className="flex justify-between items-start mb-2">
-               <div className="flex items-center space-x-3"><stage.icon size={24} className={totalSteps >= stage.threshold ? stage.color : "text-slate-400"} /><h4 className={`font-bold ${totalSteps >= stage.threshold ? 'text-emerald-800' : 'text-slate-400'}`}>{stage.title}</h4></div>
-               {totalSteps >= stage.threshold && (<Award size={18} className="text-emerald-500" />)}
+          <div key={stage.title} className={`p-5 rounded-[24px] border transition-all flex items-center space-x-4 ${totalSteps >= stage.threshold ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-slate-50/50 border-slate-100 opacity-50'}`}>
+            <div className="w-12 h-12 shrink-0"><TreeIllustration stage={stage.stageIndex} className="w-full h-full" /></div>
+            <div>
+               <h4 className={`font-bold ${totalSteps >= stage.threshold ? 'text-emerald-800' : 'text-slate-400'}`}>{stage.title}</h4>
+               <p className="text-xs leading-relaxed text-slate-500 mt-1">{stage.desc}</p>
+               <div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-60">Требуется: {stage.threshold} очков</div>
             </div>
-            <p className="text-xs leading-relaxed text-slate-500 mt-2">{stage.desc}</p>
-            <div className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-60">Требуется: {stage.threshold} очков</div>
           </div>
         ))}
       </div>
@@ -528,7 +575,13 @@ const App: React.FC = () => {
           <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
           <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">1.9.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
+          {/* СЕКРЕТНЫЙ СБРОС: 5 КЛИКОВ ПО ВЕРСИИ */}
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
+             <div className="text-center cursor-pointer active:scale-95 transition-transform" onClick={() => {
+                if (window.confirm("СБРОСИТЬ ВСЕ ДАННЫЕ?")) { localStorage.clear(); window.location.reload(); }
+             }}><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">2.0.0</p></div>
+             <div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div>
+          </div>
           <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
         </div>
       </div>
