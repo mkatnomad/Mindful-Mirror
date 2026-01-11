@@ -42,7 +42,7 @@ const STORAGE_KEYS = {
   ACTIVITY: 'mm_weekly_activity',
   JOURNAL: 'mm_journal_entries',
   CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v10'
+  DAILY_INSIGHT: 'mm_daily_insight_v11'
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
@@ -323,7 +323,7 @@ const App: React.FC = () => {
   const handleAdminTriggerStart = () => { longPressTimer.current = window.setTimeout(() => { if (prompt('Admin:') === siteConfig.adminPasscode) setCurrentView('ADMIN'); }, 2000); };
   const handleAdminTriggerEnd = () => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } };
 
-  // --- MODALS & SCREENS ---
+  // --- COMPONENT: BATTERY MODAL ---
   const renderBatteryModal = () => {
     if (!isBatteryModalOpen) return null;
     return (
@@ -366,7 +366,7 @@ const App: React.FC = () => {
          <div className="w-10 h-10 flex items-center justify-center" onPointerDown={handleAdminTriggerStart} onPointerUp={handleAdminTriggerEnd} onPointerLeave={handleAdminTriggerEnd}><Logo className="w-8 h-8 opacity-20" /></div>
       </header>
 
-      {/* КАРТА ДНЯ (ГЛАВНАЯ) */}
+      {/* КАРТА ДНЯ */}
       <div className="px-6 mb-8">
         {!userProfile.onboardingCompleted ? (
           <button onClick={() => setCurrentView('ONBOARDING')} className="w-full relative overflow-hidden rounded-[32px] bg-slate-900 p-8 text-left shadow-xl shadow-slate-200 group active:scale-95 transition-all">
@@ -395,14 +395,10 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* КНОПКИ ЧАТОВ (ВЕРНУЛ ЦВЕТНЫЕ) */}
+      {/* КНОПКИ ЧАТОВ (ЦВЕТНЫЕ) */}
       <div className="px-6 mb-8">
         <div className="grid grid-cols-3 gap-4">
-          {[ 
-            { id: 'DECISION', label: 'Решение', icon: Zap, color: 'text-indigo-500', bg: 'bg-indigo-50' }, 
-            { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' }, 
-            { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50' } 
-          ].map((m) => (
+          {[ { id: 'DECISION', label: 'Решение', icon: Zap, color: 'text-indigo-500', bg: 'bg-indigo-50' }, { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' }, { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50' } ].map((m) => (
             <button key={m.id} onClick={() => startMode(m.id as JournalMode)} className="flex flex-col items-center p-4 rounded-[24px] bg-white border border-slate-50 shadow-sm active:scale-95 transition-all group">
               <div className={`w-12 h-12 rounded-2xl ${m.bg} flex items-center justify-center ${m.color} mb-3 group-hover:scale-110 transition-transform`}><m.icon size={24} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} /></div><span className="text-[11px] font-bold text-slate-500">{m.label}</span>
             </button>
@@ -410,7 +406,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО СОЗНАНИЯ (ВЕРНУЛ СТАТИСТИКУ) */}
+      {/* ДРЕВО СОЗНАНИЯ (ВМЕСТО РАНГОВ) */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all">
             <div className="flex justify-between items-center mb-4">
@@ -420,17 +416,10 @@ const App: React.FC = () => {
                 </div>
                 <ChevronRight size={20} className="text-slate-300" />
             </div>
-            
             {/* Статистика внутри карточки */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
-               <div className="text-center border-r border-slate-50">
-                  <p className="text-lg font-bold text-slate-800">{totalSessions}</p>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Сессий</p>
-               </div>
-               <div className="text-center">
-                  <p className="text-lg font-bold text-slate-800">{totalMinutes}</p>
-                  <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Минут</p>
-               </div>
+               <div className="text-center border-r border-slate-50"><p className="text-lg font-bold text-slate-800">{totalSessions}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Сессий</p></div>
+               <div className="text-center"><p className="text-lg font-bold text-slate-800">{totalMinutes}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Минут</p></div>
             </div>
          </button>
       </div>
@@ -439,15 +428,12 @@ const App: React.FC = () => {
 
   const renderRanksInfo = () => (
     <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Древо сознания</h1></header>
+      <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Стадии роста</h1></header>
       <div className="space-y-4">
         {[...TREE_STAGES].reverse().map((stage) => (
           <div key={stage.title} className={`p-5 rounded-[24px] border transition-all ${totalSteps >= stage.threshold ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-slate-50/50 border-slate-100 opacity-50'}`}>
             <div className="flex justify-between items-start mb-2">
-               <div className="flex items-center space-x-3">
-                 <stage.icon size={24} className={totalSteps >= stage.threshold ? stage.color : "text-slate-400"} />
-                 <h4 className={`font-bold ${totalSteps >= stage.threshold ? 'text-emerald-800' : 'text-slate-400'}`}>{stage.title}</h4>
-               </div>
+               <div className="flex items-center space-x-3"><stage.icon size={24} className={totalSteps >= stage.threshold ? stage.color : "text-slate-400"} /><h4 className={`font-bold ${totalSteps >= stage.threshold ? 'text-emerald-800' : 'text-slate-400'}`}>{stage.title}</h4></div>
                {totalSteps >= stage.threshold && (<Award size={18} className="text-emerald-500" />)}
             </div>
             <p className="text-xs leading-relaxed text-slate-500 mt-2">{stage.desc}</p>
