@@ -1,4 +1,3 @@
-
 export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN';
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
@@ -33,6 +32,12 @@ export interface UserProfile {
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
+  // 👇 НОВЫЕ ПОЛЯ (Добавлены для опроса и темы)
+  theme?: 'LIGHT' | 'SPACE';
+  onboardingCompleted?: boolean;
+  focus?: string;    // На чем фокус (Спокойствие, Карьера...)
+  struggle?: string; // Что мешает (Стресс, Лень...)
+  aiTone?: string;   // Какой стиль общения
 }
 
 export interface SiteConfig {
