@@ -5,7 +5,6 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-// Используем только самые стандартные иконки, чтобы избежать ошибок импорта
 import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, Leaf } from 'lucide-react';
 
 declare global {
@@ -27,7 +26,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   adminPasscode: "0000"
 };
 
-// Стадии дерева с БЕЗОПАСНЫМИ иконками
+// СТАДИИ ДЕРЕВА (БЕЗОПАСНЫЕ ИКОНКИ)
 const TREE_STAGES = [
   { threshold: 1500, title: "Мудрое Древо", icon: Award, color: "text-emerald-700", desc: "Глубокие корни и мощная крона." },
   { threshold: 500, title: "Крепкое Древо", icon: Shield, color: "text-emerald-600", desc: "Вы уверенно стоите на ногах." },
@@ -192,7 +191,6 @@ const App: React.FC = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }
   });
    
-  // ЗАЩИТА ОТ БИТЫХ ДАННЫХ
   const [totalSessions, setTotalSessions] = useState<number>(() => {
     const val = parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10);
     return isNaN(val) ? 0 : val;
@@ -209,6 +207,43 @@ const App: React.FC = () => {
 
   const longPressTimer = useRef<number | null>(null);
 
+  // --- TELEGRAM INIT (ВОССТАНОВЛЕНО ПОЛНОСТЬЮ) ---
+  useEffect(() => {
+    if (window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+
+      try {
+        if (tg.setHeaderColor) tg.setHeaderColor('#F8FAFC');
+        if (tg.setBackgroundColor) tg.setBackgroundColor('#F8FAFC');
+      } catch (e) {
+        console.error("Error setting Telegram colors:", e);
+      }
+
+      const user = tg.initDataUnsafe?.user;
+      if (user) {
+        const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
+        
+        setUserProfile(prev => {
+          // Логика: если аватарки нет, или она не загружена вручную (не начинается с data:),
+          // то берем из телеграма.
+          const tgPhoto = user.photo_url || null;
+          const isManual = prev.avatarUrl?.startsWith('data:');
+          const shouldUpdateAvatar = !isManual && prev.avatarUrl !== tgPhoto;
+
+          return { 
+            ...prev, 
+            name: prev.name || fullName, 
+            avatarUrl: shouldUpdateAvatar ? tgPhoto : prev.avatarUrl,
+            isRegistered: true 
+          };
+        });
+      }
+    }
+  }, []);
+
+  // --- ГЕНЕРАЦИЯ ---
   useEffect(() => {
     const generateDailyAdvice = async () => {
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
@@ -241,7 +276,7 @@ const App: React.FC = () => {
         `;
 
         const responseText = await sendMessageToGemini(prompt);
-        const cleanText = responseText.replace(/^(Мышление|Действие|Тело|Инсайт)[:\.]\s*/gim, "").trim();
+        const cleanText = responseText.replace(/^(Мышление|Действие|Тело|Инсайт|Mindset|Action|Body|Insight)[:\.]\s*/gim, "").trim();
         const parts = cleanText.split('|||');
         
         const newInsight: DailyInsightData = {
@@ -270,17 +305,6 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.TIME, totalTimeSeconds.toString()); }, [totalTimeSeconds]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.JOURNAL, JSON.stringify(journalEntries)); }, [journalEntries]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(siteConfig)); }, [siteConfig]);
-
-  useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready(); tg.expand();
-      const user = tg.initDataUnsafe?.user;
-      if (user) {
-        setUserProfile(prev => ({ ...prev, name: prev.name || [user.first_name, user.last_name].join(' '), avatarUrl: (!prev.avatarUrl?.startsWith('data:') && prev.avatarUrl !== user.photo_url) ? user.photo_url : prev.avatarUrl, isRegistered: true }));
-      }
-    }
-  }, []);
 
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
@@ -311,6 +335,8 @@ const App: React.FC = () => {
       reader.readAsDataURL(e.target.files[0]);
     }
   };
+  
+  // КНОПКА СБРОСА АВАТАРА (ВОССТАНОВЛЕНА)
   const resetToTelegramAvatar = () => {
     const tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
     if (tgPhoto) setUserProfile(prev => ({ ...prev, avatarUrl: tgPhoto }));
@@ -404,7 +430,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО СОЗНАНИЯ (ВЕРНУЛ) */}
+      {/* ДРЕВО СОЗНАНИЯ */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all">
             <div className="flex justify-between items-center mb-4">
@@ -484,6 +510,7 @@ const App: React.FC = () => {
         <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border border-slate-50 space-y-8">
           <div className="flex flex-col items-center">
             <div className="relative"><div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md active:scale-95">{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50"><UserIcon size={40} /></div>}</div><label className="absolute bottom-0 right-0 p-2 bg-indigo-500 rounded-full text-white cursor-pointer shadow-md"><Camera size={16} /><input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} /></label></div>
+            {window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url && (<button onClick={resetToTelegramAvatar} className="mt-4 flex items-center space-x-2 text-xs font-bold text-indigo-500 bg-indigo-50 px-4 py-2 rounded-full active:scale-95 transition-all"><RefreshCw size={12} /><span>Фото из Telegram</span></button>)}
           </div>
           <div className="space-y-2"><label className="text-sm font-bold text-slate-700">Имя</label><input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-100 border focus:outline-none focus:border-indigo-500 font-semibold" /></div>
           <div className="pt-4 border-t border-slate-100"><label className="text-sm font-bold text-slate-700 mb-2 block">Тест личности</label><button onClick={() => setCurrentView('ONBOARDING')} className="w-full py-4 rounded-2xl bg-slate-50 text-slate-600 font-bold border border-slate-100 active:scale-95 transition-all flex items-center justify-center space-x-2 hover:bg-slate-100"><Compass size={18} /><span>Пройти тест заново</span></button></div>
@@ -501,7 +528,7 @@ const App: React.FC = () => {
           <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
           <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">1.8.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">1.9.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
           <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
         </div>
       </div>
