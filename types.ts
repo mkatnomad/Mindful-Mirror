@@ -1,6 +1,4 @@
-// src/types.ts
-
-export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'DAILY_GUIDE'; // Добавили DAILY_GUIDE
+export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'DAILY_GUIDE';
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
 
@@ -35,10 +33,14 @@ export interface UserProfile {
   isSetup: boolean;
   isRegistered: boolean;
   theme?: 'LIGHT' | 'SPACE';
+  
+  // 👇 НОВЫЕ ПОЛЯ ДЛЯ ГЛУБОКОГО ПРОФИЛЯ
   onboardingCompleted?: boolean;
-  focus?: string;
-  struggle?: string;
-  aiTone?: string;
+  identity?: string;   // Кто я? (Творец, Предприниматель, Искатель...)
+  struggle?: string;   // Главная проблема
+  chronotype?: string; // Биоритмы (Утро/Вечер)
+  focus?: string;      // Главная цель
+  aiTone?: string;     // Тон общения
 }
 
 export interface SiteConfig {
@@ -60,11 +62,11 @@ export interface JournalEntry {
   content: string;
 }
 
-// Новая структура для Совета Дня
+// Новая структура "Протокола дня"
 export interface DailyInsightData {
   date: string;
-  focus: string;
-  action: string;
-  thought: string;
-  isLoading?: boolean;
+  morning: string;   // Ритуал утра
+  focus: string;     // Главная задача
+  energy: string;    // Управление энергией
+  evening: string;   // Вечерняя рефлексия
 }
