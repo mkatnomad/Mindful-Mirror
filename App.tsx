@@ -5,7 +5,7 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Map } from 'lucide-react';
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -45,7 +45,7 @@ const STORAGE_KEYS = {
   ACTIVITY: 'mm_weekly_activity',
   JOURNAL: 'mm_journal_entries',
   CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v6'
+  DAILY_INSIGHT: 'mm_daily_insight_v7' // v7 для сброса старых "скудных" советов
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
@@ -56,7 +56,7 @@ const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string,
   <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} />
 );
 
-// --- ГЛУБОКИЙ ОПРОС ---
+// --- КОМПОНЕНТ ОПРОСА ---
 const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState({ identity: '', focus: '', struggle: '', chronotype: '', aiTone: '' });
@@ -192,8 +192,17 @@ const App: React.FC = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }
   });
    
-  const [totalSessions, setTotalSessions] = useState<number>(() => parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10) || 0);
-  const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => parseInt(localStorage.getItem(STORAGE_KEYS.TIME) || '0', 10) || 0);
+  // ЗАЩИТА: Если totalSessions = NaN, ставим 0
+  const [totalSessions, setTotalSessions] = useState<number>(() => {
+    const val = parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10);
+    return isNaN(val) ? 0 : val;
+  });
+   
+  const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => {
+    const val = parseInt(localStorage.getItem(STORAGE_KEYS.TIME) || '0', 10);
+    return isNaN(val) ? 0 : val;
+  });
+
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.JOURNAL) || '[]'); } catch { return []; }
   });
@@ -216,25 +225,31 @@ const App: React.FC = () => {
         const recentEntries = journalEntries.slice(0, 3).map(e => e.content).join(". ");
         const userName = userProfile.name || "Друг";
         
+        // --- ПРОДВИНУТЫЙ ПРОМПТ (RICH CONTENT) ---
         const prompt = `
-          Ты — персональный наставник. Клиент: ${userName}.
-          Профиль:
-          - Роль: ${userProfile.identity || 'Человек'}
+          Ты — элитный ментор по осознанности. Клиент: ${userName}.
+          
+          ЕГО ПРОФИЛЬ:
+          - Роль: ${userProfile.identity || 'Искатель'}
           - Биоритм: ${userProfile.chronotype || 'Обычный'}
           - Цель: ${userProfile.focus || 'Рост'}
           - Проблема: ${userProfile.struggle || 'Нет'}
           - Тон: ${userProfile.aiTone || 'Мудрый'}
           
-          Контекст дневника: "${recentEntries}".
+          Контекст из дневника: "${recentEntries}".
           
-          Составь "Карту дня". Кратко и конкретно.
-          Раздели ответ строго символами "|||".
-          1. Утро (Ритуал).
-          2. Главный Фокус (Задача).
-          3. Энергия (Совет).
-          4. Вечер (Вопрос).
+          ЗАДАЧА:
+          Составь подробный "Протокол дня". Не пиши общих фраз. Давай конкретику.
+          Раздели секции строго символами "|||".
+          НЕ пиши заголовки типа "Утро:", пиши сразу текст совета.
           
-          Ответ только текст: УТРО|||ФОКУС|||ЭНЕРГИЯ|||ВЕЧЕР
+          1. Утро: Конкретная практика настройки на день (учитывая биоритм). 2-3 предложения.
+          2. Главный Фокус: Как именно достичь цели сегодня? Стратегия. 2-3 предложения.
+          3. Энергия: Как избежать главной проблемы (выгорания/лени)? Лайфхак. 2-3 предложения.
+          4. Вечер: Глубокий вопрос для рефлексии перед сном.
+          
+          Формат ответа (только текст):
+          ТЕКСТ_УТРА|||ТЕКСТ_ФОКУСА|||ТЕКСТ_ЭНЕРГИИ|||ТЕКСТ_ВЕЧЕРА
         `;
 
         const responseText = await sendMessageToGemini(prompt);
@@ -254,10 +269,10 @@ const App: React.FC = () => {
       } catch (e) {
         setDailyInsight({
           date: todayStr,
-          morning: "Улыбнись новому дню.",
-          focus: "Слушай себя.",
-          energy: "Делай паузы.",
-          evening: "День прошел не зря."
+          morning: "Попробуй начать день с улыбки и стакана воды.",
+          focus: "Слушай себя. Ты знаешь, что делать.",
+          energy: "Делай паузы, когда чувствуешь усталость.",
+          evening: "За что я могу поблагодарить этот день?"
         });
       } finally {
         setIsInsightLoading(false);
@@ -294,9 +309,8 @@ const App: React.FC = () => {
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
   
-  // --- ЗАЩИЩЕННЫЙ РАСЧЕТ РАНГА ---
+  // --- ЗАЩИТА ОТ КРАША В РАНГАХ ---
   const getCurrentRank = (steps: number) => {
-    // Если steps - это NaN или undefined, ставим 0
     const safeSteps = (typeof steps === 'number' && !isNaN(steps)) ? steps : 0;
     return RANKS.find(r => safeSteps >= r.threshold) || RANKS[RANKS.length - 1];
   };
@@ -327,6 +341,7 @@ const App: React.FC = () => {
     if (tgPhoto) setUserProfile(prev => ({ ...prev, avatarUrl: tgPhoto }));
   };
 
+  // Safe Calculation for Rank
   const currentRank = getCurrentRank(totalSteps);
   const ascendingRanks = [...RANKS].reverse();
   const nextRank = ascendingRanks.find(r => r.threshold > totalSteps);
@@ -358,7 +373,7 @@ const App: React.FC = () => {
       </header>
 
       {dailyInsight ? (
-        <div className="space-y-5">
+        <div className="space-y-6">
           <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm relative overflow-hidden">
              <div className="flex items-center space-x-3 mb-3 text-amber-500">
                <Sun size={20} />
@@ -372,7 +387,7 @@ const App: React.FC = () => {
               <Target size={20} />
               <span className="text-[10px] font-bold uppercase tracking-widest">Главный фокус</span>
             </div>
-            <h2 className="text-xl font-bold leading-snug">{dailyInsight.focus}</h2>
+            <h2 className="text-lg font-bold leading-relaxed">{dailyInsight.focus}</h2>
           </div>
 
           <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
@@ -394,7 +409,7 @@ const App: React.FC = () => {
       ) : (
         <div className="flex flex-col items-center justify-center h-full">
           <Loader2 className="animate-spin text-indigo-500 mb-4" size={32} />
-          <p className="text-slate-400">Собираю карту...</p>
+          <p className="text-slate-400">Составляю план...</p>
         </div>
       )}
     </div>
@@ -462,7 +477,7 @@ const App: React.FC = () => {
 
       <div className="px-6 space-y-3.5 mb-7">
         <h3 className="text-[10px] font-bold ml-2 text-slate-400 uppercase tracking-widest">
-          {userProfile.onboardingCompleted ? "Ваш план на день" : "Знакомство"}
+          {userProfile.onboardingCompleted ? "Ваш план на день" : "Начало пути"}
         </h3>
         
         {!userProfile.onboardingCompleted ? (
@@ -477,9 +492,9 @@ const App: React.FC = () => {
              
              <div className="relative z-10 flex items-center justify-between">
                 <div className="text-left">
-                  <h4 className="font-bold text-lg mb-1">Начать путь</h4>
+                  <h4 className="font-bold text-lg mb-1">Создать профиль</h4>
                   <p className="text-indigo-100 text-xs leading-relaxed max-w-[200px]">
-                    Расскажите о себе, чтобы советы попадали точно в цель.
+                    Персонализируйте приложение под свои цели.
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
@@ -497,20 +512,20 @@ const App: React.FC = () => {
              {isInsightLoading ? (
                <div className="flex flex-col items-center justify-center w-full space-y-3">
                  <Loader2 className="animate-spin text-indigo-500" size={20} />
-                 <p className="text-[10px] text-slate-400 animate-pulse font-medium">Собираю карту...</p>
+                 <p className="text-[10px] text-slate-400 animate-pulse font-medium">Анализирую состояние...</p>
                </div>
              ) : (
                <>
                  <div className="relative z-10 mb-3">
                    <span className="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">
-                     Фокус дня
+                     Сегодня
                    </span>
                  </div>
-                 <p className="text-slate-800 font-bold text-lg leading-tight mb-2 relative z-10">
+                 <p className="text-slate-800 font-bold text-lg leading-tight mb-2 relative z-10 line-clamp-2">
                    {dailyInsight?.focus || "Загрузка..."}
                  </p>
                  <div className="flex items-center text-indigo-500 text-xs font-bold mt-2 group-hover:translate-x-1 transition-transform">
-                   <span>Смотреть карту</span>
+                   <span>Открыть протокол</span>
                    <ChevronRight size={14} className="ml-1" />
                  </div>
                </>
@@ -560,7 +575,6 @@ const App: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {history.map((session) => {
-            // --- ЗАЩИТА ОТ БИТОЙ ДАТЫ ---
             let dateStr = "Дата неизвестна";
             try {
               if (session.date) dateStr = new Date(session.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
