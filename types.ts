@@ -28,17 +28,17 @@ export interface ChatSession {
 
 export interface UserProfile {
   name: string;
+  email?: string;
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
   theme?: 'LIGHT' | 'SPACE';
   
-  // 👇 ГЛУБИННЫЙ ПРОФИЛЬ (АРХЕТИП)
+  // Поля профиля
   onboardingCompleted?: boolean;
-  archetype?: string;    // Например: "Творец"
-  shadow?: string;       // Главный страх (Тень)
-  superpower?: string;   // Источник силы
-  aiTone?: string;       // Тон общения
+  archetype?: string;  // Результат теста (Творец, Мудрец...)
+  focus?: string;      // Цель
+  struggle?: string;   // Проблема
 }
 
 export interface SiteConfig {
@@ -60,11 +60,11 @@ export interface JournalEntry {
   content: string;
 }
 
-// 👇 НОВАЯ СТРУКТУРА "АЛХИМИЧЕСКОЙ КАРТЫ"
+// Новая структура "Карты Дня" по сферам
 export interface DailyInsightData {
   date: string;
-  archetype: string; // Роль дня (метафора)
-  trap: string;      // Ловушка/Щит
-  lens: string;      // Оптика/Призма
-  key: string;       // Артефакт/Практика
+  mindset: string; // Сфера Мышления
+  action: string;  // Сфера Действий
+  health: string;  // Сфера Тела/Энергии
+  insight: string; // Сфера Смыслов
 }
