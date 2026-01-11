@@ -5,7 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
-import { Heart, BookOpen, ChevronRight, Settings, Info, Bell, User as UserIcon, Activity, Calendar, Quote, Clock, Zap, Camera, Star, ArrowLeft, Footprints, MessageSquare, ArrowRight, Cloud, Lock, CheckCircle, Edit2, Mail, LogOut, LogIn, PenTool, Moon, Sun, Sparkles, ChevronUp, ChevronDown, Award, Medal } from 'lucide-react';
+import { Heart, BookOpen, ChevronRight, Settings, Info, Bell, User as UserIcon, Activity, Calendar, Quote, Clock, Zap, Camera, Star, ArrowLeft, Footprints, MessageSquare, ArrowRight, Cloud, Lock, CheckCircle, Edit2, Mail, LogOut, LogIn, PenTool, Moon, Sun, Sparkles, ChevronUp, ChevronDown, Award, Medal, RefreshCw } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -134,13 +134,20 @@ const App: React.FC = () => {
       if (user) {
         const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
         
-        // Automatically sync name and avatar from Telegram if they aren't already set
-        setUserProfile(prev => ({ 
-          ...prev, 
-          name: prev.name || fullName, 
-          avatarUrl: prev.avatarUrl || user.photo_url || null,
-          isRegistered: true 
-        }));
+        setUserProfile(prev => {
+          const tgPhoto = user.photo_url || null;
+          // Only auto-update if current avatar is null OR it's a direct URL (not a manually uploaded base64 data URI)
+          // AND it's different from the new Telegram photo URL.
+          const isManual = prev.avatarUrl?.startsWith('data:');
+          const shouldUpdateAvatar = !isManual && prev.avatarUrl !== tgPhoto;
+
+          return { 
+            ...prev, 
+            name: prev.name || fullName, 
+            avatarUrl: shouldUpdateAvatar ? tgPhoto : prev.avatarUrl,
+            isRegistered: true 
+          };
+        });
       }
     }
   }, []);
@@ -241,6 +248,13 @@ const App: React.FC = () => {
       const reader = new FileReader();
       reader.onloadend = () => setUserProfile(prev => ({ ...prev, avatarUrl: reader.result as string }));
       reader.readAsDataURL(e.target.files[0]);
+    }
+  };
+
+  const resetToTelegramAvatar = () => {
+    const tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
+    if (tgPhoto) {
+      setUserProfile(prev => ({ ...prev, avatarUrl: tgPhoto }));
     }
   };
 
@@ -372,7 +386,7 @@ const App: React.FC = () => {
         <div className="relative flex flex-row items-center pt-4 pb-4 px-8 min-h-[90px]">
           {/* Large Area-Filling Avatar Watermark - Brighter and Larger */}
           <div 
-            className="absolute right-[-12%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
+            className="absolute right-[-10%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
             onPointerDown={handleAdminTriggerStart}
             onPointerUp={handleAdminTriggerEnd}
             onPointerLeave={handleAdminTriggerEnd}
@@ -590,40 +604,56 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderSettings = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
-      <header className="mb-8 flex items-center space-x-4">
-         <button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
-           <ArrowLeft size={24} />
-         </button>
-         <h1 className="text-3xl font-bold text-slate-800">Настройки</h1>
-      </header>
+  const renderSettings = () => {
+    const tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
+    const isManualAvatar = userProfile.avatarUrl?.startsWith('data:');
 
-      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border border-slate-50 space-y-8">
-        <div className="flex flex-col items-center">
-          <div className="relative">
-             <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md transition-transform active:scale-95">
-                {userProfile.avatarUrl ? (
-                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
-                    <UserIcon size={40} />
-                  </div>
-                )}
-             </div>
-             <label className="absolute bottom-0 right-0 p-2 bg-indigo-500 rounded-full text-white cursor-pointer shadow-md"><Camera size={16} /><input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} /></label>
+    return (
+      <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+        <header className="mb-8 flex items-center space-x-4">
+           <button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+             <ArrowLeft size={24} />
+           </button>
+           <h1 className="text-3xl font-bold text-slate-800">Настройки</h1>
+        </header>
+
+        <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border border-slate-50 space-y-8">
+          <div className="flex flex-col items-center">
+            <div className="relative">
+               <div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md transition-transform active:scale-95">
+                  {userProfile.avatarUrl ? (
+                    <img src={userProfile.avatarUrl} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50">
+                      <UserIcon size={40} />
+                    </div>
+                  )}
+               </div>
+               <label className="absolute bottom-0 right-0 p-2 bg-indigo-500 rounded-full text-white cursor-pointer shadow-md"><Camera size={16} /><input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} /></label>
+            </div>
+            
+            {/* Show sync/reset button only if there's a custom avatar or we want to force refresh */}
+            {tgPhoto && (
+               <button 
+                 onClick={resetToTelegramAvatar}
+                 className="mt-4 flex items-center space-x-2 text-xs font-bold text-indigo-500 bg-indigo-50 px-4 py-2 rounded-full active:scale-95 transition-all"
+               >
+                 <RefreshCw size={12} />
+                 <span>Использовать фото из Telegram</span>
+               </button>
+            )}
           </div>
-        </div>
 
-        <div className="space-y-2">
-           <label className="text-sm font-bold text-slate-700">Имя</label>
-           <input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-100 border focus:outline-none focus:border-indigo-500 focus:bg-white transition-all font-semibold" />
-        </div>
+          <div className="space-y-2">
+             <label className="text-sm font-bold text-slate-700">Имя</label>
+             <input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-100 border focus:outline-none focus:border-indigo-500 focus:bg-white transition-all font-semibold" />
+          </div>
 
-        <button onClick={() => setCurrentView('PROFILE')} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold shadow-lg mt-4 active:scale-98 transition-transform">Сохранить</button>
+          <button onClick={() => setCurrentView('PROFILE')} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold shadow-lg mt-4 active:scale-98 transition-transform">Сохранить</button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="h-screen w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
