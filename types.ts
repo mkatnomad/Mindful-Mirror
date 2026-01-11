@@ -1,3 +1,6 @@
+// src/types.ts
+
+// Добавил 'ONBOARDING' в список экранов
 export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN';
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
@@ -20,24 +23,24 @@ export interface DecisionData {
 export interface ChatSession {
   id: string;
   mode: JournalMode;
-  date: number; // timestamp
-  duration: number; // seconds
-  preview: string; // short text preview
+  date: number;
+  duration: number;
+  preview: string;
   messages: Message[];
 }
 
+// Добавил новые поля (focus, struggle, aiTone, theme, onboardingCompleted)
 export interface UserProfile {
   name: string;
   email?: string;
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
-  // 👇 НОВЫЕ ПОЛЯ (Добавлены для опроса и темы)
   theme?: 'LIGHT' | 'SPACE';
   onboardingCompleted?: boolean;
-  focus?: string;    // На чем фокус (Спокойствие, Карьера...)
-  struggle?: string; // Что мешает (Стресс, Лень...)
-  aiTone?: string;   // Какой стиль общения
+  focus?: string;
+  struggle?: string;
+  aiTone?: string;
 }
 
 export interface SiteConfig {
