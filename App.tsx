@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { sendMessageToGemini } from './services/geminiService';
-// ИСПОЛЬЗУЕМ ТОЛЬКО ТЕ ИКОНКИ, КОТОРЫЕ БЫЛИ В РАБОЧЕЙ ВЕРСИИ
+// ТОЛЬКО БАЗОВЫЕ ИКОНКИ ДЛЯ ИНТЕРФЕЙСА (Меню, Чат)
 import { 
-  Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, Lightbulb, CheckCircle, Leaf, Sprout, TreeDeciduous 
+  Heart, BookOpen, ChevronRight, User as UserIcon, Zap, Star, 
+  ArrowLeft, Loader2, Cloud, Moon, Sun, Briefcase, Feather, 
+  Compass, Anchor, Target, Battery, Shield, Map, Smile, 
+  Lightbulb, CheckCircle, Send, Camera, Settings, Info
 } from 'lucide-react';
 
 // --- ТИПЫ ---
@@ -14,16 +17,16 @@ interface ChatSession { id: string; mode: JournalMode; date: number; duration: n
 interface UserProfile { name: string; avatarUrl: string | null; onboardingCompleted?: boolean; archetype?: string; focus?: string; struggle?: string; chronotype?: string; currentMood?: 'high' | 'flow' | 'ok' | 'low'; }
 interface DailyInsightData { date: string; generatedForMood?: string; mindset: string; action: string; health: string; insight: string; }
 
-// --- КЛЮЧИ (СБРОС НЕ НУЖЕН, НО МЫ ОБНОВИМ ТЕКСТЫ) ---
+// --- КЛЮЧИ (Обновляем для чистого старта без иконок) ---
 const STORAGE_KEYS = {
-  PROFILE: 'mm_profile_stable_content_v1', 
-  HISTORY: 'mm_history_stable_content_v1',
-  SESSIONS: 'mm_sessions_stable_content_v1',
-  TIME: 'mm_time_stable_content_v1',
-  ACTIVITY: 'mm_activity_stable_content_v1',
-  JOURNAL: 'mm_journal_stable_content_v1',
-  CONFIG: 'mm_config_stable_content_v1',
-  DAILY_INSIGHT: 'mm_insight_stable_content_v1'
+  PROFILE: 'mm_profile_noicons_v1', 
+  HISTORY: 'mm_history_noicons_v1',
+  SESSIONS: 'mm_sessions_noicons_v1',
+  TIME: 'mm_time_noicons_v1',
+  ACTIVITY: 'mm_activity_noicons_v1',
+  JOURNAL: 'mm_journal_noicons_v1',
+  CONFIG: 'mm_config_noicons_v1',
+  DAILY_INSIGHT: 'mm_insight_noicons_v1'
 };
 
 const Logo = ({ className = "w-20 h-20" }: { className?: string }) => (
@@ -32,17 +35,20 @@ const Logo = ({ className = "w-20 h-20" }: { className?: string }) => (
 
 // --- ВЕКТОРНЫЕ ДЕРЕВЬЯ (SVG) ---
 const TreeIllustration: React.FC<{ stage: number, className?: string }> = ({ stage, className }) => {
-  const gradId = `grad-${stage}-${Math.random().toString(36).substr(2, 9)}`;
-  if (stage <= 1) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#FEF3C7" /><path d="M50 75C50 75 40 75 40 75" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="70" r="6" fill="#B45309" /></svg>;
-  if (stage === 2) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#ECFDF5" /><path d="M50 80V60" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 60C50 60 35 55 35 45C35 55 50 60 50 60Z" fill="#10B981" /><path d="M50 60C50 60 65 55 65 45C65 55 50 60 50 60Z" fill="#34D399" /></svg>;
-  if (stage === 3) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#D1FAE5" /><path d="M50 85V50" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 65L65 55" stroke="#059669" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="45" r="10" fill="#10B981" /><circle cx="65" cy="55" r="6" fill="#34D399" /></svg>;
-  if (stage === 4) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#A7F3D0" /><path d="M50 85V45" stroke="#92400E" strokeWidth="4" strokeLinecap="round"/><path d="M50 65L30 55" stroke="#92400E" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="40" r="15" fill="#10B981" /><circle cx="30" cy="55" r="8" fill="#34D399" /><circle cx="65" cy="50" r="8" fill="#34D399" /></svg>;
-  if (stage === 5) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#6EE7B7" /><path d="M50 90V40" stroke="#92400E" strokeWidth="5" strokeLinecap="round"/><path d="M50 60L25 50" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><path d="M50 50L75 40" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="35" r="20" fill="#059669" /><circle cx="25" cy="50" r="12" fill="#10B981" /><circle cx="75" cy="40" r="12" fill="#10B981" /></svg>;
-  if (stage === 6) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#34D399" /><path d="M50 90L50 35" stroke="#78350F" strokeWidth="6" strokeLinecap="round"/><path d="M50 70L20 60" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><path d="M50 60L80 50" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="30" r="25" fill="#047857" /><circle cx="20" cy="60" r="15" fill="#059669" /><circle cx="80" cy="50" r="15" fill="#059669" /></svg>;
-  if (stage === 7) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#10B981" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="7" strokeLinecap="round"/><path d="M50 70L20 55" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><path d="M50 60L85 45" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><circle cx="50" cy="35" r="30" fill="#064E3B" /><circle cx="20" cy="55" r="18" fill="#065F46" /><circle cx="85" cy="45" r="18" fill="#065F46" /><circle cx="35" cy="80" r="5" fill="#064E3B" opacity="0.5"/></svg>;
-  if (stage === 8) return <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#FCE7F3" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="8" strokeLinecap="round"/><circle cx="50" cy="40" r="35" fill="#065F46" /><circle cx="25" cy="55" r="20" fill="#047857" /><circle cx="75" cy="55" r="20" fill="#047857" /><circle cx="40" cy="30" r="5" fill="#F472B6" /><circle cx="60" cy="30" r="5" fill="#F472B6" /><circle cx="25" cy="55" r="5" fill="#F472B6" /><circle cx="75" cy="55" r="5" fill="#F472B6" /><circle cx="50" cy="15" r="5" fill="#F472B6" /></svg>;
+  const c = className || "w-full h-full";
+  const gid = `g-${stage}-${Math.random().toString(36).substr(2,5)}`;
+  
+  if (stage <= 1) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#FEF3C7" /><path d="M50 75C50 75 40 75 40 75" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="70" r="6" fill="#B45309" /></svg>;
+  if (stage === 2) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#ECFDF5" /><path d="M50 80V60" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 60C50 60 35 55 35 45C35 55 50 60 50 60Z" fill="#10B981" /><path d="M50 60C50 60 65 55 65 45C65 55 50 60 50 60Z" fill="#34D399" /></svg>;
+  if (stage === 3) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#D1FAE5" /><path d="M50 85V50" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 65L65 55" stroke="#059669" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="45" r="10" fill="#10B981" /><circle cx="65" cy="55" r="6" fill="#34D399" /></svg>;
+  if (stage === 4) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#A7F3D0" /><path d="M50 85V45" stroke="#92400E" strokeWidth="4" strokeLinecap="round"/><path d="M50 65L30 55" stroke="#92400E" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="40" r="15" fill="#10B981" /><circle cx="30" cy="55" r="8" fill="#34D399" /><circle cx="65" cy="50" r="8" fill="#34D399" /></svg>;
+  if (stage === 5) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#6EE7B7" /><path d="M50 90V40" stroke="#92400E" strokeWidth="5" strokeLinecap="round"/><path d="M50 60L25 50" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><path d="M50 50L75 40" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="35" r="20" fill="#059669" /><circle cx="25" cy="50" r="12" fill="#10B981" /><circle cx="75" cy="40" r="12" fill="#10B981" /></svg>;
+  if (stage === 6) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#34D399" /><path d="M50 90L50 35" stroke="#78350F" strokeWidth="6" strokeLinecap="round"/><path d="M50 70L20 60" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><path d="M50 60L80 50" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="30" r="25" fill="#047857" /><circle cx="20" cy="60" r="15" fill="#059669" /><circle cx="80" cy="50" r="15" fill="#059669" /></svg>;
+  if (stage === 7) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#10B981" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="7" strokeLinecap="round"/><path d="M50 70L20 55" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><path d="M50 60L85 45" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><circle cx="50" cy="35" r="30" fill="#064E3B" /><circle cx="20" cy="55" r="18" fill="#065F46" /><circle cx="85" cy="45" r="18" fill="#065F46" /><circle cx="35" cy="80" r="5" fill="#064E3B" opacity="0.5"/></svg>;
+  if (stage === 8) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#FCE7F3" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="8" strokeLinecap="round"/><circle cx="50" cy="40" r="35" fill="#065F46" /><circle cx="25" cy="55" r="20" fill="#047857" /><circle cx="75" cy="55" r="20" fill="#047857" /><circle cx="40" cy="30" r="5" fill="#F472B6" /><circle cx="60" cy="30" r="5" fill="#F472B6" /><circle cx="25" cy="55" r="5" fill="#F472B6" /><circle cx="75" cy="55" r="5" fill="#F472B6" /><circle cx="50" cy="15" r="5" fill="#F472B6" /></svg>;
   if (stage === 9) return (<svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#FEF3C7" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="9" strokeLinecap="round"/><circle cx="50" cy="40" r="38" fill="#14532D" /><circle cx="20" cy="60" r="22" fill="#166534" /><circle cx="80" cy="60" r="22" fill="#166534" /><circle cx="40" cy="40" r="6" fill="#F59E0B" /><circle cx="60" cy="30" r="6" fill="#F59E0B" /><circle cx="20" cy="60" r="6" fill="#F59E0B" /><circle cx="80" cy="60" r="6" fill="#F59E0B" /><circle cx="50" cy="20" r="6" fill="#F59E0B" /></svg>);
-  return (<svg viewBox="0 0 100 100" className={className} fill="none"><defs><radialGradient id={gradId} cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style={{stopColor:'rgb(255,255,255)', stopOpacity:0.8}} /><stop offset="100%" style={{stopColor:'rgb(16, 185, 129)', stopOpacity:0}} /></radialGradient></defs><circle cx="50" cy="50" r="48" fill={`url(#${gradId})`} /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="10" strokeLinecap="round"/><circle cx="50" cy="40" r="40" fill="#064E3B" /><circle cx="20" cy="65" r="25" fill="#065F46" /><circle cx="80" cy="65" r="25" fill="#065F46" /><circle cx="50" cy="25" r="15" fill="#10B981" /><path d="M20 20L25 25" stroke="#FCD34D" strokeWidth="2" /><path d="M80 20L75 25" stroke="#FCD34D" strokeWidth="2" /></svg>);
+  
+  return (<svg viewBox="0 0 100 100" className={c} fill="none"><defs><radialGradient id={gid} cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style={{stopColor:'rgb(255,255,255)', stopOpacity:0.8}} /><stop offset="100%" style={{stopColor:'rgb(16, 185, 129)', stopOpacity:0}} /></radialGradient></defs><circle cx="50" cy="50" r="48" fill={`url(#${gid})`} /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="10" strokeLinecap="round"/><circle cx="50" cy="40" r="40" fill="#064E3B" /><circle cx="20" cy="65" r="25" fill="#065F46" /><circle cx="80" cy="65" r="25" fill="#065F46" /><circle cx="50" cy="25" r="15" fill="#10B981" /><path d="M20 20L25 25" stroke="#FCD34D" strokeWidth="2" /><path d="M80 20L75 25" stroke="#FCD34D" strokeWidth="2" /></svg>);
 };
 
 const TREE_STAGES = [
@@ -58,9 +64,10 @@ const TREE_STAGES = [
   { threshold: 0, title: "Семя", stageIndex: 1, desc: "Потенциал, готовый к пробуждению." },
 ];
 
+// --- ДАННЫЕ ОБ АРХЕТИПАХ ---
 const ARCHETYPE_INFO: any = {
   "Творец": { 
-    desc: "Для вас жизнь — это чистый холст, требующий выражения. Вы не переносите серость, рутину и застой. Ваша миссия — материализовать свои идеи, будь то бизнес, искусство или уникальный стиль жизни. Вы видите потенциал там, где другие видят пустоту.",
+    desc: "Для вас жизнь — это чистый холст, требующий выражения. Вы не переносите серость, рутину и застой. Ваша миссия — материализовать свои идеи, будь то бизнес, искусство или уникальный стиль жизни.",
     strength: "Способность создавать нечто уникальное из хаоса. Визионерство.", 
     shadow: "Перфекционизм, который парализует. Страх, что результат будет недостаточно идеальным.", 
     advice: "Не ждите вдохновения — оно приходит во время работы. «Сделанное» лучше «идеального».", 
@@ -98,6 +105,116 @@ const ARCHETYPE_INFO: any = {
 
 // --- КОМПОНЕНТЫ ---
 
+const ArchetypeResultScreen: React.FC<{ archetype: string, onContinue: () => void, isReadOnly?: boolean, onBack?: () => void }> = ({ archetype, onContinue, isReadOnly, onBack }) => {
+  const info = ARCHETYPE_INFO[archetype] || ARCHETYPE_INFO["Искатель"];
+  const Icon = info.icon;
+  return (
+    <div className="h-full flex flex-col bg-white overflow-y-auto animate-fade-in relative z-50">
+      <div className="p-6 pb-0">{isReadOnly && <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 mb-4"><ArrowLeft size={24} /></button>}</div>
+      <div className="flex-1 px-6 pb-12 flex flex-col items-center text-center">
+        <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 shadow-xl ${info.bg} ${info.color}`}><Icon size={64} strokeWidth={1.5} /></div>
+        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Ваш Архетип</h2>
+        <h1 className="text-4xl font-black text-slate-800 mb-6">{archetype}</h1>
+        <p className="text-lg text-slate-600 leading-relaxed mb-10">{info.desc}</p>
+        <div className="w-full space-y-4 mb-10 text-left">
+          <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-100"><div className="flex items-center space-x-3 mb-2 text-emerald-700 font-bold"><Star size={20} /><span>Суперсила</span></div><p className="text-emerald-900/80 font-medium leading-snug">{info.strength}</p></div>
+          <div className="p-5 rounded-2xl bg-rose-50 border border-rose-100"><div className="flex items-center space-x-3 mb-2 text-rose-700 font-bold"><Cloud size={20} /><span>Тень</span></div><p className="text-rose-900/80 font-medium leading-snug">{info.shadow}</p></div>
+          <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100"><div className="flex items-center space-x-3 mb-2 text-indigo-700 font-bold"><Lightbulb size={20} /><span>Совет</span></div><p className="text-indigo-900/80 font-medium leading-snug">{info.advice}</p></div>
+        </div>
+        {!isReadOnly && <button onClick={onContinue} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-xl active:scale-95 transition-all">Далее</button>}
+      </div>
+    </div>
+  );
+};
+
+const TutorialScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+  const [slide, setSlide] = useState(0);
+  const slides = [
+    { title: "Карта Дня", desc: "Каждое утро ИИ создает для вас персональный план на основе вашего архетипа.", icon: Map, color: "text-indigo-500", bg: "bg-indigo-50" },
+    { title: "Настроение", desc: "Нажмите на кнопку 'Как ты?' на главной, чтобы адаптировать план под ваш уровень энергии.", icon: Battery, color: "text-emerald-500", bg: "bg-emerald-50" },
+    { title: "Древо Сознания", desc: "Ваш прогресс визуализируется в виде дерева. Чем больше практик, тем выше оно растет.", icon: Sprout, color: "text-amber-500", bg: "bg-amber-50" }
+  ];
+  return (
+    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
+      <div className="flex-1 flex flex-col justify-center items-center text-center">
+        <div className={`w-32 h-32 rounded-[32px] flex items-center justify-center mb-8 shadow-sm ${slides[slide].bg} ${slides[slide].color}`}>{React.createElement(slides[slide].icon, { size: 64 })}</div>
+        <h2 className="text-3xl font-black text-slate-800 mb-4">{slides[slide].title}</h2>
+        <p className="text-slate-500 text-lg leading-relaxed max-w-xs">{slides[slide].desc}</p>
+      </div>
+      <div className="flex flex-col items-center space-y-8">
+        <div className="flex space-x-2">{slides.map((_, i) => <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === slide ? 'w-8 bg-indigo-600' : 'w-2 bg-slate-200'}`} />)}</div>
+        <button onClick={() => { if (slide < slides.length - 1) setSlide(s => s + 1); else onFinish(); }} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-lg active:scale-95 transition-all">{slide < slides.length - 1 ? "Далее" : "Начать"}</button>
+      </div>
+    </div>
+  );
+};
+
+// --- ОПРОСНИК БЕЗ ИКОНОК В ОТВЕТАХ (ЧТОБЫ НЕ КРАШИЛОСЬ) ---
+const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
+  const [step, setStep] = useState(0);
+  const [scores, setScores] = useState({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0, EXPLORER: 0 });
+  const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string }>({});
+  
+  const steps = [
+    { title: "Что вас вдохновляет?", type: 'archetype', options: [{ label: "Создание нового", type: 'CREATOR' }, { label: "Управление и успех", type: 'RULER' }, { label: "Познание мира", type: 'SAGE' }, { label: "Забота о людях", type: 'CAREGIVER' }] },
+    { title: "Чего вы избегаете?", type: 'archetype', options: [{ label: "Скуки и рутины", type: 'CREATOR' }, { label: "Хаоса", type: 'RULER' }, { label: "Незнания", type: 'SAGE' }, { label: "Застоя", type: 'EXPLORER' }] },
+    { title: "Идеальный выходной?", type: 'archetype', options: [{ label: "Путешествие", type: 'EXPLORER' }, { label: "Уют с семьей", type: 'CAREGIVER' }, { label: "Изучение новой темы", type: 'SAGE' }, { label: "Планирование недели", type: 'RULER' }] },
+    { title: "В сложной ситуации...", type: 'archetype', options: [{ label: "Креативите", type: 'CREATOR' }, { label: "Берете ответственность", type: 'RULER' }, { label: "Анализируете", type: 'SAGE' }, { label: "Помогаете", type: 'CAREGIVER' }] },
+    { title: "Мотивация?", type: 'archetype', options: [{ label: "Самовыражение", type: 'CREATOR' }, { label: "Статус", type: 'RULER' }, { label: "Истина", type: 'SAGE' }, { label: "Свобода", type: 'EXPLORER' }] },
+    { title: "Ценность в людях?", type: 'archetype', options: [{ label: "Уникальность", type: 'CREATOR' }, { label: "Верность", type: 'CAREGIVER' }, { label: "Ум", type: 'SAGE' }, { label: "Легкость", type: 'EXPLORER' }] },
+    { title: "Решения?", type: 'archetype', options: [{ label: "Интуиция", type: 'CREATOR' }, { label: "Логика", type: 'SAGE' }, { label: "Расчет", type: 'RULER' }, { label: "Сердце", type: 'CAREGIVER' }] },
+    { title: "Лидерство?", type: 'archetype', options: [{ label: "Вдохновитель", type: 'CREATOR' }, { label: "Стратег", type: 'RULER' }, { label: "Учитель", type: 'SAGE' }, { label: "Опекун", type: 'CAREGIVER' }] },
+    { title: "Новизна?", type: 'archetype', options: [{ label: "Восторг", type: 'EXPLORER' }, { label: "Любопытство", type: 'SAGE' }, { label: "Польза", type: 'RULER' }, { label: "Осторожность", type: 'CAREGIVER' }] },
+    { title: "Подарок?", type: 'archetype', options: [{ label: "Hand-made", type: 'CAREGIVER' }, { label: "Билет", type: 'EXPLORER' }, { label: "Книга", type: 'SAGE' }, { label: "Бренд", type: 'RULER' }] },
+    { title: "Идеальное утро?", type: 'archetype', options: [{ label: "Спорт", type: 'RULER' }, { label: "Мечты", type: 'CREATOR' }, { label: "Сразу в путь", type: 'EXPLORER' }, { label: "Семья", type: 'CAREGIVER' }] },
+    { title: "Наследие?", type: 'archetype', options: [{ label: "Искусство", type: 'CREATOR' }, { label: "Бизнес", type: 'RULER' }, { label: "Знания", type: 'SAGE' }, { label: "Память", type: 'CAREGIVER' }] },
+    // Настройки
+    { title: "Главный фокус?", key: 'focus', options: [{ label: "Рост доходов и карьера", value: "Рост доходов" }, { label: "Снижение стресса", value: "Снижение стресса" }, { label: "Дисциплина и режим", value: "Дисциплина" }, { label: "Отношения и семья", value: "Семья" }] },
+    { title: "Что мешает вам больше всего?", key: 'struggle', options: [{ label: "Прокрастинация и лень", value: "Прокрастинация" }, { label: "Страх и неуверенность", value: "Неуверенность" }, { label: "Выгорание и усталость", value: "Выгорание" }, { label: "Расфокус и хаос", value: "Расфокус" }] },
+    { title: "Ваши биоритмы?", key: 'chronotype', options: [{ label: "Жаворонок (Утро)", value: "Утро" }, { label: "Сова (Вечер)", value: "Вечер" }, { label: "Плавающий график", value: "Плавающий" }] }
+  ];
+
+  const currentStepData = steps[step];
+  if (!currentStepData) return null;
+
+  const handleSelect = (option: any) => {
+    if (currentStepData.type === 'archetype') setScores(prev => ({ ...prev, [option.type]: (prev[option.type as keyof typeof scores] || 0) + 1 }));
+    if (currentStepData.key) setFinalData(prev => ({ ...prev, [currentStepData.key!]: option.value }));
+
+    if (step < steps.length - 1) {
+      setStep(prev => prev + 1);
+    } else {
+      let winner = 'SAGE';
+      let max = -1;
+      Object.entries(scores).forEach(([k, v]) => { if (v > max) { max = v; winner = k; } });
+      const archMap: any = { CREATOR: "Творец", RULER: "Правитель", SAGE: "Мудрец", CAREGIVER: "Хранитель", EXPLORER: "Искатель" };
+      onComplete({ archetype: archMap[winner] || "Искатель", ...finalData });
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
+      <div className="flex justify-start mb-6"><button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600"><ArrowLeft size={24} /></button></div>
+      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+        <div className="mb-10">
+          <div className="flex space-x-1 mb-8 justify-center flex-wrap gap-y-2">{steps.map((_, i) => (<div key={i} className={`h-1.5 rounded-full transition-all duration-500 mx-0.5 ${i <= step ? 'w-4 bg-indigo-500' : 'w-2 bg-slate-100'}`} />))}</div>
+          <h2 className="text-2xl font-black text-slate-800 text-center leading-tight mb-2">{currentStepData.title}</h2>
+        </div>
+        <div className="space-y-3" key={step}>
+          {currentStepData.options.map((option: any, idx: number) => {
+            return (
+            <button key={idx} onClick={() => handleSelect(option)} className="w-full p-5 rounded-[24px] border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all active:scale-[0.98] text-left group focus:outline-none">
+              <span className="font-bold text-slate-700 text-base group-hover:text-indigo-700 leading-tight">{option.label}</span>
+            </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- INTERNAL CHAT (NO EXTERNAL FILES) ---
 const InternalChat: React.FC<{ mode: JournalMode, onBack: () => void, onComplete: (msg: any, dur: number) => void }> = ({ mode, onBack, onComplete }) => {
   const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'assistant', content: 'Привет! О чем хочешь поговорить?', timestamp: Date.now() }]);
   const [input, setInput] = useState('');
@@ -149,127 +266,13 @@ const InternalBottomNav: React.FC<{ currentView: string, onChangeView: (v: strin
   </div>
 );
 
-// --- ЭКРАНЫ ---
-
-const ArchetypeResultScreen: React.FC<{ archetype: string, onContinue: () => void, isReadOnly?: boolean, onBack?: () => void }> = ({ archetype, onContinue, isReadOnly, onBack }) => {
-  const info = ARCHETYPE_INFO[archetype] || ARCHETYPE_INFO["Искатель"];
-  const Icon = info.icon;
-  return (
-    <div className="h-full flex flex-col bg-white overflow-y-auto animate-fade-in relative z-50">
-      <div className="p-6 pb-0">{isReadOnly && <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 mb-4"><ArrowLeft size={24} /></button>}</div>
-      <div className="flex-1 px-6 pb-12 flex flex-col items-center text-center">
-        <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 shadow-xl ${info.bg} ${info.color}`}><Icon size={64} strokeWidth={1.5} /></div>
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Ваш Архетип</h2>
-        <h1 className="text-4xl font-black text-slate-800 mb-6">{archetype}</h1>
-        <p className="text-lg text-slate-600 leading-relaxed mb-10">{info.desc}</p>
-        <div className="w-full space-y-4 mb-10 text-left">
-          <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-100"><div className="flex items-center space-x-3 mb-2 text-emerald-700 font-bold"><Star size={20} /><span>Суперсила</span></div><p className="text-emerald-900/80 font-medium leading-snug">{info.strength}</p></div>
-          <div className="p-5 rounded-2xl bg-rose-50 border border-rose-100"><div className="flex items-center space-x-3 mb-2 text-rose-700 font-bold"><Cloud size={20} /><span>Тень</span></div><p className="text-rose-900/80 font-medium leading-snug">{info.shadow}</p></div>
-          <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100"><div className="flex items-center space-x-3 mb-2 text-indigo-700 font-bold"><Lightbulb size={20} /><span>Совет</span></div><p className="text-indigo-900/80 font-medium leading-snug">{info.advice}</p></div>
-        </div>
-        {!isReadOnly && <button onClick={onContinue} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-xl active:scale-95 transition-all">Далее</button>}
-      </div>
-    </div>
-  );
-};
-
-const TutorialScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
-  const [slide, setSlide] = useState(0);
-  const slides = [
-    { title: "Карта Дня", desc: "Каждое утро ИИ создает для вас персональный план на основе вашего архетипа.", icon: Map, color: "text-indigo-500", bg: "bg-indigo-50" },
-    { title: "Настроение", desc: "Нажмите на кнопку 'Как ты?' на главной, чтобы адаптировать план под ваш уровень энергии.", icon: Battery, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { title: "Древо Сознания", desc: "Ваш прогресс визуализируется в виде дерева. Чем больше практик, тем выше оно растет.", icon: Sprout, color: "text-amber-500", bg: "bg-amber-50" }
-  ];
-  return (
-    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
-      <div className="flex-1 flex flex-col justify-center items-center text-center">
-        <div className={`w-32 h-32 rounded-[32px] flex items-center justify-center mb-8 shadow-sm ${slides[slide].bg} ${slides[slide].color}`}>{React.createElement(slides[slide].icon, { size: 64 })}</div>
-        <h2 className="text-3xl font-black text-slate-800 mb-4">{slides[slide].title}</h2>
-        <p className="text-slate-500 text-lg leading-relaxed max-w-xs">{slides[slide].desc}</p>
-      </div>
-      <div className="flex flex-col items-center space-y-8">
-        <div className="flex space-x-2">{slides.map((_, i) => <div key={i} className={`h-2 rounded-full transition-all duration-300 ${i === slide ? 'w-8 bg-indigo-600' : 'w-2 bg-slate-200'}`} />)}</div>
-        <button onClick={() => { if (slide < slides.length - 1) setSlide(s => s + 1); else onFinish(); }} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-lg active:scale-95 transition-all">{slide < slides.length - 1 ? "Далее" : "Начать"}</button>
-      </div>
-    </div>
-  );
-};
-
-// --- ОПРОСНИК С НОВЫМ КОНТЕНТОМ И СТАРЫМИ ИКОНКАМИ ---
-const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
-  const [step, setStep] = useState(0);
-  const [scores, setScores] = useState({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0, EXPLORER: 0 });
-  const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string }>({});
-  
-  // ВАЖНО: Используем ТОЛЬКО иконки из импорта в начале файла
-  const steps = [
-    { title: "Что вас вдохновляет?", type: 'archetype', options: [{ label: "Создание нового", type: 'CREATOR', icon: Feather }, { label: "Управление и успех", type: 'RULER', icon: Target }, { label: "Познание мира", type: 'SAGE', icon: BookOpen }, { label: "Забота о людях", type: 'CAREGIVER', icon: Heart }] },
-    { title: "Чего вы избегаете?", type: 'archetype', options: [{ label: "Скуки и рутины", type: 'CREATOR', icon: Activity }, { label: "Хаоса", type: 'RULER', icon: Lock }, { label: "Незнания", type: 'SAGE', icon: Search }, { label: "Застоя", type: 'EXPLORER', icon: Map }] },
-    { title: "Идеальный выходной?", type: 'archetype', options: [{ label: "Путешествие", type: 'EXPLORER', icon: Compass }, { label: "Уют с семьей", type: 'CAREGIVER', icon: Coffee }, { label: "Изучение нового", type: 'SAGE', icon: Zap }, { label: "Планирование", type: 'RULER', icon: Briefcase }] },
-    { title: "В сложной ситуации...", type: 'archetype', options: [{ label: "Креативите", type: 'CREATOR', icon: Star }, { label: "Берете ответственность", type: 'RULER', icon: Shield }, { label: "Анализируете", type: 'SAGE', icon: Brain }, { label: "Помогаете", type: 'CAREGIVER', icon: Heart }] },
-    { title: "Мотивация?", type: 'archetype', options: [{ label: "Самовыражение", type: 'CREATOR', icon: Feather }, { label: "Статус", type: 'RULER', icon: Award }, { label: "Истина", type: 'SAGE', icon: Search }, { label: "Свобода", type: 'EXPLORER', icon: Map }] },
-    { title: "Ценность в людях?", type: 'archetype', options: [{ label: "Уникальность", type: 'CREATOR', icon: Star }, { label: "Верность", type: 'CAREGIVER', icon: Anchor }, { label: "Ум", type: 'SAGE', icon: MessageSquare }, { label: "Легкость", type: 'EXPLORER', icon: Compass }] },
-    { title: "Решения?", type: 'archetype', options: [{ label: "Интуиция", type: 'CREATOR', icon: Zap }, { label: "Логика", type: 'SAGE', icon: Brain }, { label: "Расчет", type: 'RULER', icon: Target }, { label: "Сердце", type: 'CAREGIVER', icon: Heart }] },
-    { title: "Лидерство?", type: 'archetype', options: [{ label: "Вдохновитель", type: 'CREATOR', icon: Sun }, { label: "Стратег", type: 'RULER', icon: Target }, { label: "Учитель", type: 'SAGE', icon: BookOpen }, { label: "Опекун", type: 'CAREGIVER', icon: Shield }] },
-    { title: "Новизна?", type: 'archetype', options: [{ label: "Восторг", type: 'EXPLORER', icon: Zap }, { label: "Любопытство", type: 'SAGE', icon: Search }, { label: "Польза", type: 'RULER', icon: Briefcase }, { label: "Осторожность", type: 'CAREGIVER', icon: Lock }] },
-    { title: "Подарок?", type: 'archetype', options: [{ label: "Hand-made", type: 'CAREGIVER', icon: Heart }, { label: "Билет", type: 'EXPLORER', icon: Map }, { label: "Книга", type: 'SAGE', icon: BookOpen }, { label: "Бренд", type: 'RULER', icon: Star }] },
-    { title: "Идеальное утро?", type: 'archetype', options: [{ label: "Спорт", type: 'RULER', icon: Activity }, { label: "Мечты", type: 'CREATOR', icon: Coffee }, { label: "Сразу в путь", type: 'EXPLORER', icon: Cloud }, { label: "Семья", type: 'CAREGIVER', icon: Smile }] },
-    { title: "Наследие?", type: 'archetype', options: [{ label: "Искусство", type: 'CREATOR', icon: Feather }, { label: "Бизнес", type: 'RULER', icon: Briefcase }, { label: "Знания", type: 'SAGE', icon: BookOpen }, { label: "Память", type: 'CAREGIVER', icon: Heart }] },
-    // Настройки
-    { title: "Главный фокус?", key: 'focus', options: [{ label: "Финансы", value: "Рост доходов", icon: Zap }, { label: "Спокойствие", value: "Снижение стресса", icon: Cloud }, { label: "Дисциплина", value: "Режим", icon: Brain }, { label: "Отношения", value: "Семья", icon: Heart }] },
-    { title: "Что мешает?", key: 'struggle', options: [{ label: "Лень", value: "Прокрастинация", icon: Clock }, { label: "Страх", value: "Неуверенность", icon: Lock }, { label: "Усталость", value: "Выгорание", icon: Battery }, { label: "Хаос", value: "Расфокус", icon: Activity }] },
-    { title: "Биоритмы?", key: 'chronotype', options: [{ label: "Жаворонок", value: "Утро", icon: Sun }, { label: "Сова", value: "Вечер", icon: Moon }, { label: "Плавающий", value: "Плавающий", icon: Activity }] }
-  ];
-
-  const currentStepData = steps[step];
-  if (!currentStepData) return null;
-
-  const handleSelect = (option: any) => {
-    if (currentStepData.type === 'archetype') setScores(prev => ({ ...prev, [option.type]: (prev[option.type as keyof typeof scores] || 0) + 1 }));
-    if (currentStepData.key) setFinalData(prev => ({ ...prev, [currentStepData.key!]: option.value }));
-
-    if (step < steps.length - 1) {
-      setStep(prev => prev + 1);
-    } else {
-      let winner = 'SAGE';
-      let max = -1;
-      Object.entries(scores).forEach(([k, v]) => { if (v > max) { max = v; winner = k; } });
-      const archMap: any = { CREATOR: "Творец", RULER: "Правитель", SAGE: "Мудрец", CAREGIVER: "Хранитель", EXPLORER: "Искатель" };
-      onComplete({ archetype: archMap[winner] || "Искатель", ...finalData });
-    }
-  };
-
-  return (
-    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
-      <div className="flex justify-start mb-6"><button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600"><ArrowLeft size={24} /></button></div>
-      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
-        <div className="mb-10">
-          <div className="flex space-x-1 mb-8 justify-center flex-wrap gap-y-2">{steps.map((_, i) => (<div key={i} className={`h-1.5 rounded-full transition-all duration-500 mx-0.5 ${i <= step ? 'w-4 bg-indigo-500' : 'w-2 bg-slate-100'}`} />))}</div>
-          <h2 className="text-2xl font-black text-slate-800 text-center leading-tight mb-2">{currentStepData.title}</h2>
-        </div>
-        <div className="space-y-3" key={step}>
-          {currentStepData.options.map((option: any, idx: number) => {
-            const Icon = option.icon;
-            return (
-            <button key={idx} onClick={() => handleSelect(option)} className="w-full p-5 rounded-[24px] border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all active:scale-[0.98] flex items-center text-left group focus:outline-none">
-              {Icon && (<div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-indigo-500 shadow-sm mr-4 group-hover:scale-110 transition-transform"><Icon size={20} /></div>)}
-              <span className="font-bold text-slate-700 text-base group-hover:text-indigo-700 leading-tight">{option.label}</span>
-            </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // --- APP ---
 const App: React.FC = () => {
-  // СБРОС КЭША ТОЛЬКО ОДИН РАЗ ДЛЯ ОБНОВЛЕНИЯ КОНТЕНТА
+  // АВТО-СБРОС ТОЛЬКО ОДИН РАЗ
   useEffect(() => {
-    if (!localStorage.getItem('mm_update_text_v1')) {
+    if (!localStorage.getItem('mm_no_icons_reset_v1')) {
       localStorage.clear();
-      localStorage.setItem('mm_update_text_v1', 'true');
+      localStorage.setItem('mm_no_icons_reset_v1', 'true');
       window.location.reload();
     }
   }, []);
@@ -285,9 +288,7 @@ const App: React.FC = () => {
     } catch { return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false, currentMood: 'ok' }; }
   });
 
-  // ВАЖНО: Start HOME
   const [currentView, setCurrentView] = useState<string>('HOME'); 
-  
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
   const [dailyInsight, setDailyInsight] = useState<DailyInsightData | null>(() => {
@@ -334,7 +335,7 @@ const App: React.FC = () => {
           Ты — ментор. Клиент: ${userName}. Архетип: "${userProfile.archetype}".
           Цель: "${userProfile.focus}". Состояние: ${moodInstruction}.
           Карта дня (4 блока). Разделитель "|||". Без заголовков.
-          1. МЫШЛЕНИЕ. 2. ДЕЙСТВИЕ. 3. ТЕЛО. 4. ИНСАЙТ.
+          1. МЫШЛЕНИЕ (Установка). 2. ДЕЙСТВИЕ (Шаг к цели). 3. ТЕЛО (Энергия). 4. ИНСАЙТ (Мысль).
           Ответ: ТЕКСТ1|||ТЕКСТ2|||ТЕКСТ3|||ТЕКСТ4
         `;
 
@@ -572,7 +573,7 @@ const App: React.FC = () => {
           <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
           <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around cursor-pointer" onClick={() => { if(window.confirm("Сброс?")) localStorage.clear(); window.location.reload(); }}><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">10.0.0 (FINAL STABLE)</p></div></div>
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around cursor-pointer" onClick={() => { if(window.confirm("Сброс?")) localStorage.clear(); window.location.reload(); }}><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">10.1.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
           <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
         </div>
       </div>
@@ -590,7 +591,7 @@ const App: React.FC = () => {
         {currentView === 'TUTORIAL' && <TutorialScreen onFinish={() => setCurrentView('HOME')} />}
         {currentView === 'DAILY_GUIDE' && renderDailyGuide()}
         {currentView === 'HOME' && renderHome()}
-        {currentView === 'CHAT' && <ChatInterface mode={selectedMode!} onBack={() => setCurrentView('HOME')} onSessionComplete={handleSessionComplete as any} />}
+        {currentView === 'CHAT' && <InternalChat mode={selectedMode!} onBack={() => setCurrentView('HOME')} onComplete={(msgs) => { setHistory(p => [...p, { id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: 0, preview: '...', messages: msgs }]); setTotalSessions(p => p+1); }} />}
         {currentView === 'READ_HISTORY' && selectedSession && <div className="p-6"><h1>История чата</h1><button onClick={() => setCurrentView('HISTORY')}>Назад</button></div>}
         {currentView === 'HISTORY' && renderHistory()}
         {currentView === 'PROFILE' && renderProfile()}
@@ -599,7 +600,7 @@ const App: React.FC = () => {
         {currentView === 'RANKS_INFO' && renderRanksInfo()}
         {currentView === 'ADMIN' && <AdminInterface config={siteConfig} onSave={(newCfg) => setSiteConfig(newCfg)} onBack={() => setCurrentView('ABOUT')} />}
       </main>
-      {(['HOME', 'HISTORY', 'PROFILE', 'ABOUT', 'SETTINGS'].includes(currentView)) && <BottomNav currentView={currentView} onChangeView={setCurrentView} />}
+      {(['HOME', 'HISTORY', 'PROFILE', 'ABOUT', 'SETTINGS'].includes(currentView)) && <InternalBottomNav currentView={currentView} onChangeView={setCurrentView} />}
     </div>
   );
 };
