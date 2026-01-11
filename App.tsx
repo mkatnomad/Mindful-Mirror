@@ -5,7 +5,8 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, TreeDeciduous, Sprout, Leaf } from 'lucide-react';
+// Используем только самые стандартные иконки, чтобы избежать ошибок импорта
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, Leaf } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -26,12 +27,13 @@ const DEFAULT_CONFIG: SiteConfig = {
   adminPasscode: "0000"
 };
 
+// Стадии дерева с БЕЗОПАСНЫМИ иконками
 const TREE_STAGES = [
-  { threshold: 1500, title: "Мудрое Древо", icon: TreeDeciduous, color: "text-emerald-700", desc: "Глубокие корни и мощная крона. Вы достигли высокой осознанности." },
-  { threshold: 500, title: "Крепкое Древо", icon: TreeDeciduous, color: "text-emerald-600", desc: "Вы уверенно стоите на ногах. Практика стала частью жизни." },
-  { threshold: 200, title: "Молодое Дерево", icon: Leaf, color: "text-emerald-500", desc: "Вы быстро растете и развиваетесь." },
-  { threshold: 50, title: "Росток", icon: Sprout, color: "text-emerald-400", desc: "Первые всходы ваших усилий." },
-  { threshold: 0, title: "Семя", icon: Sprout, color: "text-emerald-300", desc: "Потенциал, готовый к пробуждению." },
+  { threshold: 1500, title: "Мудрое Древо", icon: Award, color: "text-emerald-700", desc: "Глубокие корни и мощная крона." },
+  { threshold: 500, title: "Крепкое Древо", icon: Shield, color: "text-emerald-600", desc: "Вы уверенно стоите на ногах." },
+  { threshold: 200, title: "Молодое Дерево", icon: Leaf, color: "text-emerald-500", desc: "Вы быстро растете." },
+  { threshold: 50, title: "Росток", icon: Leaf, color: "text-emerald-400", desc: "Первые всходы ваших усилий." },
+  { threshold: 0, title: "Семя", icon: Sun, color: "text-amber-400", desc: "Потенциал, готовый к пробуждению." },
 ];
 
 const STORAGE_KEYS = {
@@ -49,6 +51,10 @@ const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity 
   <span className={`${className} font-extrabold italic select-none pointer-events-none uppercase`} style={{ color, opacity, fontFamily: 'Manrope, sans-serif' }}>{text}</span>
 );
 
+const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string, bg?: string }) => (
+  <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} />
+);
+
 // --- КОМПОНЕНТ ОПРОСА ---
 const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
@@ -60,20 +66,20 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       title: "Что вас вдохновляет?",
       type: 'archetype',
       options: [
-        { label: "Создание нового", type: 'CREATOR' },
-        { label: "Управление и успех", type: 'RULER' },
-        { label: "Познание мира", type: 'SAGE' },
-        { label: "Забота о людях", type: 'CAREGIVER' },
+        { label: "Создание нового", type: 'CREATOR', icon: Feather },
+        { label: "Управление и успех", type: 'RULER', icon: Briefcase },
+        { label: "Познание мира", type: 'SAGE', icon: BookOpen },
+        { label: "Забота о людях", type: 'CAREGIVER', icon: Heart },
       ]
     },
     {
       title: "Чего вы избегаете?",
       type: 'archetype',
       options: [
-        { label: "Скуки и рутины", type: 'CREATOR' },
-        { label: "Хаоса и беспорядка", type: 'RULER' },
-        { label: "Ошибок и незнания", type: 'SAGE' },
-        { label: "Застоя на месте", type: 'EXPLORER' },
+        { label: "Скуки и рутины", type: 'CREATOR', icon: Activity },
+        { label: "Хаоса и беспорядка", type: 'RULER', icon: Lock },
+        { label: "Ошибок и незнания", type: 'SAGE', icon: Search },
+        { label: "Застоя на месте", type: 'EXPLORER', icon: Compass },
       ]
     },
     {
@@ -186,6 +192,7 @@ const App: React.FC = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }
   });
    
+  // ЗАЩИТА ОТ БИТЫХ ДАННЫХ
   const [totalSessions, setTotalSessions] = useState<number>(() => {
     const val = parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10);
     return isNaN(val) ? 0 : val;
@@ -199,13 +206,9 @@ const App: React.FC = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.JOURNAL) || '[]'); } catch { return []; }
   });
-  const [weeklyActivity, setWeeklyActivity] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVITY) || '[40, 60, 30, 80, 55, 30, 10]'); } catch { return [40, 60, 30, 80, 55, 30, 10]; }
-  });
 
   const longPressTimer = useRef<number | null>(null);
 
-  // --- ГЕНЕРАЦИЯ ---
   useEffect(() => {
     const generateDailyAdvice = async () => {
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
@@ -223,16 +226,12 @@ const App: React.FC = () => {
         let moodInstruction = "";
         if (currentMood === 'low') moodInstruction = "КЛИЕНТ УСТАЛ. Дай мягкие советы. Фокус на отдыхе.";
         if (currentMood === 'high') moodInstruction = "КЛИЕНТ НА ПИКЕ. Дай амбициозные задачи.";
-        if (currentMood === 'flow') moodInstruction = "КЛИЕНТ В ПОТОКЕ. Помоги удержать состояние.";
         
         const prompt = `
-          Ты — мудрый ментор. Клиент: ${userName}.
-          Архетип: "${userProfile.archetype}". Цель: "${userProfile.focus}".
-          СОСТОЯНИЕ: ${moodInstruction}
+          Ты — ментор. Клиент: ${userName}. Архетип: "${userProfile.archetype}".
+          Цель: "${userProfile.focus}". Состояние: ${moodInstruction}.
           
-          Составь Карту Дня.
-          Разделитель: "|||". БЕЗ ЗАГОЛОВКОВ.
-          
+          Карта дня (4 блока). Разделитель "|||". Без заголовков.
           1. МЫШЛЕНИЕ (Установка).
           2. ДЕЙСТВИЕ (Шаг к цели).
           3. ТЕЛО (Энергия).
@@ -242,7 +241,7 @@ const App: React.FC = () => {
         `;
 
         const responseText = await sendMessageToGemini(prompt);
-        const cleanText = responseText.replace(/^(Мышление|Действие|Тело|Инсайт|Mindset|Action|Body|Insight)[:\.]\s*/gim, "").trim();
+        const cleanText = responseText.replace(/^(Мышление|Действие|Тело|Инсайт)[:\.]\s*/gim, "").trim();
         const parts = cleanText.split('|||');
         
         const newInsight: DailyInsightData = {
@@ -323,7 +322,6 @@ const App: React.FC = () => {
   const handleAdminTriggerStart = () => { longPressTimer.current = window.setTimeout(() => { if (prompt('Admin:') === siteConfig.adminPasscode) setCurrentView('ADMIN'); }, 2000); };
   const handleAdminTriggerEnd = () => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } };
 
-  // --- COMPONENT: BATTERY MODAL ---
   const renderBatteryModal = () => {
     if (!isBatteryModalOpen) return null;
     return (
@@ -406,7 +404,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО СОЗНАНИЯ (ВМЕСТО РАНГОВ) */}
+      {/* ДРЕВО СОЗНАНИЯ (ВЕРНУЛ) */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all">
             <div className="flex justify-between items-center mb-4">
@@ -416,7 +414,6 @@ const App: React.FC = () => {
                 </div>
                 <ChevronRight size={20} className="text-slate-300" />
             </div>
-            {/* Статистика внутри карточки */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-50">
                <div className="text-center border-r border-slate-50"><p className="text-lg font-bold text-slate-800">{totalSessions}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Сессий</p></div>
                <div className="text-center"><p className="text-lg font-bold text-slate-800">{totalMinutes}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Минут</p></div>
@@ -428,7 +425,7 @@ const App: React.FC = () => {
 
   const renderRanksInfo = () => (
     <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Стадии роста</h1></header>
+      <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Древо сознания</h1></header>
       <div className="space-y-4">
         {[...TREE_STAGES].reverse().map((stage) => (
           <div key={stage.title} className={`p-5 rounded-[24px] border transition-all ${totalSteps >= stage.threshold ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-slate-50/50 border-slate-100 opacity-50'}`}>
