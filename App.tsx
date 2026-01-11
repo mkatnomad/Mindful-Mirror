@@ -5,7 +5,7 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Shield, Eye, Key, X } from 'lucide-react';
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -19,8 +19,8 @@ const DEFAULT_CONFIG: SiteConfig = {
   customLogoUrl: null,
   customWatermarkUrl: null,
   aboutParagraphs: [
-    "Mindful Mirror — зеркало твоей души.",
-    "Мы используем психологическое профилирование и ИИ, чтобы помочь тебе настроить внутренний компас."
+    "Mindful Mirror — это пространство для честного диалога с самим собой.",
+    "Здесь технологии помогают услышать внутренний голос."
   ],
   quotes: [],
   adminPasscode: "0000"
@@ -45,61 +45,65 @@ const STORAGE_KEYS = {
   ACTIVITY: 'mm_weekly_activity',
   JOURNAL: 'mm_journal_entries',
   CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v8' // v8 - Алхимическая карта
+  DAILY_INSIGHT: 'mm_daily_insight_v8'
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
   <span className={`${className} font-extrabold italic select-none pointer-events-none uppercase`} style={{ color, opacity, fontFamily: 'Manrope, sans-serif' }}>{text}</span>
 );
 
-const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string, bg?: string }) => (
-  <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} />
-);
-
-// --- ГЛУБОКИЙ ОНБОРДИНГ (Определение Архетипа) ---
-const ArchetypeOnboarding: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
+// --- ГЛУБОКИЙ ОПРОС ---
+const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState({ archetype: '', shadow: '', superpower: '', aiTone: '' });
+  const [answers, setAnswers] = useState({ identity: '', focus: '', struggle: '', chronotype: '', aiTone: '' });
   
   const steps = [
     {
-      title: "Что движет тобой больше всего?",
-      key: 'archetype',
+      title: "Ваш архетип сейчас?",
+      key: 'identity',
       options: [
-        { label: "Порядок и Контроль", icon: Shield, value: "Правитель (Стремление к порядку)" },
-        { label: "Познание Истины", icon: BookOpen, value: "Мудрец (Поиск правды)" },
-        { label: "Победа и Мастерство", icon: Medal, value: "Герой (Достижение целей)" },
-        { label: "Связь и Чувства", icon: Heart, value: "Любовник (Эмпатия и связь)" },
-        { label: "Создание Нового", icon: Feather, value: "Творец (Воображение)" },
+        { label: "Творец", icon: Feather, value: "Творец, ищущий вдохновение" },
+        { label: "Лидер", icon: Briefcase, value: "Лидер, строящий системы" },
+        { label: "Искатель", icon: Search, value: "Человек, ищущий истину и знания" },
+        { label: "Хранитель", icon: Anchor, value: "Человек, ищущий гармонию и стабильность" },
       ]
     },
     {
-      title: "Твой главный внутренний страх?",
-      key: 'shadow',
+      title: "Когда у вас пик энергии?",
+      key: 'chronotype',
       options: [
-        { label: "Хаос и потеря контроля", icon: Cloud, value: "Страх хаоса" },
-        { label: "Быть слабым / проиграть", icon: Lock, value: "Страх слабости" },
-        { label: "Одиночество / Ненужность", icon: UserIcon, value: "Страх отвержения" },
-        { label: "Застой / Пустота", icon: Anchor, value: "Страх бессмысленности" },
+        { label: "Раннее утро", icon: Sun, value: "Утренний тип" },
+        { label: "Поздний вечер", icon: Moon, value: "Вечерний тип" },
+        { label: "День / Плавающе", icon: Activity, value: "Плавающий режим" },
       ]
     },
     {
-      title: "В чем твоя суперсила?",
-      key: 'superpower',
+      title: "Главная цель на месяц?",
+      key: 'focus',
       options: [
-        { label: "Воля и Дисциплина", icon: Zap, value: "Железная воля" },
-        { label: "Интуиция и Поток", icon: Sparkles, value: "Сильная интуиция" },
-        { label: "Логика и Анализ", icon: Brain, value: "Холодный разум" },
-        { label: "Эмпатия и Люди", icon: Heart, value: "Чувствование людей" },
+        { label: "Финансы и Карьера", icon: Zap, value: "Рост доходов и карьеры" },
+        { label: "Внутренний покой", icon: Cloud, value: "Снижение стресса и тревоги" },
+        { label: "Дисциплина", icon: Brain, value: "Построение режима" },
+        { label: "Семья и Люди", icon: Heart, value: "Улучшение отношений" },
       ]
     },
     {
-      title: "Какой наставник тебе нужен?",
+      title: "Что мешает больше всего?",
+      key: 'struggle',
+      options: [
+        { label: "Откладывание дел", icon: Clock, value: "Прокрастинация" },
+        { label: "Тревожные мысли", icon: Lock, value: "Страх и неуверенность" },
+        { label: "Расфокус", icon: Activity, value: "Сложно держать внимание" },
+        { label: "Нет сил", icon: Coffee, value: "Выгорание и усталость" },
+      ]
+    },
+    {
+      title: "Какой стиль общения выбрать?",
       key: 'aiTone',
       options: [
-        { label: "Мудрый Философ", icon: Moon, value: "Философский, спокойный, глубокий" },
-        { label: "Честный Тренер", icon: Target, value: "Прямой, мотивирующий, без жалости" },
-        { label: "Мягкий Психолог", icon: Coffee, value: "Теплый, принимающий, заботливый" },
+        { label: "Мудрец (Спокойный)", icon: BookOpen, value: "Глубокий, спокойный, философский" },
+        { label: "Коуч (Прямой)", icon: Zap, value: "Прямой, честный, ориентированный на результат" },
+        { label: "Друг (Тёплый)", icon: Heart, value: "Поддерживающий, теплый, эмпатичный" },
       ]
     }
   ];
@@ -130,13 +134,11 @@ const ArchetypeOnboarding: React.FC<{ onComplete: (data: Partial<UserProfile>) =
               <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i <= step ? 'w-8 bg-indigo-500' : 'w-2 bg-slate-200'}`} />
             ))}
           </div>
-          <h2 className="text-2xl font-extrabold text-slate-800 text-center leading-tight mb-2">
+          <h2 className="text-3xl font-extrabold text-slate-800 text-center leading-tight mb-2">
             {currentStepData.title}
           </h2>
           <p className="text-center text-slate-400 text-sm">Шаг {step + 1} из {steps.length}</p>
         </div>
-        
-        {/* Key=Step нужен, чтобы сбрасывать фокус/выделение при смене вопроса */}
         <div className="space-y-3" key={step}>
           {currentStepData.options.map((option, idx) => (
             <button
@@ -157,63 +159,9 @@ const ArchetypeOnboarding: React.FC<{ onComplete: (data: Partial<UserProfile>) =
   );
 };
 
-// --- ЕЖЕДНЕВНЫЙ ЧЕК-ИН (Погода дня) ---
-const DailyCheckinModal: React.FC<{ onClose: () => void, onSubmit: (energy: string, context: string) => void }> = ({ onClose, onSubmit }) => {
-  const [stage, setStage] = useState<'ENERGY' | 'CONTEXT'>('ENERGY');
-  const [energy, setEnergy] = useState('');
-
-  const energyOptions = [
-    { label: "На пике 🔥", value: "Высокая, готов свернуть горы" },
-    { label: "В потоке 🌊", value: "Ровная, спокойная уверенность" },
-    { label: "В хаосе 🌪", value: "Тревожная, много мыслей" },
-    { label: "На нуле 🪫", value: "Низкая, нужно восстановление" },
-  ];
-
-  const contextOptions = [
-    { label: "Битва / Вызов ⚔️", value: "Важная встреча или сложная задача" },
-    { label: "Рутина / Работа 🏗", value: "Обычный рабочий день" },
-    { label: "Тишина / Отдых 🧘", value: "Выходной, время для себя" },
-    { label: "Творчество 🎨", value: "Создание чего-то нового" },
-  ];
-
-  const handleSelect = (val: string) => {
-    if (stage === 'ENERGY') {
-      setEnergy(val);
-      setStage('CONTEXT');
-    } else {
-      onSubmit(energy, val);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center animate-fade-in p-4">
-      <div className="bg-white w-full max-w-sm rounded-[32px] p-6 shadow-2xl relative overflow-hidden">
-        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
-          <X size={20} />
-        </button>
-        
-        <h3 className="text-xl font-bold text-slate-800 mb-6 text-center mt-2">
-          {stage === 'ENERGY' ? "Как твоя батарейка?" : "Что предстоит сегодня?"}
-        </h3>
-
-        <div className="grid grid-cols-2 gap-3">
-          {(stage === 'ENERGY' ? energyOptions : contextOptions).map((opt) => (
-            <button
-              key={opt.label}
-              onClick={() => handleSelect(opt.value)}
-              className="p-4 rounded-2xl bg-slate-50 border border-slate-100 hover:bg-indigo-50 hover:border-indigo-100 transition-all active:scale-95 flex flex-col items-center text-center space-y-2"
-            >
-              <span className="font-bold text-slate-700 text-sm">{opt.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- MAIN APP ---
+// --- ГЛАВНОЕ ПРИЛОЖЕНИЕ ---
 const App: React.FC = () => {
+  // --- STATE INIT (SAFE PARSING) ---
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null') || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; }
   });
@@ -225,8 +173,6 @@ const App: React.FC = () => {
     } catch { return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false }; }
   });
 
-  const isSpaceTheme = userProfile.theme === 'SPACE';
-
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
@@ -236,99 +182,106 @@ const App: React.FC = () => {
   });
   
   const [isInsightLoading, setIsInsightLoading] = useState(false);
-  const [showCheckin, setShowCheckin] = useState(false);
+  const [isBatteryModalOpen, setIsBatteryModalOpen] = useState(false); // Для модалки батарейки
    
   const [history, setHistory] = useState<ChatSession[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }
   });
    
-  const [totalSessions, setTotalSessions] = useState<number>(() => parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10) || 0);
-  const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => parseInt(localStorage.getItem(STORAGE_KEYS.TIME) || '0', 10) || 0);
+  const [totalSessions, setTotalSessions] = useState<number>(() => {
+    const val = parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10);
+    return isNaN(val) ? 0 : val;
+  });
+   
+  const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => {
+    const val = parseInt(localStorage.getItem(STORAGE_KEYS.TIME) || '0', 10);
+    return isNaN(val) ? 0 : val;
+  });
+
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.JOURNAL) || '[]'); } catch { return []; }
-  });
-  const [weeklyActivity, setWeeklyActivity] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVITY) || '[40, 60, 30, 80, 55, 30, 10]'); } catch { return [40, 60, 30, 80, 55, 30, 10]; }
   });
 
   const longPressTimer = useRef<number | null>(null);
 
-  // Функция запуска генерации карты (вызывается после чекина)
-  const generateAlchemicalMap = async (currentEnergy: string, currentContext: string) => {
-    setShowCheckin(false);
-    setIsInsightLoading(true);
-    const todayStr = new Date().toDateString();
+  // --- LOGIC ---
+  useEffect(() => {
+    const generateDailyAdvice = async () => {
+      if (!userProfile.onboardingCompleted || !userProfile.name) return;
 
-    try {
-      const recentEntries = journalEntries.slice(0, 3).map(e => e.content).join(". ");
-      const userName = userProfile.name || "Путешественник";
-      
-      const prompt = `
-        Ты — мудрый оракул и психолог. Клиент: ${userName}.
+      const todayStr = new Date().toDateString();
+      if (dailyInsight && dailyInsight.date === todayStr) return;
+
+      setIsInsightLoading(true);
+      try {
+        const recentEntries = journalEntries.slice(0, 3).map(e => e.content).join(". ");
+        const userName = userProfile.name || "Друг";
         
-        ГЛОБАЛЬНЫЙ ПРОФИЛЬ (Кто он по сути):
-        - Архетип: ${userProfile.archetype}
-        - Тень (Страх): ${userProfile.shadow}
-        - Сила: ${userProfile.superpower}
-        - Тон: ${userProfile.aiTone}
+        const prompt = `
+          Ты — элитный персональный наставник. Клиент: ${userName}.
+          
+          ПРОФИЛЬ КЛИЕНТА:
+          - Архетип: ${userProfile.identity || 'Искатель'}
+          - Биоритм: ${userProfile.chronotype || 'Обычный'}
+          - Цель: ${userProfile.focus || 'Рост'}
+          - Враг: ${userProfile.struggle || 'Нет'}
+          - Стиль: ${userProfile.aiTone || 'Мудрый'}
+          
+          Контекст (из дневника): "${recentEntries}".
+          
+          ЗАДАЧА:
+          Составь "Карту дня". 
+          Раздели ответ строго символами "|||".
+          Не используй markdown заголовки.
+          
+          1. Утро: Практика настройки на день (2 предложения).
+          2. Главный Фокус: Стратегия достижения цели сегодня (2 предложения).
+          3. Энергия: Лайфхак от выгорания/лени (2 предложения).
+          4. Вечер: Вопрос для рефлексии.
+          
+          Формат ответа:
+          ТЕКСТ_УТРА|||ТЕКСТ_ФОКУСА|||ТЕКСТ_ЭНЕРГИИ|||ТЕКСТ_ВЕЧЕРА
+        `;
+
+        const responseText = await sendMessageToGemini(prompt);
+        const parts = responseText.split('|||');
         
-        ТЕКУЩАЯ ПОГОДА (Здесь и сейчас):
-        - Энергия: ${currentEnergy}
-        - Контекст дня: ${currentContext}
-        - Мысли из дневника: "${recentEntries}"
-        
-        ЗАДАЧА:
-        Составь "Алхимическую Карту Дня". Она должна помочь прожить этот день максимально гармонично, учитывая разницу между Архетипом и текущим состоянием.
-        
-        СТРУКТУРА ОТВЕТА (4 коротких емких блока, разделитель "|||"):
-        1. Роль дня (Метафора). Кем ему сегодня быть? (Например: "Раненый Целитель", "Наблюдатель в башне", "Веселый Трикстер").
-        2. Щит (Ловушка). От чего предостеречь? (Учитывая Тень и Энергию).
-        3. Призма (Оптика). Как смотреть на происходящее?
-        4. Артефакт (Ключ). Одно микро-действие или фраза-оберег.
-        
-        Формат ответа (только текст):
-        РОЛЬ_МЕТАФОРА|||ПРЕДОСТЕРЕЖЕНИЕ|||ФОКУС_ВНИМАНИЯ|||КЛЮЧЕВОЕ_ДЕЙСТВИЕ
-      `;
+        const newInsight: DailyInsightData = {
+          date: todayStr,
+          morning: parts[0]?.trim() || "Начни с благодарности.",
+          focus: parts[1]?.trim() || "Сделай главное дело первым.",
+          energy: parts[2]?.trim() || "Дыши глубже.",
+          evening: parts[3]?.trim() || "Что порадовало сегодня?",
+        };
 
-      const responseText = await sendMessageToGemini(prompt);
-      const parts = responseText.split('|||');
-      
-      const newInsight: DailyInsightData = {
-        date: todayStr,
-        archetype: parts[0]?.trim() || "Тихий Наблюдатель",
-        trap: parts[1]?.trim() || "Не пытайся спасти всех.",
-        lens: parts[2]?.trim() || "Смотри сквозь шум.",
-        key: parts[3]?.trim() || "Дыши.",
-      };
+        setDailyInsight(newInsight);
+        localStorage.setItem(STORAGE_KEYS.DAILY_INSIGHT, JSON.stringify(newInsight));
 
-      setDailyInsight(newInsight);
-      localStorage.setItem(STORAGE_KEYS.DAILY_INSIGHT, JSON.stringify(newInsight));
-      setCurrentView('DAILY_GUIDE');
+      } catch (e) {
+        setDailyInsight({
+          date: todayStr,
+          morning: "Улыбнись новому дню.",
+          focus: "Слушай себя.",
+          energy: "Делай паузы.",
+          evening: "День прошел не зря."
+        });
+      } finally {
+        setIsInsightLoading(false);
+      }
+    };
 
-    } catch (e) {
-      console.error("AI Error", e);
-    } finally {
-      setIsInsightLoading(false);
-    }
-  };
+    generateDailyAdvice();
+  }, [userProfile.name, journalEntries, userProfile.onboardingCompleted, dailyInsight]);
 
-  const handleDailyCardClick = () => {
-    const todayStr = new Date().toDateString();
-    if (dailyInsight && dailyInsight.date === todayStr) {
-      setCurrentView('DAILY_GUIDE');
-    } else {
-      setShowCheckin(true);
-    }
-  };
-
+  // Save Effects
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history)); }, [history]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.SESSIONS, totalSessions.toString()); }, [totalSessions]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.TIME, totalTimeSeconds.toString()); }, [totalTimeSeconds]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(weeklyActivity)); }, [weeklyActivity]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.JOURNAL, JSON.stringify(journalEntries)); }, [journalEntries]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(siteConfig)); }, [siteConfig]);
 
+  // Telegram Init
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -347,10 +300,13 @@ const App: React.FC = () => {
 
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
+  
+  // SAFE RANK CALC
   const getCurrentRank = (steps: number) => {
-    const safeSteps = (typeof steps === 'number' && !isNaN(steps)) ? steps : 0;
+    const safeSteps = isNaN(steps) ? 0 : steps;
     return RANKS.find(r => safeSteps >= r.threshold) || RANKS[RANKS.length - 1];
   };
+
   const startMode = (mode: JournalMode) => { setSelectedMode(mode); setCurrentView('CHAT'); };
   
   const handleSaveJournalEntry = (entry: JournalEntry, isNew: boolean, duration: number) => {
@@ -388,80 +344,111 @@ const App: React.FC = () => {
 
   const handleAdminTriggerStart = () => {
     longPressTimer.current = window.setTimeout(() => {
-      const pass = prompt('Пароль администратора:');
+      const pass = prompt('Admin Password:');
       if (pass === siteConfig.adminPasscode) setCurrentView('ADMIN');
     }, 2000); 
   };
+  const handleAdminTriggerEnd = () => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } };
 
-  const handleAdminTriggerEnd = () => {
-    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
+  // --- COMPONENTS ---
+
+  const renderBatteryModal = () => {
+    if (!isBatteryModalOpen) return null;
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsBatteryModalOpen(false)}></div>
+        
+        {/* Content */}
+        <div className="bg-white rounded-[32px] p-6 w-full max-w-sm relative z-10 animate-fade-in shadow-2xl">
+          <button onClick={() => setIsBatteryModalOpen(false)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
+            <X size={24} />
+          </button>
+          
+          <h3 className="text-xl font-bold text-center mb-6 text-slate-800">Как твоя батарейка?</h3>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { label: "На пике 🔥", val: "high" },
+              { label: "В потоке 🌊", val: "flow" },
+              { label: "Нормально 🙂", val: "ok" },
+              { label: "Нужен отдых 🔋", val: "low" }
+            ].map((item) => (
+              <button 
+                key={item.val}
+                onClick={() => {
+                  // Здесь можно сохранить состояние, пока просто закрываем
+                  setIsBatteryModalOpen(false);
+                  if (window.Telegram?.WebApp?.HapticFeedback) {
+                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                  }
+                }}
+                className="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 font-semibold text-slate-700 transition-all active:scale-95"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   };
 
-  // --- ЭКРАН "АЛХИМИЧЕСКАЯ КАРТА" ---
   const renderDailyGuide = () => (
     <div className="h-full flex flex-col bg-[#F8FAFC] px-6 pt-10 pb-32 animate-fade-in overflow-y-auto">
       <header className="mb-8 flex items-center space-x-4">
          <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
            <ArrowLeft size={24} />
          </button>
-         <h1 className="text-3xl font-bold text-slate-800">Твой Компас</h1>
+         <h1 className="text-3xl font-bold text-slate-800">Карта дня</h1>
       </header>
 
       {dailyInsight ? (
         <div className="space-y-6">
-          {/* РОЛЬ ДНЯ */}
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[32px] p-8 text-white shadow-xl shadow-indigo-200 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-            <div className="relative z-10">
-                <div className="flex items-center space-x-3 mb-4 opacity-80">
-                <span className="bg-white/20 p-1.5 rounded-lg"><UserIcon size={16} /></span>
-                <span className="text-xs font-bold uppercase tracking-widest">Архетип дня</span>
-                </div>
-                <h2 className="text-2xl font-bold leading-tight">{dailyInsight.archetype}</h2>
-            </div>
-          </div>
-
-          {/* ЩИТ (ПРЕДОСТЕРЕЖЕНИЕ) */}
-          <div className="bg-white rounded-[28px] p-6 border border-rose-100 shadow-sm relative overflow-hidden">
-             <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-rose-400"></div>
-             <div className="flex items-center space-x-3 mb-3 text-rose-500">
-               <Shield size={20} />
-               <span className="text-[10px] font-bold uppercase tracking-widest">Ловушка дня</span>
+          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
+             <div className="flex items-center space-x-3 mb-3 text-amber-500">
+               <Sun size={20} />
+               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Настройка (Утро)</span>
              </div>
-             <p className="text-slate-700 leading-relaxed font-medium pl-2">{dailyInsight.trap}</p>
+             <p className="text-slate-700 leading-relaxed font-medium">{dailyInsight.morning}</p>
           </div>
 
-          {/* ЛИНЗА (ОПТИКА) */}
-          <div className="bg-white rounded-[28px] p-6 border border-indigo-50 shadow-sm">
-            <div className="flex items-center space-x-3 mb-3 text-indigo-500">
-              <Eye size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Оптика</span>
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[28px] p-6 text-white shadow-lg shadow-indigo-200">
+            <div className="flex items-center space-x-3 mb-3 opacity-80">
+              <Target size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Главный фокус</span>
             </div>
-            <p className="text-slate-700 leading-relaxed font-medium pl-2">{dailyInsight.lens}</p>
+            <h2 className="text-lg font-bold leading-relaxed">{dailyInsight.focus}</h2>
           </div>
 
-          {/* КЛЮЧ (АРТЕФАКТ) */}
-          <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-[28px] p-6 border border-amber-100 shadow-sm">
-            <div className="flex items-center space-x-3 mb-3 text-amber-600">
-              <Key size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Артефакт силы</span>
+          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
+            <div className="flex items-center space-x-3 mb-3 text-emerald-600">
+              <Zap size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Энергия</span>
             </div>
-            <p className="text-slate-800 leading-relaxed font-bold italic pl-2">"{dailyInsight.key}"</p>
+            <p className="text-slate-700 leading-relaxed font-medium">{dailyInsight.energy}</p>
+          </div>
+
+          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
+            <div className="flex items-center space-x-3 mb-3 text-indigo-400">
+              <Moon size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Рефлексия (Вечер)</span>
+            </div>
+            <p className="text-slate-600 leading-relaxed italic">"{dailyInsight.evening}"</p>
           </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-full">
           <Loader2 className="animate-spin text-indigo-500 mb-4" size={32} />
-          <p className="text-slate-400">Синхронизация...</p>
+          <p className="text-slate-400">Составляю карту...</p>
         </div>
       )}
     </div>
   );
 
-  // --- ГЛАВНЫЙ ЭКРАН ---
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-10 w-full relative overflow-hidden">
+      <header className="mb-8 w-full relative overflow-hidden">
         <div className="absolute inset-0 bg-[#F8FAFC]">
            <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: `radial-gradient(#6366f1 0.8px, transparent 0.8px)`, backgroundSize: '16px 16px' }}></div>
            <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[120%] bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full blur-[40px] opacity-20"></div>
@@ -477,14 +464,9 @@ const App: React.FC = () => {
                <div className="relative w-[240px] h-[240px] rounded-full overflow-hidden opacity-[0.18] grayscale brightness-110 pointer-events-none">
                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
                </div>
-             ) : siteConfig.customWatermarkUrl ? (
-               <img src={siteConfig.customWatermarkUrl} className="h-[80px] object-contain opacity-[0.08] grayscale pointer-events-none" alt="Watermark" />
              ) : (
                 <div className="w-[100px] h-[100px] flex items-center justify-center opacity-[0.02]">
-                  <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="50" cy="50" r="40" stroke="#6366f1" strokeWidth="1"/>
-                    <path d="M50 10V90M10 50H90" stroke="#6366f1" strokeWidth="1"/>
-                  </svg>
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="#6366f1" strokeWidth="1"/><path d="M50 10V90M10 50H90" stroke="#6366f1" strokeWidth="1"/></svg>
                 </div>
              )}
           </div>
@@ -492,12 +474,17 @@ const App: React.FC = () => {
             <h1 className="text-[19px] font-light tracking-tight text-slate-800/95 leading-tight">
               Привет, <span className="font-bold text-slate-900">{userProfile.name || 'Странник'}</span>
             </h1>
-            <p className="text-[11px] font-medium text-slate-400 tracking-tight opacity-75 border-l border-indigo-200/50 pl-2 mt-0.5">
-              Как твое настроение?
-            </p>
+            
+            {/* Кнопка состояния (Батарейка) */}
+            <button 
+              onClick={() => setIsBatteryModalOpen(true)}
+              className="mt-2 flex items-center space-x-2 bg-white/60 backdrop-blur-sm border border-indigo-100 rounded-full px-3 py-1.5 shadow-sm active:scale-95 transition-all"
+            >
+              <Battery size={14} className="text-indigo-500" />
+              <span className="text-[11px] font-bold text-slate-600">Как ты?</span>
+            </button>
           </div>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-px bg-slate-100/30"></div>
       </header>
 
       <div className="px-6 mb-10 relative z-20">
@@ -518,10 +505,9 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* --- ИНТЕРАКТИВНЫЙ БЛОК --- */}
       <div className="px-6 space-y-3.5 mb-7">
         <h3 className="text-[10px] font-bold ml-2 text-slate-400 uppercase tracking-widest">
-          {userProfile.onboardingCompleted ? "Компас дня" : "Начало"}
+          {userProfile.onboardingCompleted ? "На сегодня" : "Начало"}
         </h3>
         
         {!userProfile.onboardingCompleted ? (
@@ -530,15 +516,11 @@ const App: React.FC = () => {
             className="w-full bg-indigo-600 text-white p-6 rounded-[28px] shadow-lg shadow-indigo-200 border border-indigo-500 relative overflow-hidden group transition-all active:scale-95"
           >
              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 opacity-90"></div>
-             <div className="absolute -right-4 -bottom-4 opacity-20 rotate-12">
-               <Sparkles size={100} fill="white" />
-             </div>
-             
              <div className="relative z-10 flex items-center justify-between">
                 <div className="text-left">
-                  <h4 className="font-bold text-lg mb-1">Узнать свой Архетип</h4>
+                  <h4 className="font-bold text-lg mb-1">Создать профиль</h4>
                   <p className="text-indigo-100 text-xs leading-relaxed max-w-[200px]">
-                    Пройдите тест, чтобы получить паспорт личности.
+                    Расскажите о себе, чтобы ИИ был полезнее.
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
@@ -548,7 +530,7 @@ const App: React.FC = () => {
           </button>
         ) : (
           <button 
-            onClick={handleDailyCardClick}
+            onClick={() => setCurrentView('DAILY_GUIDE')}
             className="w-full bg-white border-slate-50 p-6 rounded-[28px] border shadow-sm relative overflow-hidden min-h-[140px] flex flex-col justify-center items-start text-left transition-all active:scale-95 group"
           >
              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
@@ -556,20 +538,20 @@ const App: React.FC = () => {
              {isInsightLoading ? (
                <div className="flex flex-col items-center justify-center w-full space-y-3">
                  <Loader2 className="animate-spin text-indigo-500" size={20} />
-                 <p className="text-[10px] text-slate-400 animate-pulse font-medium">Синхронизация...</p>
+                 <p className="text-[10px] text-slate-400 animate-pulse font-medium">Анализирую состояние...</p>
                </div>
              ) : (
                <>
                  <div className="relative z-10 mb-3">
                    <span className="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">
-                     Сегодня
+                     Фокус дня
                    </span>
                  </div>
-                 <p className="text-slate-800 font-bold text-lg leading-tight mb-2 relative z-10">
-                   {dailyInsight ? `Архетип: ${dailyInsight.archetype}` : "Получить карту дня"}
+                 <p className="text-slate-800 font-bold text-lg leading-tight mb-2 relative z-10 line-clamp-2">
+                   {dailyInsight?.focus || "Загрузка..."}
                  </p>
                  <div className="flex items-center text-indigo-500 text-xs font-bold mt-2 group-hover:translate-x-1 transition-transform">
-                   <span>{dailyInsight ? "Открыть компас" : "Настроить день"}</span>
+                   <span>Открыть карту</span>
                    <ChevronRight size={14} className="ml-1" />
                  </div>
                </>
@@ -585,7 +567,7 @@ const App: React.FC = () => {
               <div className="flex justify-between items-start mb-5">
                 <div>
                   <p className="text-[9px] text-slate-400 font-bold uppercase tracking-[0.15em] mb-1.5 flex items-center">ПУТЬ ОСОЗНАНИЯ <ChevronRight size={10} className="ml-1 opacity-50" /></p>
-                  <h4 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">{currentRank.title}</h4>
+                  <h4 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700">{currentRank?.title || "Странник"}</h4>
                 </div>
                 <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-md border border-indigo-100/20"><Star size={20} fill="currentColor" /></div>
               </div>
@@ -600,6 +582,97 @@ const App: React.FC = () => {
               </div>
             </div>
          </button>
+      </div>
+    </div>
+  );
+
+  const renderHistory = () => {
+    // SAFE RENDER
+    return (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+       <header className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">История</h1>
+      </header>
+      {!history || history.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+          <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
+            <BookOpen size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-slate-700 font-medium text-lg">Пока пусто</h3>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {history.map((session) => {
+            let dateStr = "Дата неизвестна";
+            try {
+              if (session.date) dateStr = new Date(session.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+            } catch (e) {}
+
+            return (
+            <button key={session.id} onClick={() => { setSelectedSession(session); setCurrentView('READ_HISTORY'); }} className="w-full text-left p-4 rounded-[24px] bg-white border-slate-50 shadow-sm border flex items-start space-x-4 hover:shadow-md transition-shadow active:scale-98">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${session.mode === 'DECISION' ? 'bg-indigo-50 text-indigo-500' : session.mode === 'EMOTIONS' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                {session.mode === 'DECISION' ? <Zap size={20} fill="currentColor" strokeWidth={0} /> : session.mode === 'EMOTIONS' ? <Heart size={20} /> : <BookOpen size={20} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-1">
+                   <h4 className="font-semibold text-slate-700 text-sm">
+                      {session.mode === 'DECISION' ? 'Решение' : session.mode === 'EMOTIONS' ? 'Эмоции' : 'Дневник'}
+                   </h4>
+                   <span className="text-[10px] text-slate-400">{dateStr}</span>
+                </div>
+                <p className="text-xs text-slate-500 line-clamp-2">{session.preview || 'Нет описания'}</p>
+              </div>
+            </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+    );
+  };
+
+  const renderProfile = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+       <header className="mb-8 flex items-center space-x-4">
+         <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">Профиль</h1>
+      </header>
+      
+      <div className="bg-white shadow-sm rounded-[32px] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border border-slate-50">
+        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-50"></div>
+        <div className="w-24 h-24 rounded-full bg-white p-1 shadow-sm relative z-10 -mt-2 overflow-hidden border border-slate-100">
+           {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}
+        </div>
+        <h3 className="text-xl font-bold mt-4 text-slate-800">{userProfile.name || 'Странник'}</h3>
+        <p className="text-sm text-indigo-400 font-medium">{currentRank?.title || "Начинающий"}</p>
+      </div>
+
+      <div className="space-y-4">
+        <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Medal size={20} /></div>
+            <span className="text-sm font-semibold">Ранги</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
+
+        <button onClick={() => setCurrentView('SETTINGS')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Settings size={20} /></div>
+            <span className="text-sm font-semibold">Настройки</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
+
+        <button onClick={() => setCurrentView('ABOUT')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Info size={20} /></div>
+            <span className="text-sm font-semibold">О приложении</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
       </div>
     </div>
   );
@@ -648,7 +721,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="pt-4 border-t border-slate-100">
-             <label className="text-sm font-bold text-slate-700 mb-2 block">Паспорт личности</label>
+             <label className="text-sm font-bold text-slate-700 mb-2 block">Протокол</label>
              <button 
                onClick={() => {
                  setCurrentView('ONBOARDING');
@@ -656,7 +729,7 @@ const App: React.FC = () => {
                className="w-full py-4 rounded-2xl bg-slate-50 text-slate-600 font-bold border border-slate-100 active:scale-95 transition-all flex items-center justify-center space-x-2 hover:bg-slate-100"
              >
                 <Compass size={18} />
-                <span>Определить Архетип заново</span>
+                <span>Пройти опрос заново</span>
              </button>
           </div>
 
@@ -666,6 +739,96 @@ const App: React.FC = () => {
     );
   };
 
+  const renderRanksInfo = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
+      <header className="mb-8 flex items-center space-x-4 text-left">
+         <button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">Ранги пути</h1>
+      </header>
+
+      <div className="space-y-4">
+        {[...RANKS].reverse().map((rank) => (
+          <div 
+            key={rank.title} 
+            className={`p-5 rounded-[24px] border transition-all ${
+              totalSteps >= rank.threshold 
+                ? 'bg-indigo-50 border-indigo-100 shadow-sm'
+                : 'bg-slate-50/50 border-slate-100 opacity-50'
+            }`}
+          >
+            <div className="flex justify-between items-start mb-2">
+               <h4 className={`font-bold ${totalSteps >= rank.threshold ? 'text-indigo-700' : 'text-slate-400'}`}>
+                 {rank.title}
+               </h4>
+               {totalSteps >= rank.threshold && (
+                 <Award size={18} className="text-indigo-500" />
+               )}
+            </div>
+            <p className="text-xs leading-relaxed text-slate-500">
+              {rank.desc}
+            </p>
+            <div className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-60">
+              Требуется: {rank.threshold} баллов
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAbout = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
+      <header className="mb-8 flex items-center space-x-4 text-left">
+         <button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">О приложении</h1>
+      </header>
+      
+      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+           <StylizedMMText text={siteConfig.logoText} className="text-[200px]" color="#A78BFA" opacity="0.05" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center w-full">
+          <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">
+            {siteConfig.customLogoUrl ? (
+              <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" alt="App Logo" />
+            ) : (
+              <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />
+            )}
+          </div>
+          <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
+          
+          <div className="space-y-6 text-left w-full px-2">
+            {siteConfig.aboutParagraphs.map((p, i) => (
+              <p key={i} className="text-[16px] leading-relaxed text-slate-600">
+                {p}
+              </p>
+            ))}
+          </div>
+
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
+             <div className="text-center">
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
+                <p className="text-base font-semibold text-slate-700">1.5.0</p>
+             </div>
+             <div className="text-center">
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
+                <p className="text-base font-semibold text-slate-700">09-2025</p>
+             </div>
+          </div>
+          
+          <p className="text-[12px] text-slate-400 font-medium italic mt-12">
+            "Познай самого себя, и ты познаешь мир."
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="h-screen w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -674,15 +837,9 @@ const App: React.FC = () => {
       </div>
 
       <main className="flex-1 relative overflow-hidden z-10">
-        {showCheckin && (
-          <DailyCheckinModal 
-            onClose={() => setShowCheckin(false)}
-            onSubmit={generateAlchemicalMap}
-          />
-        )}
-
+        {renderBatteryModal()}
         {currentView === 'ONBOARDING' && (
-          <ArchetypeOnboarding 
+          <OnboardingScreen 
             onComplete={(data) => {
               setUserProfile(prev => ({ ...prev, ...data, onboardingCompleted: true }));
               localStorage.removeItem(STORAGE_KEYS.DAILY_INSIGHT);
@@ -692,7 +849,6 @@ const App: React.FC = () => {
             onBack={() => setCurrentView('HOME')}
           />
         )}
-        
         {currentView === 'DAILY_GUIDE' && renderDailyGuide()}
         {currentView === 'HOME' && renderHome()}
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface entries={journalEntries} onSaveEntry={handleSaveJournalEntry} onDeleteEntry={handleDeleteJournalEntry} onUpdateOrder={handleReorderJournalEntries} onBack={() => setCurrentView('HOME')} />}
