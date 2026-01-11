@@ -5,7 +5,7 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X } from 'lucide-react';
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -19,8 +19,8 @@ const DEFAULT_CONFIG: SiteConfig = {
   customLogoUrl: null,
   customWatermarkUrl: null,
   aboutParagraphs: [
-    "Mindful Mirror — это пространство для честного диалога с самим собой.",
-    "Здесь технологии помогают услышать внутренний голос."
+    "Mindful Mirror — это зеркало вашего сознания.",
+    "Здесь вы находите ответы, которые уже есть внутри вас."
   ],
   quotes: [],
   adminPasscode: "0000"
@@ -45,80 +45,137 @@ const STORAGE_KEYS = {
   ACTIVITY: 'mm_weekly_activity',
   JOURNAL: 'mm_journal_entries',
   CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v8'
+  DAILY_INSIGHT: 'mm_daily_insight_v9' // v9 - Новая структура сфер
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
   <span className={`${className} font-extrabold italic select-none pointer-events-none uppercase`} style={{ color, opacity, fontFamily: 'Manrope, sans-serif' }}>{text}</span>
 );
 
-// --- ГЛУБОКИЙ ОПРОС ---
+// --- ЛОГИКА ТЕСТА НА АРХЕТИП ---
+const ARCHETYPES = {
+  CREATOR: { title: "Творец", icon: Feather, desc: "Вы стремитесь создавать новое и выражать себя." },
+  RULER: { title: "Правитель", icon: Briefcase, desc: "Вам важен порядок, контроль и достижения." },
+  SAGE: { title: "Мудрец", icon: BookOpen, desc: "Вы ищете истину, знания и понимание мира." },
+  CAREGIVER: { title: "Хранитель", icon: Shield, desc: "Ваша сила в заботе, эмпатии и поддержке." }
+};
+
 const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
-  const [answers, setAnswers] = useState({ identity: '', focus: '', struggle: '', chronotype: '', aiTone: '' });
-  
-  const steps = [
+  const [scores, setScores] = useState({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0 });
+  const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string }>({});
+  const [resultArchetype, setResultArchetype] = useState<string | null>(null);
+
+  // Вопросы теста
+  const questions = [
     {
-      title: "Ваш архетип сейчас?",
-      key: 'identity',
+      title: "Что движет вами больше всего?",
       options: [
-        { label: "Творец", icon: Feather, value: "Творец, ищущий вдохновение" },
-        { label: "Лидер", icon: Briefcase, value: "Лидер, строящий системы" },
-        { label: "Искатель", icon: Search, value: "Человек, ищущий истину и знания" },
-        { label: "Хранитель", icon: Anchor, value: "Человек, ищущий гармонию и стабильность" },
+        { label: "Желание создать что-то уникальное", type: 'CREATOR' },
+        { label: "Стремление к успеху и влиянию", type: 'RULER' },
+        { label: "Поиск истины и знаний", type: 'SAGE' },
+        { label: "Желание помогать людям", type: 'CAREGIVER' },
       ]
     },
     {
-      title: "Когда у вас пик энергии?",
-      key: 'chronotype',
+      title: "Чего вы боитесь?",
       options: [
-        { label: "Раннее утро", icon: Sun, value: "Утренний тип" },
-        { label: "Поздний вечер", icon: Moon, value: "Вечерний тип" },
-        { label: "День / Плавающе", icon: Activity, value: "Плавающий режим" },
+        { label: "Быть посредственностью", type: 'CREATOR' },
+        { label: "Хаоса и потери контроля", type: 'RULER' },
+        { label: "Быть обманутым или невежественным", type: 'SAGE' },
+        { label: "Эгоизма и неблагодарности", type: 'CAREGIVER' },
       ]
     },
     {
-      title: "Главная цель на месяц?",
+      title: "Как вы отдыхаете?",
+      options: [
+        { label: "Хобби, искусство, креатив", type: 'CREATOR' },
+        { label: "Планирование, спорт, статус", type: 'RULER' },
+        { label: "Чтение, размышления, учеба", type: 'SAGE' },
+        { label: "Время с близкими, уют", type: 'CAREGIVER' },
+      ]
+    },
+    // Вопросы для настройки (не влияют на архетип, но сохраняются)
+    {
+      title: "Главный фокус на месяц?",
       key: 'focus',
       options: [
-        { label: "Финансы и Карьера", icon: Zap, value: "Рост доходов и карьеры" },
-        { label: "Внутренний покой", icon: Cloud, value: "Снижение стресса и тревоги" },
-        { label: "Дисциплина", icon: Brain, value: "Построение режима" },
-        { label: "Семья и Люди", icon: Heart, value: "Улучшение отношений" },
+        { label: "Деньги и Карьера", value: "Рост доходов" },
+        { label: "Спокойствие", value: "Снижение стресса" },
+        { label: "Самореализация", value: "Поиск предназначения" },
+        { label: "Отношения", value: "Улучшение связей" },
       ]
     },
     {
-      title: "Что мешает больше всего?",
+      title: "Что мешает прямо сейчас?",
       key: 'struggle',
       options: [
-        { label: "Откладывание дел", icon: Clock, value: "Прокрастинация" },
-        { label: "Тревожные мысли", icon: Lock, value: "Страх и неуверенность" },
-        { label: "Расфокус", icon: Activity, value: "Сложно держать внимание" },
-        { label: "Нет сил", icon: Coffee, value: "Выгорание и усталость" },
-      ]
-    },
-    {
-      title: "Какой стиль общения выбрать?",
-      key: 'aiTone',
-      options: [
-        { label: "Мудрец (Спокойный)", icon: BookOpen, value: "Глубокий, спокойный, философский" },
-        { label: "Коуч (Прямой)", icon: Zap, value: "Прямой, честный, ориентированный на результат" },
-        { label: "Друг (Тёплый)", icon: Heart, value: "Поддерживающий, теплый, эмпатичный" },
+        { label: "Прокрастинация", value: "Откладывание дел" },
+        { label: "Тревога и Страх", value: "Неуверенность" },
+        { label: "Нет энергии", value: "Выгорание" },
+        { label: "Хаос в мыслях", value: "Расфокус" },
       ]
     }
   ];
 
-  const currentStepData = steps[step];
+  const handleSelect = (option: any) => {
+    // Если это вопрос на архетип (первые 3)
+    if (option.type) {
+      setScores(prev => ({ ...prev, [option.type]: prev[option.type as keyof typeof scores] + 1 }));
+    }
+    // Если это вопрос настройки
+    if (questions[step].key) {
+      setFinalData(prev => ({ ...prev, [questions[step].key!]: option.value }));
+    }
 
-  const handleOptionSelect = (value: string) => {
-    const newAnswers = { ...answers, [currentStepData.key]: value };
-    setAnswers(newAnswers);
-    if (step < steps.length - 1) {
+    if (step < questions.length - 1) {
       setStep(prev => prev + 1);
     } else {
-      onComplete(newAnswers);
+      calculateResult();
     }
   };
+
+  const calculateResult = () => {
+    // Находим победителя
+    let winner = 'SAGE';
+    let maxScore = -1;
+    (Object.keys(scores) as Array<keyof typeof scores>).forEach(key => {
+      if (scores[key] > maxScore) {
+        maxScore = scores[key];
+        winner = key;
+      }
+    });
+    setResultArchetype(winner);
+  };
+
+  const finish = () => {
+    if (resultArchetype) {
+      const arch = ARCHETYPES[resultArchetype as keyof typeof ARCHETYPES];
+      onComplete({ 
+        archetype: arch.title,
+        focus: finalData.focus,
+        struggle: finalData.struggle
+      });
+    }
+  };
+
+  if (resultArchetype) {
+    const arch = ARCHETYPES[resultArchetype as keyof typeof ARCHETYPES];
+    const Icon = arch.icon;
+    return (
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-white animate-fade-in text-center">
+        <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-6 shadow-sm">
+          <Icon size={48} />
+        </div>
+        <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Ваш Архетип</h2>
+        <h1 className="text-4xl font-extrabold text-slate-800 mb-4">{arch.title}</h1>
+        <p className="text-slate-600 leading-relaxed mb-10 max-w-xs">{arch.desc}</p>
+        <button onClick={finish} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-200 active:scale-95 transition-all">
+          Получить персональный план
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
@@ -130,26 +187,22 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
         <div className="mb-8">
           <div className="flex space-x-2 mb-6 justify-center">
-            {steps.map((_, i) => (
+            {questions.map((_, i) => (
               <div key={i} className={`h-1.5 rounded-full transition-all duration-500 ${i <= step ? 'w-8 bg-indigo-500' : 'w-2 bg-slate-200'}`} />
             ))}
           </div>
           <h2 className="text-3xl font-extrabold text-slate-800 text-center leading-tight mb-2">
-            {currentStepData.title}
+            {questions[step].title}
           </h2>
-          <p className="text-center text-slate-400 text-sm">Шаг {step + 1} из {steps.length}</p>
         </div>
         <div className="space-y-3" key={step}>
-          {currentStepData.options.map((option, idx) => (
+          {questions[step].options.map((option, idx) => (
             <button
               key={idx}
-              onClick={() => handleOptionSelect(option.value)}
+              onClick={() => handleSelect(option)}
               className="w-full p-5 rounded-[24px] border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-100 transition-all active:scale-95 flex items-center text-left group focus:outline-none"
             >
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-indigo-500 shadow-sm group-hover:scale-110 transition-transform">
-                <option.icon size={24} />
-              </div>
-              <span className="ml-4 font-bold text-slate-700 group-hover:text-indigo-700">{option.label}</span>
+              <span className="ml-2 font-bold text-slate-700 group-hover:text-indigo-700">{option.label}</span>
               <ChevronRight className="ml-auto text-slate-300 group-hover:text-indigo-400" size={20} />
             </button>
           ))}
@@ -159,9 +212,8 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
   );
 };
 
-// --- ГЛАВНОЕ ПРИЛОЖЕНИЕ ---
+// --- MAIN APP ---
 const App: React.FC = () => {
-  // --- STATE INIT (SAFE PARSING) ---
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null') || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; }
   });
@@ -182,7 +234,7 @@ const App: React.FC = () => {
   });
   
   const [isInsightLoading, setIsInsightLoading] = useState(false);
-  const [isBatteryModalOpen, setIsBatteryModalOpen] = useState(false); // Для модалки батарейки
+  const [isBatteryModalOpen, setIsBatteryModalOpen] = useState(false);
    
   const [history, setHistory] = useState<ChatSession[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }
@@ -201,10 +253,13 @@ const App: React.FC = () => {
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.JOURNAL) || '[]'); } catch { return []; }
   });
+  const [weeklyActivity, setWeeklyActivity] = useState<number[]>(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVITY) || '[40, 60, 30, 80, 55, 30, 10]'); } catch { return [40, 60, 30, 80, 55, 30, 10]; }
+  });
 
   const longPressTimer = useRef<number | null>(null);
 
-  // --- LOGIC ---
+  // --- ГЕНЕРАЦИЯ ПО СФЕРАМ ЖИЗНИ ---
   useEffect(() => {
     const generateDailyAdvice = async () => {
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
@@ -218,29 +273,19 @@ const App: React.FC = () => {
         const userName = userProfile.name || "Друг";
         
         const prompt = `
-          Ты — элитный персональный наставник. Клиент: ${userName}.
+          Ты — элитный ментор. Клиент: ${userName}.
+          Профиль: Архетип "${userProfile.archetype || 'Искатель'}", Цель "${userProfile.focus}", Проблема "${userProfile.struggle}".
+          Контекст дневника: "${recentEntries}".
           
-          ПРОФИЛЬ КЛИЕНТА:
-          - Архетип: ${userProfile.identity || 'Искатель'}
-          - Биоритм: ${userProfile.chronotype || 'Обычный'}
-          - Цель: ${userProfile.focus || 'Рост'}
-          - Враг: ${userProfile.struggle || 'Нет'}
-          - Стиль: ${userProfile.aiTone || 'Мудрый'}
+          Составь "Карту Дня" по 4 сферам. Дай конкретные, глубокие рекомендации (2-3 предложения каждая).
+          Разделитель: "|||".
           
-          Контекст (из дневника): "${recentEntries}".
+          1. СФЕРА МЫШЛЕНИЯ (Mindset): На чем держать ментальный фокус?
+          2. СФЕРА ДЕЙСТВИЙ (Action): Какой конкретный шаг сделать к цели?
+          3. СФЕРА ТЕЛА (Energy): Как восстановить ресурс сегодня?
+          4. СФЕРА СМЫСЛОВ (Insight): Философский вопрос или мысль дня.
           
-          ЗАДАЧА:
-          Составь "Карту дня". 
-          Раздели ответ строго символами "|||".
-          Не используй markdown заголовки.
-          
-          1. Утро: Практика настройки на день (2 предложения).
-          2. Главный Фокус: Стратегия достижения цели сегодня (2 предложения).
-          3. Энергия: Лайфхак от выгорания/лени (2 предложения).
-          4. Вечер: Вопрос для рефлексии.
-          
-          Формат ответа:
-          ТЕКСТ_УТРА|||ТЕКСТ_ФОКУСА|||ТЕКСТ_ЭНЕРГИИ|||ТЕКСТ_ВЕЧЕРА
+          Ответ только текст: МЫШЛЕНИЕ|||ДЕЙСТВИЕ|||ТЕЛО|||СМЫСЛ
         `;
 
         const responseText = await sendMessageToGemini(prompt);
@@ -248,10 +293,10 @@ const App: React.FC = () => {
         
         const newInsight: DailyInsightData = {
           date: todayStr,
-          morning: parts[0]?.trim() || "Начни с благодарности.",
-          focus: parts[1]?.trim() || "Сделай главное дело первым.",
-          energy: parts[2]?.trim() || "Дыши глубже.",
-          evening: parts[3]?.trim() || "Что порадовало сегодня?",
+          mindset: parts[0]?.trim() || "Фокусируйся на том, что ты можешь контролировать.",
+          action: parts[1]?.trim() || "Сделай самую важную задачу в первые 2 часа дня.",
+          health: parts[2]?.trim() || "Прогуляйся 15 минут без телефона.",
+          insight: parts[3]?.trim() || "Куда направлено внимание, туда течет энергия.",
         };
 
         setDailyInsight(newInsight);
@@ -260,10 +305,10 @@ const App: React.FC = () => {
       } catch (e) {
         setDailyInsight({
           date: todayStr,
-          morning: "Улыбнись новому дню.",
-          focus: "Слушай себя.",
-          energy: "Делай паузы.",
-          evening: "День прошел не зря."
+          mindset: "Слушай тишину.",
+          action: "Один шаг вперед.",
+          health: "Дыши глубоко.",
+          insight: "Ты на верном пути."
         });
       } finally {
         setIsInsightLoading(false);
@@ -273,15 +318,14 @@ const App: React.FC = () => {
     generateDailyAdvice();
   }, [userProfile.name, journalEntries, userProfile.onboardingCompleted, dailyInsight]);
 
-  // Save Effects
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history)); }, [history]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.SESSIONS, totalSessions.toString()); }, [totalSessions]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.TIME, totalTimeSeconds.toString()); }, [totalTimeSeconds]);
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.ACTIVITY, JSON.stringify(weeklyActivity)); }, [weeklyActivity]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.JOURNAL, JSON.stringify(journalEntries)); }, [journalEntries]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(siteConfig)); }, [siteConfig]);
 
-  // Telegram Init
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -300,13 +344,10 @@ const App: React.FC = () => {
 
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
-  
-  // SAFE RANK CALC
   const getCurrentRank = (steps: number) => {
     const safeSteps = isNaN(steps) ? 0 : steps;
     return RANKS.find(r => safeSteps >= r.threshold) || RANKS[RANKS.length - 1];
   };
-
   const startMode = (mode: JournalMode) => { setSelectedMode(mode); setCurrentView('CHAT'); };
   
   const handleSaveJournalEntry = (entry: JournalEntry, isNew: boolean, duration: number) => {
@@ -344,46 +385,37 @@ const App: React.FC = () => {
 
   const handleAdminTriggerStart = () => {
     longPressTimer.current = window.setTimeout(() => {
-      const pass = prompt('Admin Password:');
+      const pass = prompt('Пароль администратора:');
       if (pass === siteConfig.adminPasscode) setCurrentView('ADMIN');
     }, 2000); 
   };
   const handleAdminTriggerEnd = () => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } };
 
-  // --- COMPONENTS ---
-
+  // --- COMPONENT: BATTERY MODAL ---
   const renderBatteryModal = () => {
     if (!isBatteryModalOpen) return null;
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        {/* Backdrop */}
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsBatteryModalOpen(false)}></div>
-        
-        {/* Content */}
-        <div className="bg-white rounded-[32px] p-6 w-full max-w-sm relative z-10 animate-fade-in shadow-2xl">
+        <div className="bg-white rounded-[32px] p-6 w-full max-w-xs relative z-10 animate-fade-in shadow-2xl">
           <button onClick={() => setIsBatteryModalOpen(false)} className="absolute right-4 top-4 text-slate-400 hover:text-slate-600">
             <X size={24} />
           </button>
-          
-          <h3 className="text-xl font-bold text-center mb-6 text-slate-800">Как твоя батарейка?</h3>
-          
+          <h3 className="text-xl font-bold text-center mb-6 text-slate-800">Твой заряд?</h3>
           <div className="grid grid-cols-2 gap-3">
             {[
               { label: "На пике 🔥", val: "high" },
               { label: "В потоке 🌊", val: "flow" },
               { label: "Нормально 🙂", val: "ok" },
-              { label: "Нужен отдых 🔋", val: "low" }
+              { label: "На нуле 🪫", val: "low" }
             ].map((item) => (
               <button 
                 key={item.val}
                 onClick={() => {
-                  // Здесь можно сохранить состояние, пока просто закрываем
                   setIsBatteryModalOpen(false);
-                  if (window.Telegram?.WebApp?.HapticFeedback) {
-                    window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
-                  }
+                  if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
                 }}
-                className="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 font-semibold text-slate-700 transition-all active:scale-95"
+                className="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 font-semibold text-slate-700 transition-all active:scale-95 text-sm"
               >
                 {item.label}
               </button>
@@ -394,58 +426,65 @@ const App: React.FC = () => {
     );
   };
 
+  // --- COMPONENT: DAILY GUIDE ---
   const renderDailyGuide = () => (
     <div className="h-full flex flex-col bg-[#F8FAFC] px-6 pt-10 pb-32 animate-fade-in overflow-y-auto">
       <header className="mb-8 flex items-center space-x-4">
          <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
            <ArrowLeft size={24} />
          </button>
-         <h1 className="text-3xl font-bold text-slate-800">Карта дня</h1>
+         <h1 className="text-3xl font-bold text-slate-800">Ваш план</h1>
       </header>
 
       {dailyInsight ? (
         <div className="space-y-6">
-          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
-             <div className="flex items-center space-x-3 mb-3 text-amber-500">
-               <Sun size={20} />
-               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Настройка (Утро)</span>
+          {/* СФЕРА МЫШЛЕНИЯ */}
+          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-20 h-20 bg-indigo-50 rounded-bl-[100px] opacity-50"></div>
+             <div className="flex items-center space-x-3 mb-3 text-indigo-500 relative z-10">
+               <Brain size={20} />
+               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Мышление</span>
              </div>
-             <p className="text-slate-700 leading-relaxed font-medium">{dailyInsight.morning}</p>
+             <p className="text-slate-700 leading-relaxed font-medium relative z-10">{dailyInsight.mindset}</p>
           </div>
 
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[28px] p-6 text-white shadow-lg shadow-indigo-200">
-            <div className="flex items-center space-x-3 mb-3 opacity-80">
+          {/* СФЕРА ДЕЙСТВИЙ (Акцент) */}
+          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[28px] p-6 text-white shadow-lg shadow-indigo-200 transform hover:scale-[1.01] transition-transform">
+            <div className="flex items-center space-x-3 mb-3 opacity-90">
               <Target size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Главный фокус</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">Действие</span>
             </div>
-            <h2 className="text-lg font-bold leading-relaxed">{dailyInsight.focus}</h2>
+            <h2 className="text-lg font-bold leading-relaxed">{dailyInsight.action}</h2>
           </div>
 
+          {/* СФЕРА ТЕЛА */}
           <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
             <div className="flex items-center space-x-3 mb-3 text-emerald-600">
-              <Zap size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Энергия</span>
+              <Battery size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Тело & Ресурс</span>
             </div>
-            <p className="text-slate-700 leading-relaxed font-medium">{dailyInsight.energy}</p>
+            <p className="text-slate-700 leading-relaxed font-medium">{dailyInsight.health}</p>
           </div>
 
-          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm">
-            <div className="flex items-center space-x-3 mb-3 text-indigo-400">
-              <Moon size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Рефлексия (Вечер)</span>
+          {/* СФЕРА СМЫСЛОВ */}
+          <div className="bg-slate-900 rounded-[28px] p-6 text-slate-300 shadow-sm">
+            <div className="flex items-center space-x-3 mb-3 text-amber-400">
+              <Sparkles size={20} />
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Инсайт</span>
             </div>
-            <p className="text-slate-600 leading-relaxed italic">"{dailyInsight.evening}"</p>
+            <p className="text-slate-200 leading-relaxed italic">"{dailyInsight.insight}"</p>
           </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-full">
           <Loader2 className="animate-spin text-indigo-500 mb-4" size={32} />
-          <p className="text-slate-400">Составляю карту...</p>
+          <p className="text-slate-400">ИИ анализирует профиль...</p>
         </div>
       )}
     </div>
   );
 
+  // --- RENDER HOME ---
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
       <header className="mb-8 w-full relative overflow-hidden">
@@ -475,13 +514,15 @@ const App: React.FC = () => {
               Привет, <span className="font-bold text-slate-900">{userProfile.name || 'Странник'}</span>
             </h1>
             
-            {/* Кнопка состояния (Батарейка) */}
+            {/* ЯРКАЯ КНОПКА "КАК ТЫ?" */}
             <button 
               onClick={() => setIsBatteryModalOpen(true)}
-              className="mt-2 flex items-center space-x-2 bg-white/60 backdrop-blur-sm border border-indigo-100 rounded-full px-3 py-1.5 shadow-sm active:scale-95 transition-all"
+              className="mt-3 flex items-center space-x-2 bg-white shadow-sm border border-indigo-100 rounded-full pl-1 pr-4 py-1 active:scale-95 transition-all group"
             >
-              <Battery size={14} className="text-indigo-500" />
-              <span className="text-[11px] font-bold text-slate-600">Как ты?</span>
+              <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                <Smile size={14} />
+              </div>
+              <span className="text-xs font-bold text-slate-600 group-hover:text-slate-800">Отметить состояние</span>
             </button>
           </div>
         </div>
@@ -507,7 +548,7 @@ const App: React.FC = () => {
 
       <div className="px-6 space-y-3.5 mb-7">
         <h3 className="text-[10px] font-bold ml-2 text-slate-400 uppercase tracking-widest">
-          {userProfile.onboardingCompleted ? "На сегодня" : "Начало"}
+          {userProfile.onboardingCompleted ? "Ваш план" : "Персонализация"}
         </h3>
         
         {!userProfile.onboardingCompleted ? (
@@ -518,9 +559,9 @@ const App: React.FC = () => {
              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 opacity-90"></div>
              <div className="relative z-10 flex items-center justify-between">
                 <div className="text-left">
-                  <h4 className="font-bold text-lg mb-1">Создать профиль</h4>
+                  <h4 className="font-bold text-lg mb-1">Пройти тест личности</h4>
                   <p className="text-indigo-100 text-xs leading-relaxed max-w-[200px]">
-                    Расскажите о себе, чтобы ИИ был полезнее.
+                    Узнайте свой архетип, чтобы ИИ создал стратегию под вас.
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
@@ -538,20 +579,20 @@ const App: React.FC = () => {
              {isInsightLoading ? (
                <div className="flex flex-col items-center justify-center w-full space-y-3">
                  <Loader2 className="animate-spin text-indigo-500" size={20} />
-                 <p className="text-[10px] text-slate-400 animate-pulse font-medium">Анализирую состояние...</p>
+                 <p className="text-[10px] text-slate-400 animate-pulse font-medium">Синхронизация...</p>
                </div>
              ) : (
                <>
                  <div className="relative z-10 mb-3">
                    <span className="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">
-                     Фокус дня
+                     План на день
                    </span>
                  </div>
                  <p className="text-slate-800 font-bold text-lg leading-tight mb-2 relative z-10 line-clamp-2">
-                   {dailyInsight?.focus || "Загрузка..."}
+                   {dailyInsight?.mindset || "Загрузка..."}
                  </p>
                  <div className="flex items-center text-indigo-500 text-xs font-bold mt-2 group-hover:translate-x-1 transition-transform">
-                   <span>Открыть карту</span>
+                   <span>Смотреть карту</span>
                    <ChevronRight size={14} className="ml-1" />
                  </div>
                </>
@@ -586,9 +627,7 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderHistory = () => {
-    // SAFE RENDER
-    return (
+  const renderHistory = () => (
     <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
        <header className="mb-8">
         <h1 className="text-3xl font-bold text-slate-800">История</h1>
@@ -628,8 +667,7 @@ const App: React.FC = () => {
         </div>
       )}
     </div>
-    );
-  };
+  );
 
   const renderProfile = () => (
     <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
@@ -646,7 +684,7 @@ const App: React.FC = () => {
            {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}
         </div>
         <h3 className="text-xl font-bold mt-4 text-slate-800">{userProfile.name || 'Странник'}</h3>
-        <p className="text-sm text-indigo-400 font-medium">{currentRank?.title || "Начинающий"}</p>
+        <p className="text-sm text-indigo-400 font-medium">{userProfile.archetype ? `Архетип: ${userProfile.archetype}` : (currentRank?.title || "Странник")}</p>
       </div>
 
       <div className="space-y-4">
@@ -721,7 +759,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="pt-4 border-t border-slate-100">
-             <label className="text-sm font-bold text-slate-700 mb-2 block">Протокол</label>
+             <label className="text-sm font-bold text-slate-700 mb-2 block">Тест личности</label>
              <button 
                onClick={() => {
                  setCurrentView('ONBOARDING');
@@ -729,7 +767,7 @@ const App: React.FC = () => {
                className="w-full py-4 rounded-2xl bg-slate-50 text-slate-600 font-bold border border-slate-100 active:scale-95 transition-all flex items-center justify-center space-x-2 hover:bg-slate-100"
              >
                 <Compass size={18} />
-                <span>Пройти опрос заново</span>
+                <span>Пройти тест заново</span>
              </button>
           </div>
 
@@ -813,7 +851,7 @@ const App: React.FC = () => {
           <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
              <div className="text-center">
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
-                <p className="text-base font-semibold text-slate-700">1.5.0</p>
+                <p className="text-base font-semibold text-slate-700">1.6.0</p>
              </div>
              <div className="text-center">
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
