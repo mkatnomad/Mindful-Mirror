@@ -1,561 +1,238 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { sendMessageToGemini } from './services/geminiService';
-// ТОЛЬКО БАЗОВЫЕ ИКОНКИ. НИКАКИХ FLAME, SPROUT, ANCHOR.
-import { 
-  Heart, BookOpen, User as UserIcon, Zap, Star, 
-  ArrowLeft, Loader2, Cloud, Moon, Sun, 
-  Compass, Battery, Map, Smile, Settings, Info,
-  CheckCircle, Play
-} from 'lucide-react';
 
-// --- ТИПЫ ---
-type ViewState = 'HOME' | 'ONBOARDING' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'DAILY_GUIDE' | 'ARCHETYPE_RESULT' | 'TUTORIAL';
-type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
-
-interface Message { id: string; role: 'user' | 'assistant' | 'system'; content: string; timestamp: number; }
-interface ChatSession { id: string; mode: JournalMode; date: number; duration: number; preview: string; messages: Message[]; }
-interface UserProfile { name: string; avatarUrl: string | null; onboardingCompleted?: boolean; archetype?: string; focus?: string; struggle?: string; chronotype?: string; currentMood?: 'high' | 'flow' | 'ok' | 'low'; }
-interface DailyInsightData { date: string; generatedForMood?: string; mindset: string; action: string; health: string; insight: string; }
-
-// --- КЛЮЧИ (СБРОС) ---
-const STORAGE_KEYS = {
-  PROFILE: 'mm_profile_last_resort', 
-  HISTORY: 'mm_history_last_resort',
-  SESSIONS: 'mm_sessions_last_resort',
-  TIME: 'mm_time_last_resort',
-  JOURNAL: 'mm_journal_last_resort',
-  DAILY_INSIGHT: 'mm_insight_last_resort',
-  CONFIG: 'mm_config_last_resort'
-};
-
-const Logo = ({ className = "w-20 h-20" }: { className?: string }) => (
-  <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} onError={(e) => e.currentTarget.style.display = 'none'} />
+// --- 0. ВСТРОЕННЫЕ ЗАМЕНИТЕЛИ ИКОНОК (SVG ВНУТРИ) ---
+// Чтобы не зависеть от библиотеки lucide-react, которая крашит приложение
+const Icon = ({ p, c = "currentColor" }: { p: string, c?: string }) => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={p} />
+  </svg>
 );
 
-// --- ВЕКТОРНЫЕ ДЕРЕВЬЯ (SVG - БЕЗОПАСНО) ---
+const ICONS = {
+  Home: "M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+  User: "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z",
+  Book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z",
+  Heart: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z",
+  Zap: "M13 2L3 14h9l-1 8 10-12h-9l1-8z",
+  Settings: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.18-.08a2 2 0 0 0-2 2v.44a2 2 0 0 0 2 2h.18a2 2 0 0 1 1.73 1l.25.43a2 2 0 0 1 0 2l-.08.18a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.18.08a2 2 0 0 0 2-2v-.44a2 2 0 0 0-2-2h-.18a2 2 0 0 1-1.73-1l-.25-.43a2 2 0 0 1 0-2l.08-.18a2 2 0 0 0-2-2z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+  ArrowLeft: "M19 12H5 M12 19l-7-7 7-7",
+  Send: "M22 2L11 13 M22 2l-7 20-4-9-9-4 20-7z",
+  Compass: "M21 21l-6-9-9-6 6 9 9 6z",
+  Battery: "M23 13v-2 M1 6h18a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H1a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2z",
+  Tree: "M12 22v-8 M12 14c-4 0-7-4-7-8s3-8 7-8 7 4 7 8-3 8-7 8z M12 22c-2 0-3-2-3-4s1-4 3-4 3 2 3 4-1 4-3 4z"
+};
+
+// --- 1. ВСТРОЕННЫЕ ТИПЫ ---
+type ViewState = 'HOME' | 'ONBOARDING' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'DAILY_GUIDE' | 'ARCHETYPE_RESULT' | 'TUTORIAL';
+type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
+
+// --- 2. ВЕКТОРНЫЕ ДЕРЕВЬЯ (ВАШ ЛЮБИМЫЙ ДИЗАЙН) ---
 const TreeIllustration: React.FC<{ stage: number, className?: string }> = ({ stage, className }) => {
   const c = className || "w-full h-full";
-  // 0-1: Семя
+  // Уникальный ID для градиента
+  const gid = `grad-${stage}-${Math.random().toString(36).substr(2, 9)}`;
+
   if (stage <= 1) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#FEF3C7" /><path d="M50 75C50 75 40 75 40 75" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="70" r="6" fill="#B45309" /></svg>;
-  // 2-3: Росток
-  if (stage <= 3) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#ECFDF5" /><path d="M50 80V60" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 60C50 60 35 55 35 45C35 55 50 60 50 60Z" fill="#10B981" /><path d="M50 60C50 60 65 55 65 45C65 55 50 60 50 60Z" fill="#34D399" /></svg>;
-  // 4-5: Деревце
-  if (stage <= 5) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#D1FAE5" /><path d="M50 85V50" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 65L65 55" stroke="#059669" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="45" r="10" fill="#10B981" /><circle cx="65" cy="55" r="6" fill="#34D399" /></svg>;
-  // 6-7: Дерево
-  if (stage <= 7) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#A7F3D0" /><path d="M50 85V45" stroke="#92400E" strokeWidth="4" strokeLinecap="round"/><path d="M50 65L30 55" stroke="#92400E" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="40" r="15" fill="#10B981" /><circle cx="30" cy="55" r="8" fill="#34D399" /><circle cx="65" cy="50" r="8" fill="#34D399" /></svg>;
-  // 8+: Могучий Дуб
-  return (<svg viewBox="0 0 100 100" className={c} fill="none"><defs><radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style={{stopColor:'rgb(255,255,255)', stopOpacity:0.8}} /><stop offset="100%" style={{stopColor:'rgb(16, 185, 129)', stopOpacity:0}} /></radialGradient></defs><circle cx="50" cy="50" r="48" fill="url(#grad1)" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="10" strokeLinecap="round"/><circle cx="50" cy="40" r="40" fill="#064E3B" /><circle cx="20" cy="65" r="25" fill="#065F46" /><circle cx="80" cy="65" r="25" fill="#065F46" /><circle cx="50" cy="25" r="15" fill="#10B981" /><circle cx="30" cy="40" r="2" fill="#FCD34D" /><circle cx="70" cy="40" r="2" fill="#FCD34D" /><circle cx="50" cy="10" r="3" fill="#FCD34D" /><path d="M20 20L25 25" stroke="#FCD34D" strokeWidth="2" /><path d="M80 20L75 25" stroke="#FCD34D" strokeWidth="2" /></svg>);
+  if (stage === 2) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#ECFDF5" /><path d="M50 80V60" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 60C50 60 35 55 35 45C35 55 50 60 50 60Z" fill="#10B981" /><path d="M50 60C50 60 65 55 65 45C65 55 50 60 50 60Z" fill="#34D399" /></svg>;
+  if (stage === 3) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#D1FAE5" /><path d="M50 85V50" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 65L65 55" stroke="#059669" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="45" r="10" fill="#10B981" /><circle cx="65" cy="55" r="6" fill="#34D399" /></svg>;
+  if (stage === 4) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#A7F3D0" /><path d="M50 85V45" stroke="#92400E" strokeWidth="4" strokeLinecap="round"/><path d="M50 65L30 55" stroke="#92400E" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="40" r="15" fill="#10B981" /><circle cx="30" cy="55" r="8" fill="#34D399" /><circle cx="65" cy="50" r="8" fill="#34D399" /></svg>;
+  if (stage === 5) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#6EE7B7" /><path d="M50 90V40" stroke="#92400E" strokeWidth="5" strokeLinecap="round"/><path d="M50 60L25 50" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><path d="M50 50L75 40" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="35" r="20" fill="#059669" /><circle cx="25" cy="50" r="12" fill="#10B981" /><circle cx="75" cy="40" r="12" fill="#10B981" /></svg>;
+  if (stage === 6) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#34D399" /><path d="M50 90L50 35" stroke="#78350F" strokeWidth="6" strokeLinecap="round"/><path d="M50 70L20 60" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><path d="M50 60L80 50" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="30" r="25" fill="#047857" /><circle cx="20" cy="60" r="15" fill="#059669" /><circle cx="80" cy="50" r="15" fill="#059669" /></svg>;
+  if (stage === 7) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#10B981" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="7" strokeLinecap="round"/><path d="M50 70L20 55" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><path d="M50 60L85 45" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><circle cx="50" cy="35" r="30" fill="#064E3B" /><circle cx="20" cy="55" r="18" fill="#065F46" /><circle cx="85" cy="45" r="18" fill="#065F46" /><circle cx="35" cy="80" r="5" fill="#064E3B" opacity="0.5"/></svg>;
+  // 8: Древо
+  return (<svg viewBox="0 0 100 100" className={c} fill="none"><defs><radialGradient id={gid} cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style={{stopColor:'rgb(255,255,255)', stopOpacity:0.8}} /><stop offset="100%" style={{stopColor:'rgb(16, 185, 129)', stopOpacity:0}} /></radialGradient></defs><circle cx="50" cy="50" r="48" fill={`url(#${gid})`} /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="10" strokeLinecap="round"/><circle cx="50" cy="40" r="40" fill="#064E3B" /><circle cx="20" cy="65" r="25" fill="#065F46" /><circle cx="80" cy="65" r="25" fill="#065F46" /><circle cx="50" cy="25" r="15" fill="#10B981" /><path d="M20 20L25 25" stroke="#FCD34D" strokeWidth="2" /><path d="M80 20L75 25" stroke="#FCD34D" strokeWidth="2" /></svg>);
 };
 
 const TREE_STAGES = [
   { threshold: 5000, title: "Древо Мудрости", stageIndex: 8 },
-  { threshold: 1200, title: "Цветущее Древо", stageIndex: 7 },
   { threshold: 600, title: "Ветвистое Древо", stageIndex: 6 },
-  { threshold: 300, title: "Крепкое Древо", stageIndex: 5 },
   { threshold: 150, title: "Молодое Дерево", stageIndex: 4 },
   { threshold: 75, title: "Саженец", stageIndex: 3 },
-  { threshold: 30, title: "Побег", stageIndex: 2 },
-  { threshold: 10, title: "Росток", stageIndex: 1 },
-  { threshold: 0, title: "Семя", stageIndex: 0 },
+  { threshold: 10, title: "Росток", stageIndex: 2 },
+  { threshold: 0, title: "Семя", stageIndex: 1 },
 ];
 
 const ARCHETYPE_INFO: any = {
-  "Творец": { desc: "Вы — творец. Вы видите мир как полотно. Ваша сила в воображении.", strength: "Креативность", shadow: "Перфекционизм", advice: "Создавайте, не ждите идеала.", icon: Star, color: "text-purple-600", bg: "bg-purple-50" },
-  "Правитель": { desc: "Вы — правитель. Вы создаете порядок из хаоса.", strength: "Лидерство", shadow: "Контроль", advice: "Делегируйте.", icon: Star, color: "text-indigo-600", bg: "bg-indigo-50" },
-  "Мудрец": { desc: "Вы — мудрец. Вы ищете истину и знания.", strength: "Интеллект", shadow: "Бездействие", advice: "Действуйте.", icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50" },
-  "Хранитель": { desc: "Вы — хранитель. Вы заботитесь о людях.", strength: "Эмпатия", shadow: "Жертвенность", advice: "Берегите себя.", icon: Heart, color: "text-emerald-600", bg: "bg-emerald-50" },
-  "Искатель": { desc: "Вы — искатель. Вы стремитесь к свободе.", strength: "Свобода", shadow: "Непостоянство", advice: "Найдите дом.", icon: Compass, color: "text-amber-600", bg: "bg-amber-50" }
+  "Творец": { desc: "Для вас жизнь — это чистый холст. Ваша миссия — материализовать свои идеи.", strength: "Креативность", shadow: "Перфекционизм", advice: "Не ждите вдохновения.", bg: "bg-purple-50", color: "text-purple-600" },
+  "Правитель": { desc: "Вы — архитектор реальности. Вы создаете порядок из хаоса.", strength: "Лидерство", shadow: "Контроль", advice: "Делегируйте.", bg: "bg-indigo-50", color: "text-indigo-600" },
+  "Мудрец": { desc: "Ваш инструмент — разум. Вы ищете истину.", strength: "Интеллект", shadow: "Бездействие", advice: "Действуйте.", bg: "bg-blue-50", color: "text-blue-600" },
+  "Хранитель": { desc: "Ваша сила — сердце. Вы заботитесь о людях.", strength: "Эмпатия", shadow: "Жертвенность", advice: "Берегите себя.", bg: "bg-emerald-50", color: "text-emerald-600" },
+  "Искатель": { desc: "Рутина вас душит. Вы стремитесь к новым горизонтам.", strength: "Свобода", shadow: "Бегство", advice: "Найдите дом.", bg: "bg-amber-50", color: "text-amber-600" }
 };
 
-// --- ВНУТРЕННИЕ КОМПОНЕНТЫ ---
-
-const InternalChat: React.FC<{ mode: JournalMode, onBack: () => void, onComplete: (msg: any, dur: number) => void }> = ({ mode, onBack, onComplete }) => {
-  const [messages, setMessages] = useState<Message[]>([{ id: '1', role: 'assistant', content: 'Привет! О чем хочешь поговорить?', timestamp: Date.now() }]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const startTime = useRef(Date.now());
-
-  const send = async () => {
-    if (!input.trim()) return;
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: Date.now() };
-    setMessages(prev => [userMsg, ...prev]); 
-    setInput('');
-    setLoading(true);
-    try {
-      const response = await sendMessageToGemini(input);
-      setMessages(prev => [{ id: (Date.now()+1).toString(), role: 'assistant', content: response, timestamp: Date.now() }, ...prev]);
-    } catch {
-      setMessages(prev => [{ id: (Date.now()+1).toString(), role: 'assistant', content: "Ошибка связи.", timestamp: Date.now() }, ...prev]);
-    } finally { setLoading(false); }
-  };
-
-  const finish = () => { onComplete(messages, Math.round((Date.now() - startTime.current) / 1000)); onBack(); };
-
-  return (
-    <div className="flex flex-col h-full bg-white z-50 fixed inset-0">
-      <div className="p-4 border-b flex justify-between items-center bg-white">
-        <button onClick={onBack}><ArrowLeft size={24} className="text-slate-500" /></button>
-        <span className="font-bold text-slate-800">{mode === 'DECISION' ? 'Решение' : mode === 'EMOTIONS' ? 'Эмоции' : 'Дневник'}</span>
-        <button onClick={finish} className="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full">Завершить</button>
-      </div>
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col-reverse space-y-reverse space-y-4 bg-slate-50">
-        {loading && <div className="self-start bg-white p-3 rounded-2xl shadow-sm"><Loader2 className="animate-spin text-indigo-500" size={16}/></div>}
-        {messages.map(m => (<div key={m.id} className={`max-w-[80%] p-4 rounded-2xl text-sm ${m.role === 'user' ? 'self-end bg-indigo-600 text-white' : 'self-start bg-white text-slate-800 shadow-sm'}`}>{m.content}</div>))}
-      </div>
-      <div className="p-4 border-t bg-white flex space-x-2">
-        <input value={input} onChange={e => setInput(e.target.value)} placeholder="Напишите..." className="flex-1 bg-slate-100 rounded-full px-4 py-3 outline-none text-sm" />
-        <button onClick={send} className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white"><ArrowLeft className="rotate-180" size={20} /></button>
-      </div>
-    </div>
-  );
-};
+// --- КОМПОНЕНТЫ ---
 
 const InternalBottomNav: React.FC<{ currentView: string, onChangeView: (v: string) => void }> = ({ currentView, onChangeView }) => (
   <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-slate-100 px-6 py-4 flex justify-between items-center z-40">
-    {[{ id: 'HOME', icon: Zap, label: 'Путь' }, { id: 'HISTORY', icon: BookOpen, label: 'История' }, { id: 'PROFILE', icon: UserIcon, label: 'Профиль' }].map(item => (
-      <button key={item.id} onClick={() => onChangeView(item.id)} className={`flex flex-col items-center space-y-1 ${currentView === item.id ? 'text-indigo-600' : 'text-slate-400'}`}>
-        <item.icon size={24} strokeWidth={currentView === item.id ? 2.5 : 2} />{currentView === item.id && <span className="text-[10px] font-bold">{item.label}</span>}
-      </button>
-    ))}
+    <button onClick={() => onChangeView('HOME')} className={currentView === 'HOME' ? 'text-indigo-600' : 'text-slate-400'}><Icon p={ICONS.Zap} /><span className="text-[10px] block font-bold">ПУТЬ</span></button>
+    <button onClick={() => onChangeView('HISTORY')} className={currentView === 'HISTORY' ? 'text-indigo-600' : 'text-slate-400'}><Icon p={ICONS.Book} /><span className="text-[10px] block font-bold">ИСТОРИЯ</span></button>
+    <button onClick={() => onChangeView('PROFILE')} className={currentView === 'PROFILE' ? 'text-indigo-600' : 'text-slate-400'}><Icon p={ICONS.User} /><span className="text-[10px] block font-bold">ПРОФИЛЬ</span></button>
   </div>
 );
 
-// --- ЭКРАНЫ ---
-
-const ArchetypeResultScreen: React.FC<{ archetype: string, onContinue: () => void, isReadOnly?: boolean, onBack?: () => void }> = ({ archetype, onContinue, isReadOnly, onBack }) => {
-  const info = ARCHETYPE_INFO[archetype] || ARCHETYPE_INFO["Искатель"];
-  const Icon = info.icon;
-  return (
-    <div className="h-full flex flex-col bg-white overflow-y-auto animate-fade-in relative z-50">
-      <div className="p-6 pb-0">{isReadOnly && <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 mb-4"><ArrowLeft size={24} /></button>}</div>
-      <div className="flex-1 px-6 pb-12 flex flex-col items-center text-center">
-        <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 shadow-xl ${info.bg} ${info.color}`}><Icon size={64} strokeWidth={1.5} /></div>
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Ваш Архетип</h2>
-        <h1 className="text-4xl font-black text-slate-800 mb-6">{archetype}</h1>
-        <p className="text-lg text-slate-600 leading-relaxed mb-10">{info.desc}</p>
-        <div className="w-full space-y-4 mb-10 text-left">
-          <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-100"><div className="flex items-center space-x-3 mb-2 text-emerald-700 font-bold"><Star size={20} /><span>Суперсила</span></div><p className="text-emerald-900/80 font-medium leading-snug">{info.strength}</p></div>
-          <div className="p-5 rounded-2xl bg-rose-50 border border-rose-100"><div className="flex items-center space-x-3 mb-2 text-rose-700 font-bold"><Cloud size={20} /><span>Тень</span></div><p className="text-rose-900/80 font-medium leading-snug">{info.shadow}</p></div>
-          <div className="p-5 rounded-2xl bg-indigo-50 border border-indigo-100"><div className="flex items-center space-x-3 mb-2 text-indigo-700 font-bold"><Lightbulb size={20} /><span>Совет</span></div><p className="text-indigo-900/80 font-medium leading-snug">{info.advice}</p></div>
-        </div>
-        {!isReadOnly && <button onClick={onContinue} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-xl active:scale-95 transition-all">Далее</button>}
-      </div>
-    </div>
-  );
-};
-
-const TutorialScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
-  const [slide, setSlide] = useState(0);
-  const slides = [
-    { title: "Карта Дня", desc: "Каждое утро ИИ создает для вас персональный план.", icon: Map, color: "text-indigo-500", bg: "bg-indigo-50" },
-    { title: "Настроение", desc: "Нажмите на кнопку 'Как ты?' на главной.", icon: Battery, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { title: "Древо", desc: "Ваш прогресс — это дерево.", icon: Activity, color: "text-amber-500", bg: "bg-amber-50" }
-  ];
-  return (
-    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
-      <div className="flex-1 flex flex-col justify-center items-center text-center">
-        <div className={`w-32 h-32 rounded-[32px] flex items-center justify-center mb-8 shadow-sm ${slides[slide].bg} ${slides[slide].color}`}>{React.createElement(slides[slide].icon, { size: 64 })}</div>
-        <h2 className="text-3xl font-black text-slate-800 mb-4">{slides[slide].title}</h2>
-        <p className="text-slate-500 text-lg leading-relaxed max-w-xs">{slides[slide].desc}</p>
-      </div>
-      <button onClick={() => { if (slide < 2) setSlide(s => s + 1); else onFinish(); }} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-lg active:scale-95 transition-all">{slide < 2 ? "Далее" : "Начать"}</button>
-    </div>
-  );
-};
-
-// --- ОПРОСНИК (15 ВОПРОСОВ, БЕЗ ИКОНОК В ОТВЕТАХ) ---
-const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
+const OnboardingScreen: React.FC<{ onComplete: (data: any) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
-  const [scores, setScores] = useState({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0, EXPLORER: 0 });
-  const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string }>({});
+  const [scores, setScores] = useState<any>({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0, EXPLORER: 0 });
+  const [finalData, setFinalData] = useState<any>({});
   
   const steps = [
-    { title: "Что дает вам энергию?", type: 'archetype', options: [{ label: "Создание чего-то нового", type: 'CREATOR' }, { label: "Управление и достижения", type: 'RULER' }, { label: "Поиск истины и знаний", type: 'SAGE' }, { label: "Помощь другим людям", type: 'CAREGIVER' }] },
-    { title: "Чего вы боитесь больше всего?", type: 'archetype', options: [{ label: "Серости и посредственности", type: 'CREATOR' }, { label: "Хаоса и потери контроля", type: 'RULER' }, { label: "Быть обманутым или глупым", type: 'SAGE' }, { label: "Застоя и ловушки", type: 'EXPLORER' }] },
-    { title: "Ваш идеальный выходной?", type: 'archetype', options: [{ label: "Спонтанное путешествие", type: 'EXPLORER' }, { label: "Уютный вечер с близкими", type: 'CAREGIVER' }, { label: "Изучение новой темы", type: 'SAGE' }, { label: "Планирование недели", type: 'RULER' }] },
-    { title: "Как вы действуете в кризис?", type: 'archetype', options: [{ label: "Ищу нестандартный выход", type: 'CREATOR' }, { label: "Беру ответственность на себя", type: 'RULER' }, { label: "Анализирую ситуацию", type: 'SAGE' }, { label: "Забочусь об эмоциональном фоне", type: 'CAREGIVER' }] },
-    { title: "Что драйвит вас по жизни?", type: 'archetype', options: [{ label: "Желание самовыражения", type: 'CREATOR' }, { label: "Статус и влияние", type: 'RULER' }, { label: "Понимание сути вещей", type: 'SAGE' }, { label: "Свобода и независимость", type: 'EXPLORER' }] },
-    { title: "Что вы цените в людях?", type: 'archetype', options: [{ label: "Уникальность и талант", type: 'CREATOR' }, { label: "Верность и преданность", type: 'CAREGIVER' }, { label: "Интеллект и глубину", type: 'SAGE' }, { label: "Легкость на подъём", type: 'EXPLORER' }] },
-    { title: "Как вы принимаете решения?", type: 'archetype', options: [{ label: "Доверяю интуиции", type: 'CREATOR' }, { label: "Опираюсь на логику", type: 'SAGE' }, { label: "Взвешиваю выгоду", type: 'RULER' }, { label: "Слушаю свое сердце", type: 'CAREGIVER' }] },
-    { title: "Ваш стиль лидерства?", type: 'archetype', options: [{ label: "Вдохновитель и визионер", type: 'CREATOR' }, { label: "Стратег и организатор", type: 'RULER' }, { label: "Наставник и эксперт", type: 'SAGE' }, { label: "Опекун и защитник", type: 'CAREGIVER' }] },
-    { title: "Как вы относитесь к переменам?", type: 'archetype', options: [{ label: "Обожаю, это приключение!", type: 'EXPLORER' }, { label: "Изучаю, прежде чем принять", type: 'SAGE' }, { label: "Внедряю, если это полезно", type: 'RULER' }, { label: "С осторожностью", type: 'CAREGIVER' }] },
-    { title: "Лучший подарок для вас?", type: 'archetype', options: [{ label: "Сделанный с душой", type: 'CAREGIVER' }, { label: "Билет в новое место", type: 'EXPLORER' }, { label: "Редкая книга или курс", type: 'SAGE' }, { label: "Статусная вещь", type: 'RULER' }] },
-    { title: "Идеальное начало дня?", type: 'archetype', options: [{ label: "Зарядка и четкий план", type: 'RULER' }, { label: "Кофе и время для мечтаний", type: 'CREATOR' }, { label: "Сразу в бой/дорогу", type: 'EXPLORER' }, { label: "Завтрак с семьей", type: 'CAREGIVER' }] },
-    { title: "Какое наследие вы хотите оставить?", type: 'archetype', options: [{ label: "Произведение искусства", type: 'CREATOR' }, { label: "Построенную империю", type: 'RULER' }, { label: "Научное открытие", type: 'SAGE' }, { label: "Добрую память", type: 'CAREGIVER' }] },
-    // Настройки
-    { title: "Ваш главный фокус сейчас?", key: 'focus', options: [{ label: "Рост доходов и карьера", value: "Рост доходов" }, { label: "Снижение стресса", value: "Снижение стресса" }, { label: "Дисциплина и режим", value: "Дисциплина" }, { label: "Отношения и семья", value: "Семья" }] },
-    { title: "Что мешает вам больше всего?", key: 'struggle', options: [{ label: "Прокрастинация и лень", value: "Прокрастинация" }, { label: "Страх и неуверенность", value: "Неуверенность" }, { label: "Выгорание и усталость", value: "Выгорание" }, { label: "Расфокус и хаос", value: "Расфокус" }] },
-    { title: "Ваши биоритмы?", key: 'chronotype', options: [{ label: "Жаворонок (Утро)", value: "Утро" }, { label: "Сова (Вечер)", value: "Вечер" }, { label: "Плавающий график", value: "Плавающий" }] }
+    { title: "Что дает вам энергию?", options: [{ label: "Создание нового", type: 'CREATOR' }, { label: "Управление и успех", type: 'RULER' }, { label: "Поиск истины", type: 'SAGE' }, { label: "Помощь людям", type: 'CAREGIVER' }] },
+    { title: "Чего вы избегаете?", options: [{ label: "Скуки и рутины", type: 'CREATOR' }, { label: "Хаоса", type: 'RULER' }, { label: "Незнания", type: 'SAGE' }, { label: "Застоя", type: 'EXPLORER' }] },
+    { title: "Идеальный выходной?", options: [{ label: "Путешествие", type: 'EXPLORER' }, { label: "Уют с семьей", type: 'CAREGIVER' }, { label: "Изучение нового", type: 'SAGE' }, { label: "Планирование", type: 'RULER' }] },
+    { title: "Драйвер жизни?", options: [{ label: "Самовыражение", type: 'CREATOR' }, { label: "Статус", type: 'RULER' }, { label: "Истина", type: 'SAGE' }, { label: "Свобода", type: 'EXPLORER' }] },
+    { title: "Ценность в людях?", options: [{ label: "Уникальность", type: 'CREATOR' }, { label: "Верность", type: 'CAREGIVER' }, { label: "Ум", type: 'SAGE' }, { label: "Легкость", type: 'EXPLORER' }] },
+    { title: "Решения?", options: [{ label: "Интуиция", type: 'CREATOR' }, { label: "Логика", type: 'SAGE' }, { label: "Выгода", type: 'RULER' }, { label: "Сердце", type: 'CAREGIVER' }] },
+    { title: "Лидерство?", options: [{ label: "Вдохновитель", type: 'CREATOR' }, { label: "Стратег", type: 'RULER' }, { label: "Наставник", type: 'SAGE' }, { label: "Защитник", type: 'CAREGIVER' }] },
+    { title: "Отношение к переменам?", options: [{ label: "Приключение!", type: 'EXPLORER' }, { label: "Изучаю", type: 'SAGE' }, { label: "Внедряю", type: 'RULER' }, { label: "Осторожно", type: 'CAREGIVER' }] },
+    { title: "Подарок?", options: [{ label: "С душой", type: 'CAREGIVER' }, { label: "Билет", type: 'EXPLORER' }, { label: "Книга", type: 'SAGE' }, { label: "Статус", type: 'RULER' }] },
+    { title: "Утро?", options: [{ label: "План", type: 'RULER' }, { label: "Кофе", type: 'CREATOR' }, { label: "В путь", type: 'EXPLORER' }, { label: "Семья", type: 'CAREGIVER' }] },
+    { title: "Наследие?", options: [{ label: "Искусство", type: 'CREATOR' }, { label: "Империя", type: 'RULER' }, { label: "Открытие", type: 'SAGE' }, { label: "Память", type: 'CAREGIVER' }] },
+    { title: "Фокус?", key: 'focus', options: [{ label: "Доходы", value: "Доходы" }, { label: "Спокойствие", value: "Спокойствие" }, { label: "Дисциплина", value: "Дисциплина" }, { label: "Семья", value: "Семья" }] },
+    { title: "Помеха?", key: 'struggle', options: [{ label: "Лень", value: "Лень" }, { label: "Страх", value: "Страх" }, { label: "Усталость", value: "Усталость" }, { label: "Хаос", value: "Хаос" }] },
+    { title: "Биоритмы?", key: 'chronotype', options: [{ label: "Жаворонок", value: "Утро" }, { label: "Сова", value: "Вечер" }, { label: "Плавающий", value: "Плавающий" }] }
   ];
 
-  const currentStepData = steps[step];
-  if (!currentStepData) return null;
+  const currentStep = steps[step];
+  if (!currentStep) return null;
 
   const handleSelect = (option: any) => {
-    if (currentStepData.type === 'archetype') setScores(prev => ({ ...prev, [option.type]: (prev[option.type as keyof typeof scores] || 0) + 1 }));
-    if (currentStepData.key) setFinalData(prev => ({ ...prev, [currentStepData.key!]: option.value }));
+    if (option.type) setScores((p:any) => ({ ...p, [option.type]: p[option.type] + 1 }));
+    if (option.key) setFinalData((p:any) => ({ ...p, [option.key]: option.value }));
 
     if (step < steps.length - 1) {
-      setStep(prev => prev + 1);
+      setStep(s => s + 1);
     } else {
       let winner = 'SAGE';
       let max = -1;
-      Object.entries(scores).forEach(([k, v]) => { if (v > max) { max = v; winner = k; } });
+      Object.entries(scores).forEach(([k, v]: any) => { if (v > max) { max = v; winner = k; } });
       const archMap: any = { CREATOR: "Творец", RULER: "Правитель", SAGE: "Мудрец", CAREGIVER: "Хранитель", EXPLORER: "Искатель" };
       onComplete({ archetype: archMap[winner] || "Искатель", ...finalData });
     }
   };
 
   return (
-    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
-      <div className="flex justify-start mb-6"><button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600"><ArrowLeft size={24} /></button></div>
-      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
-        <div className="mb-10">
-          <div className="flex space-x-1 mb-8 justify-center flex-wrap gap-y-2">{steps.map((_, i) => (<div key={i} className={`h-1.5 rounded-full transition-all duration-500 mx-0.5 ${i <= step ? 'w-4 bg-indigo-500' : 'w-2 bg-slate-100'}`} />))}</div>
-          <h2 className="text-2xl font-black text-slate-800 text-center leading-tight mb-2">{currentStepData.title}</h2>
-        </div>
-        <div className="space-y-3" key={step}>
-          {currentStepData.options.map((option: any, idx: number) => {
-            return (
-            <button key={idx} onClick={() => handleSelect(option)} className="w-full p-5 rounded-[24px] border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-200 hover:shadow-lg transition-all active:scale-[0.98] text-left group focus:outline-none">
-              <span className="font-bold text-slate-700 text-base group-hover:text-indigo-700 leading-tight">{option.label}</span>
-            </button>
-            );
-          })}
-        </div>
+    <div className="h-full bg-white p-6 pt-10 flex flex-col">
+      <button onClick={onBack} className="self-start mb-6 text-slate-400"><Icon p={ICONS.ArrowLeft} /></button>
+      <div className="mb-8"><div className="flex space-x-1 mb-4">{steps.map((_, i) => (<div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-indigo-500' : 'bg-slate-100'}`} />))}</div><h2 className="text-2xl font-black text-slate-800">{currentStep.title}</h2></div>
+      <div className="space-y-3">{currentStep.options.map((opt: any, i: number) => (<button key={i} onClick={() => handleSelect(opt)} className="w-full p-4 rounded-xl border border-slate-100 bg-slate-50 text-left font-semibold text-slate-700 hover:bg-indigo-50">{opt.label}</button>))}</div>
+    </div>
+  );
+};
+
+const ArchetypeResult: React.FC<{ archetype: string, onContinue: () => void }> = ({ archetype, onContinue }) => {
+  const info = ARCHETYPE_INFO[archetype] || ARCHETYPE_INFO["Искатель"];
+  return (
+    <div className="h-full bg-white p-6 flex flex-col items-center text-center pt-12 animate-fade-in">
+      <div className={`w-32 h-32 rounded-full flex items-center justify-center mb-6 shadow-xl ${info.bg} ${info.color}`}><Icon p={ICONS.Star} /></div>
+      <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Ваш Архетип</h2>
+      <h1 className="text-4xl font-black text-slate-800 mb-6">{archetype}</h1>
+      <p className="text-lg text-slate-600 leading-relaxed mb-8">{info.desc}</p>
+      <div className="w-full space-y-4 mb-8 text-left">
+        <div className="p-4 bg-slate-50 rounded-xl"><span className="font-bold text-xs uppercase text-slate-400 block mb-1">Сила</span>{info.strength}</div>
+        <div className="p-4 bg-slate-50 rounded-xl"><span className="font-bold text-xs uppercase text-slate-400 block mb-1">Совет</span>{info.advice}</div>
       </div>
+      <button onClick={onContinue} className="w-full py-4 rounded-xl bg-indigo-600 text-white font-bold text-lg">Далее</button>
+    </div>
+  );
+};
+
+const Tutorial: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
+  return (
+    <div className="h-full bg-white p-6 flex flex-col justify-center items-center text-center">
+      <div className="w-32 h-32 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center mb-8"><Icon p={ICONS.Compass} /></div>
+      <h2 className="text-3xl font-black text-slate-800 mb-4">Начнем путь</h2>
+      <p className="text-slate-500 text-lg mb-8">ИИ создаст карту дня под ваш архетип. Дерево покажет прогресс.</p>
+      <button onClick={onFinish} className="w-full py-4 rounded-xl bg-indigo-600 text-white font-bold text-lg">Вперед</button>
     </div>
   );
 };
 
 // --- APP ---
 const App: React.FC = () => {
-  // АВТО-СБРОС КЭША
   useEffect(() => {
-    if (!localStorage.getItem('mm_final_fix_v3')) {
+    if (!localStorage.getItem('mm_nuclear_reset_v1')) {
       localStorage.clear();
-      localStorage.setItem('mm_final_fix_v3', 'true');
+      localStorage.setItem('mm_nuclear_reset_v1', 'true');
       window.location.reload();
     }
   }, []);
 
-  const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null') || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; }
+  const [user, setUser] = useState<any>(() => {
+    try { const s = localStorage.getItem(STORAGE_KEYS.PROFILE); return s ? JSON.parse(s) : { onboardingCompleted: false, currentMood: 'ok' }; } catch { return { onboardingCompleted: false }; }
   });
+  const [view, setView] = useState('HOME');
+  const [insight, setInsight] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [moodOpen, setMoodOpen] = useState(false);
+  const [history, setHistory] = useState<any[]>([]);
+  const [sessions, setSessions] = useState(0);
 
-  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      return saved ? { onboardingCompleted: false, currentMood: 'ok', ...JSON.parse(saved) } : { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false, currentMood: 'ok' };
-    } catch { return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false, currentMood: 'ok' }; }
-  });
+  useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(user)); }, [user]);
 
-  const [currentView, setCurrentView] = useState<string>('HOME'); 
-  const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
-  const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
-  const [dailyInsight, setDailyInsight] = useState<DailyInsightData | null>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_INSIGHT) || 'null'); } catch { return null; }
-  });
-  
-  const [isInsightLoading, setIsInsightLoading] = useState(false);
-  const [isBatteryModalOpen, setIsBatteryModalOpen] = useState(false);
-  const [history, setHistory] = useState<ChatSession[]>(() => { try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }});
-  const [totalSessions, setTotalSessions] = useState<number>(() => {
-    const val = parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10);
-    return isNaN(val) ? 0 : val;
-  });
-  const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => {
-    const val = parseInt(localStorage.getItem(STORAGE_KEYS.TIME) || '0', 10);
-    return isNaN(val) ? 0 : val;
-  });
+  const currentTree = TREE_STAGES.find(r => sessions >= r.threshold) || TREE_STAGES[0];
 
-  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.JOURNAL) || '[]'); } catch { return []; }
-  });
-
-  // --- GENERATION ---
   useEffect(() => {
-    const generateDailyAdvice = async () => {
-      if (!userProfile.onboardingCompleted || !userProfile.name) return;
-      const todayStr = new Date().toDateString();
-      const currentMood = userProfile.currentMood || 'ok';
-
-      if (dailyInsight && dailyInsight.date === todayStr && dailyInsight.generatedForMood === currentMood) return;
-
-      setIsInsightLoading(true);
+    const gen = async () => {
+      if (!user.onboardingCompleted || !user.name) return;
+      setLoading(true);
       try {
-        const userName = userProfile.name || "Друг";
-        let moodInstruction = "";
-        if (currentMood === 'low') moodInstruction = "КЛИЕНТ УСТАЛ. Мягкие советы.";
-        if (currentMood === 'high') moodInstruction = "КЛИЕНТ НА ПИКЕ. Амбициозные задачи.";
-        
-        const prompt = `
-          Ты — ментор. Клиент: ${userName}. Архетип: "${userProfile.archetype}".
-          Цель: "${userProfile.focus}". Состояние: ${moodInstruction}.
-          Карта дня (4 блока). Разделитель "|||". Без заголовков.
-          1. МЫШЛЕНИЕ. 2. ДЕЙСТВИЕ. 3. ТЕЛО. 4. ИНСАЙТ.
-          Ответ: ТЕКСТ1|||ТЕКСТ2|||ТЕКСТ3|||ТЕКСТ4
-        `;
-
-        const responseText = await sendMessageToGemini(prompt);
-        const parts = responseText.replace(/^(Мышление|Действие|Тело|Инсайт)[:\.]\s*/gim, "").trim().split('|||');
-        
-        const newInsight: DailyInsightData = {
-          date: todayStr,
-          generatedForMood: currentMood,
-          mindset: parts[0]?.trim() || "Фокусируйся на главном.",
-          action: parts[1]?.trim() || "Сделай один маленький шаг.",
-          health: parts[2]?.trim() || "Дыши глубже.",
-          insight: parts[3]?.trim() || "Все ответы внутри.",
-        };
-        setDailyInsight(newInsight);
-        localStorage.setItem(STORAGE_KEYS.DAILY_INSIGHT, JSON.stringify(newInsight));
-      } catch (e) { } finally { setIsInsightLoading(false); }
+        const res = await sendMessageToGemini("Advice");
+        const p = res.split('|||');
+        setInsight({ mindset: p[0]||"Фокус", action: p[1]||"Действие", health: p[2]||"Энергия", insight: p[3]||"Мудрость" });
+      } catch {} finally { setLoading(false); }
     };
-    generateDailyAdvice();
-  }, [userProfile.name, userProfile.currentMood, journalEntries, userProfile.onboardingCompleted]);
-
-  // Effects
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(userProfile)); }, [userProfile]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history)); }, [history]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.SESSIONS, totalSessions.toString()); }, [totalSessions]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.TIME, totalTimeSeconds.toString()); }, [totalTimeSeconds]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.JOURNAL, JSON.stringify(journalEntries)); }, [journalEntries]);
-  useEffect(() => { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(siteConfig)); }, [siteConfig]);
-
-  useEffect(() => {
-    if (window.Telegram?.WebApp) {
-      const tg = window.Telegram.WebApp;
-      tg.ready(); tg.expand();
-      const user = tg.initDataUnsafe?.user;
-      if (user) {
-        setUserProfile(prev => ({ ...prev, name: prev.name || [user.first_name, user.last_name].join(' '), avatarUrl: (!prev.avatarUrl?.startsWith('data:') && prev.avatarUrl !== user.photo_url) ? user.photo_url : prev.avatarUrl, isRegistered: true }));
-      }
-    }
-  }, []);
-
-  const totalMinutes = Math.round(totalTimeSeconds / 60);
-  const totalSteps = totalSessions + totalMinutes; 
-  const getTreeStage = (steps: number) => { const safeSteps = isNaN(steps) ? 0 : steps; return TREE_STAGES.find(r => safeSteps >= r.threshold) || TREE_STAGES[TREE_STAGES.length - 1]; };
-  const currentTree = getTreeStage(totalSteps);
-
-  const startMode = (mode: JournalMode) => { setSelectedMode(mode); setCurrentView('CHAT'); };
-  
-  const handleSessionComplete = (messages: Message[], duration: number) => {
-    const previewText = messages.find(m => m.role === 'user')?.content || 'Сессия';
-    const newSession: ChatSession = { id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration, preview: previewText.substring(0, 50) + '...', messages };
-    setHistory(prev => [newSession, ...prev]); setTotalSessions(prev => prev + 1); setTotalTimeSeconds(prev => prev + duration);
-  };
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => { if (e.target.files?.[0]) { const reader = new FileReader(); reader.onloadend = () => setUserProfile(prev => ({ ...prev, avatarUrl: reader.result as string })); reader.readAsDataURL(e.target.files[0]); } };
-
-  // --- RENDERERS ---
-  const renderBatteryModal = () => {
-    if (!isBatteryModalOpen) return null;
-    return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsBatteryModalOpen(false)}></div>
-        <div className="bg-white rounded-[32px] p-6 w-full max-w-xs relative z-10 animate-fade-in shadow-2xl">
-          <button onClick={() => setIsBatteryModalOpen(false)} className="absolute right-4 top-4 text-slate-300 hover:text-slate-500"><X size={24} /></button>
-          <h3 className="text-xl font-extrabold text-center mb-6 text-slate-800">Твой заряд?</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {[ { label: "На пике 🔥", val: "high" }, { label: "В потоке 🌊", val: "flow" }, { label: "Нормально 🙂", val: "ok" }, { label: "На нуле 🪫", val: "low" } ].map((item) => (
-              <button key={item.val} onClick={() => { setIsBatteryModalOpen(false); setUserProfile(prev => ({ ...prev, currentMood: item.val as any })); }} className="p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50 border border-slate-100 hover:border-indigo-100 font-bold text-slate-700 transition-all active:scale-95 text-sm">{item.label}</button>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const renderDailyGuide = () => (
-    <div className="h-full flex flex-col bg-[#F8FAFC] px-6 pt-10 pb-32 animate-fade-in overflow-y-auto">
-      <header className="mb-8 flex items-center space-x-4"><button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Карта дня</h1></header>
-      {dailyInsight ? (
-        <div className="space-y-6">
-          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm relative overflow-hidden"><div className="flex items-center space-x-3 mb-3 text-indigo-500 relative z-10"><Brain size={20} /><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Мышление</span></div><p className="text-slate-700 leading-relaxed font-medium relative z-10">{dailyInsight.mindset}</p></div>
-          <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-[28px] p-6 text-white shadow-lg shadow-indigo-200 transform hover:scale-[1.01] transition-transform"><div className="flex items-center space-x-3 mb-3 opacity-90"><Target size={20} /><span className="text-[10px] font-bold uppercase tracking-widest">Действие</span></div><h2 className="text-lg font-bold leading-relaxed">{dailyInsight.action}</h2></div>
-          <div className="bg-white rounded-[28px] p-6 border border-slate-100 shadow-sm"><div className="flex items-center space-x-3 mb-3 text-emerald-600"><Battery size={20} /><span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Тело & Ресурс</span></div><p className="text-slate-700 leading-relaxed font-medium">{dailyInsight.health}</p></div>
-          <div className="bg-slate-900 rounded-[28px] p-6 text-slate-300 shadow-sm"><div className="flex items-center space-x-3 mb-3 text-amber-400"><Sparkles size={20} /><span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Инсайт</span></div><p className="text-slate-200 leading-relaxed italic">"{dailyInsight.insight}"</p></div>
-        </div>
-      ) : ( <div className="flex flex-col items-center justify-center h-full"><Loader2 className="animate-spin text-indigo-500 mb-4" size={32} /><p className="text-slate-400">Составляю карту...</p></div> )}
-    </div>
-  );
+    gen();
+  }, [user]);
 
   const renderHome = () => (
-    <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-4 w-full flex items-center justify-between px-6 pt-4">
-         <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-white shadow-sm">{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-400"><UserIcon size={20} /></div>}</div>
-            <div><h3 className="text-sm font-bold text-slate-900 leading-tight">{userProfile.name || 'Странник'}</h3><p className="text-[10px] text-slate-400 font-medium">{userProfile.archetype || 'Начало пути'}</p></div>
-         </div>
-         <div className="w-10 h-10 flex items-center justify-center"><Logo /></div>
-      </header>
-
-      {/* КАРТА ДНЯ */}
-      <div className="px-6 mb-8">
-        {!userProfile.onboardingCompleted ? (
-          <button onClick={() => setCurrentView('ONBOARDING')} className="w-full relative overflow-hidden rounded-[32px] bg-slate-900 p-8 text-left shadow-xl shadow-slate-200 group active:scale-95 transition-all">
-             <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500 rounded-full blur-[60px] opacity-30 group-hover:opacity-50 transition-opacity"></div>
-             <div className="relative z-10">
-               <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white mb-6"><Compass size={24} /></div>
-               <h2 className="text-2xl font-bold text-white mb-2 leading-tight">Найти свой путь</h2>
-               <p className="text-slate-400 text-sm mb-6 leading-relaxed max-w-[200px]">Узнайте свой архетип и получите карту развития.</p>
-               <div className="inline-flex items-center space-x-2 bg-white text-slate-900 px-5 py-2.5 rounded-full text-xs font-bold"><span>Начать тест</span><ArrowLeft className="rotate-180" size={14} /></div>
-             </div>
-          </button>
-        ) : (
-          <div className="w-full relative overflow-hidden rounded-[32px] bg-white border border-slate-100 p-6 text-left shadow-lg shadow-indigo-100/50">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-60"></div>
-             <div className="relative z-10">
-               <div className="flex justify-between items-start mb-4">
-                 <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">Фокус дня</span>
-                 <button onClick={(e) => { e.stopPropagation(); setIsBatteryModalOpen(true); }} className="flex items-center space-x-1.5 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-full transition-colors active:scale-90"><Battery size={14} className={userProfile.currentMood === 'low' ? "text-rose-500" : "text-emerald-500"} /><span className="text-[10px] font-bold text-slate-600">{userProfile.currentMood === 'high' ? 'На пике' : userProfile.currentMood === 'low' ? 'На нуле' : userProfile.currentMood === 'flow' ? 'В потоке' : 'Норм'}</span></button>
-               </div>
-               <div className="mb-6 min-h-[60px]">
-                 {isInsightLoading ? (<div className="flex items-center space-x-2 text-slate-400 animate-pulse"><Loader2 size={18} className="animate-spin" /><span>Синхронизация...</span></div>) : (<h2 className="text-xl font-bold text-slate-800 leading-snug line-clamp-3">{dailyInsight?.mindset || "Загрузка..."}</h2>)}
-               </div>
-               <button onClick={() => setCurrentView('DAILY_GUIDE')} className="w-full py-3.5 rounded-2xl bg-indigo-600 text-white font-bold text-sm shadow-md shadow-indigo-200 active:scale-95 transition-all flex items-center justify-center space-x-2 group"><Map size={16} /><span>Открыть карту дня</span><ChevronRight size={16} className="opacity-60 group-hover:translate-x-1 transition-transform" /></button>
-             </div>
-          </div>
-        )}
+    <div className="h-full overflow-y-auto px-6 pt-6 pb-32">
+      <div className="flex justify-between items-center mb-6">
+        <div><h1 className="text-xl font-bold text-slate-800">Привет!</h1><p className="text-xs text-slate-500">{user.archetype || 'Странник'}</p></div>
+        <Logo />
       </div>
 
-      {/* ЧАТЫ */}
-      <div className="px-6 mb-8">
-        <div className="grid grid-cols-3 gap-4">
-          {[ { id: 'DECISION', label: 'Решение', icon: Zap, color: 'text-indigo-500', bg: 'bg-indigo-50' }, { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' }, { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50' } ].map((m) => (
-            <button key={m.id} onClick={() => startMode(m.id as JournalMode)} className="flex flex-col items-center p-4 rounded-[24px] bg-white border border-slate-50 shadow-sm active:scale-95 transition-all group">
-              <div className={`w-12 h-12 rounded-2xl ${m.bg} flex items-center justify-center ${m.color} mb-3 group-hover:scale-110 transition-transform`}><m.icon size={24} fill={m.id === 'DECISION' ? "currentColor" : "none"} strokeWidth={m.id === 'DECISION' ? 0 : 2} /></div><span className="text-[11px] font-bold text-slate-500">{m.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ДРЕВО (С ВЕКТОРНОЙ КАРТИНКОЙ) */}
-      <div className="px-6 mb-6">
-         <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-gradient-to-br from-white to-slate-50 border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-60"></div>
-            <div className="flex justify-between items-center mb-4 relative z-10">
-                <div className="flex items-center space-x-4">
-                   <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center overflow-hidden"><TreeIllustration stage={currentTree.stageIndex} className="w-10 h-10" /></div>
-                   <div className="text-left"><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Древо сознания</p><h4 className="text-base font-bold text-slate-800">{currentTree.title}</h4></div>
-                </div>
-                <ChevronRight size={20} className="text-slate-300" />
-            </div>
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 relative z-10">
-               <div className="text-center border-r border-slate-100"><p className="text-lg font-bold text-slate-800">{totalSessions}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Сессий</p></div>
-               <div className="text-center"><p className="text-lg font-bold text-slate-800">{totalMinutes}</p><p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Минут</p></div>
-            </div>
-         </button>
-      </div>
-    </div>
-  );
-
-  const renderRanksInfo = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Древо сознания</h1></header>
-      <div className="space-y-4">
-        {[...TREE_STAGES].reverse().map((stage) => (
-          <div key={stage.title} className={`p-5 rounded-[24px] border transition-all flex items-center space-x-4 ${totalSteps >= stage.threshold ? 'bg-emerald-50 border-emerald-100 shadow-sm' : 'bg-slate-50/50 border-slate-100 opacity-50'}`}>
-            <div className="w-12 h-12 shrink-0"><TreeIllustration stage={stage.stageIndex} className="w-full h-full" /></div>
-            <div><h4 className={`font-bold ${totalSteps >= stage.threshold ? 'text-emerald-800' : 'text-slate-400'}`}>{stage.title}</h4><p className="text-xs leading-relaxed text-slate-500 mt-1">{stage.desc}</p><div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-60">Требуется: {stage.threshold} очков</div></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-  const renderHistory = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
-       <header className="mb-8"><h1 className="text-3xl font-bold text-slate-800">История</h1></header>
-      {!history || history.length === 0 ? (<div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4"><div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2"><BookOpen size={32} strokeWidth={1.5} /></div><h3 className="text-slate-700 font-medium text-lg">Пока пусто</h3></div>) : (
-        <div className="space-y-4">
-          {history.map((session) => {
-            let dateStr = "Дата неизвестна";
-            try { if (session.date) dateStr = new Date(session.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }); } catch (e) {}
-            return (
-            <button key={session.id} onClick={() => { setSelectedSession(session); setCurrentView('READ_HISTORY'); }} className="w-full text-left p-4 rounded-[24px] bg-white border-slate-50 shadow-sm border flex items-start space-x-4 active:scale-98">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${session.mode === 'DECISION' ? 'bg-indigo-50 text-indigo-500' : session.mode === 'EMOTIONS' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>{session.mode === 'DECISION' ? <Zap size={20} fill="currentColor" /> : session.mode === 'EMOTIONS' ? <Heart size={20} /> : <BookOpen size={20} />}</div>
-              <div className="flex-1 min-w-0"><div className="flex justify-between items-center mb-1"><h4 className="font-semibold text-slate-700 text-sm">{session.mode === 'DECISION' ? 'Решение' : session.mode === 'EMOTIONS' ? 'Эмоции' : 'Дневник'}</h4><span className="text-[10px] text-slate-400">{dateStr}</span></div><p className="text-xs text-slate-500 line-clamp-2">{session.preview || 'Нет описания'}</p></div>
-            </button>
-            );
-          })}
+      {!user.onboardingCompleted ? (
+        <button onClick={() => setView('ONBOARDING')} className="w-full bg-slate-900 rounded-[32px] p-6 text-white text-left shadow-lg mb-8">
+          <div className="mb-4"><Icon p={ICONS.Compass} /></div>
+          <h2 className="text-xl font-bold mb-2">Найти свой путь</h2>
+          <p className="text-sm opacity-80 mb-4">Пройти тест архетипа</p>
+          <span className="bg-white text-slate-900 px-4 py-2 rounded-full text-xs font-bold">Начать</span>
+        </button>
+      ) : (
+        <div className="w-full bg-white border border-slate-100 rounded-[32px] p-6 shadow-lg shadow-indigo-100/50 mb-8">
+           <div className="flex justify-between mb-4">
+             <span className="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded">Фокус дня</span>
+             <button onClick={() => setMoodOpen(true)} className="flex items-center space-x-1 bg-slate-100 px-2 py-1 rounded-full"><Icon p={ICONS.Battery} /><span className="text-[10px]">{user.currentMood || 'Норм'}</span></button>
+           </div>
+           <h2 className="text-lg font-bold text-slate-800 mb-4 line-clamp-3">{loading ? "Загрузка..." : (insight?.mindset || "...")}</h2>
+           <button onClick={() => setView('DAILY')} className="w-full py-3 rounded-xl bg-indigo-600 text-white font-bold text-sm">Открыть карту</button>
         </div>
       )}
-    </div>
-  );
 
-  const renderProfile = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
-       <header className="mb-8 flex items-center space-x-4"><button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Профиль</h1></header>
-      <div className="bg-white shadow-sm rounded-[32px] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border border-slate-50">
-        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-50"></div>
-        <div className="w-24 h-24 rounded-full bg-white p-1 shadow-sm relative z-10 -mt-2 overflow-hidden border border-slate-100">{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}</div>
-        <h3 className="text-xl font-bold mt-4 text-slate-800">{userProfile.name || 'Странник'}</h3>
-        <p className="text-sm text-indigo-400 font-medium">{userProfile.archetype || "Странник"}</p>
-        {userProfile.archetype && (
-          <button onClick={() => setCurrentView('ARCHETYPE_RESULT_VIEW')} className="mt-4 px-4 py-2 rounded-full bg-white/50 border border-slate-200 text-xs font-bold text-slate-600 hover:bg-white transition-all">Подробнее об архетипе</button>
-        )}
+      <div className="grid grid-cols-3 gap-3 mb-8">
+        <button className="p-4 bg-indigo-50 rounded-2xl flex flex-col items-center"><Icon p={ICONS.Zap} c="#6366f1" /><span className="text-[10px] font-bold text-slate-600 mt-2">РЕШЕНИЕ</span></button>
+        <button className="p-4 bg-rose-50 rounded-2xl flex flex-col items-center"><Icon p={ICONS.Heart} c="#e11d48" /><span className="text-[10px] font-bold text-slate-600 mt-2">ЭМОЦИИ</span></button>
+        <button className="p-4 bg-emerald-50 rounded-2xl flex flex-col items-center"><Icon p={ICONS.Book} c="#10b981" /><span className="text-[10px] font-bold text-slate-600 mt-2">ДНЕВНИК</span></button>
       </div>
-      <div className="space-y-4">
-        <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between active:scale-95"><div className="flex items-center space-x-4"><div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Medal size={20} /></div><span className="text-sm font-semibold">Древо сознания</span></div><ChevronRight size={18} className="text-slate-300" /></button>
-        <button onClick={() => setCurrentView('SETTINGS')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between active:scale-95"><div className="flex items-center space-x-4"><div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Settings size={20} /></div><span className="text-sm font-semibold">Настройки</span></div><ChevronRight size={18} className="text-slate-300" /></button>
-        <button onClick={() => setCurrentView('ABOUT')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between active:scale-95"><div className="flex items-center space-x-4"><div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Info size={20} /></div><span className="text-sm font-semibold">О приложении</span></div><ChevronRight size={18} className="text-slate-300" /></button>
-      </div>
-    </div>
-  );
 
-  const renderSettings = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
-        <header className="mb-8 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">Настройки</h1></header>
-        <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border border-slate-50 space-y-8">
-          <div className="flex flex-col items-center">
-            <div className="relative"><div className="w-28 h-28 rounded-full overflow-hidden bg-slate-100 border-4 border-white shadow-md active:scale-95">{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300 bg-slate-50"><UserIcon size={40} /></div>}</div><label className="absolute bottom-0 right-0 p-2 bg-indigo-500 rounded-full text-white cursor-pointer shadow-md"><Camera size={16} /><input type="file" accept="image/*" className="hidden" onChange={(e) => { if(e.target.files?.[0]) { const r = new FileReader(); r.onloadend = () => setUserProfile(p => ({...p, avatarUrl: r.result as string})); r.readAsDataURL(e.target.files[0]); } }} /></label></div>
-          </div>
-          <div className="space-y-2"><label className="text-sm font-bold text-slate-700">Имя</label><input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-100 border focus:outline-none focus:border-indigo-500 font-semibold" /></div>
-          <div className="pt-4 border-t border-slate-100"><label className="text-sm font-bold text-slate-700 mb-2 block">Тест личности</label><button onClick={() => setCurrentView('ONBOARDING')} className="w-full py-4 rounded-2xl bg-slate-50 text-slate-600 font-bold border border-slate-100 active:scale-95 transition-all flex items-center justify-center space-x-2 hover:bg-slate-100"><Compass size={18} /><span>Пройти тест заново</span></button></div>
-          <button onClick={() => setCurrentView('PROFILE')} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold shadow-lg mt-4 active:scale-98 transition-transform">Сохранить</button>
-        </div>
-    </div>
-  );
-
-  const renderAbout = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
-      <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">О приложении</h1></header>
-      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0"><StylizedMMText text={siteConfig.logoText} className="text-[200px]" color="#A78BFA" opacity="0.05" /></div>
-        <div className="relative z-10 flex flex-col items-center w-full">
-          <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
-          <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
-          <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around cursor-pointer" onClick={() => { if(window.confirm("Сброс?")) localStorage.clear(); window.location.reload(); }}><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">11.0.0 (NO ICONS)</p></div></div>
-          <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
-        </div>
+      <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-sm flex items-center justify-between">
+         <div className="flex items-center space-x-4"><div className="w-12 h-12"><TreeIllustration stage={currentTree.stageIndex} /></div><div><p className="text-[10px] uppercase text-slate-400 font-bold">Древо</p><h4 className="font-bold text-slate-800">{currentTree.title}</h4></div></div>
       </div>
     </div>
   );
 
   return (
-    <div className="h-screen w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
-      <div className="absolute inset-0 z-0 pointer-events-none"><div className="absolute top-[-10%] left-[-10%] w-[70%] h-[50%] bg-blue-100 rounded-full blur-[100px] opacity-60"></div><div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[50%] bg-purple-100 rounded-full blur-[100px] opacity-60"></div></div>
-      <main className="flex-1 relative overflow-hidden z-10">
-        {renderBatteryModal()}
-        {currentView === 'ONBOARDING' && <OnboardingScreen onComplete={(data) => { setUserProfile(prev => ({ ...prev, ...data, onboardingCompleted: true })); localStorage.removeItem(STORAGE_KEYS.DAILY_INSIGHT); setDailyInsight(null); setCurrentView('ARCHETYPE_RESULT'); }} onBack={() => setCurrentView('HOME')} />}
-        {currentView === 'ARCHETYPE_RESULT' && <ArchetypeResultScreen archetype={userProfile.archetype || 'Искатель'} onContinue={() => setCurrentView('TUTORIAL')} />}
-        {currentView === 'ARCHETYPE_RESULT_VIEW' && <ArchetypeResultScreen archetype={userProfile.archetype || 'Искатель'} isReadOnly={true} onBack={() => setCurrentView('PROFILE')} onContinue={() => {}} />}
-        {currentView === 'TUTORIAL' && <TutorialScreen onFinish={() => setCurrentView('HOME')} />}
-        {currentView === 'DAILY_GUIDE' && renderDailyGuide()}
-        {currentView === 'HOME' && renderHome()}
-        {currentView === 'CHAT' && <InternalChat mode={selectedMode!} onBack={() => setCurrentView('HOME')} onComplete={(msgs) => { setHistory(p => [...p, { id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: 0, preview: '...', messages: msgs }]); setTotalSessions(p => p+1); }} />}
-        {currentView === 'READ_HISTORY' && selectedSession && <div className="p-6"><h1>История чата</h1><button onClick={() => setCurrentView('HISTORY')}>Назад</button></div>}
-        {currentView === 'HISTORY' && renderHistory()}
-        {currentView === 'PROFILE' && renderProfile()}
-        {currentView === 'SETTINGS' && renderSettings()}
-        {currentView === 'ABOUT' && renderAbout()}
-        {currentView === 'RANKS_INFO' && renderRanksInfo()}
-        {currentView === 'ADMIN' && <AdminInterface config={siteConfig} onSave={(newCfg) => setSiteConfig(newCfg)} onBack={() => setCurrentView('ABOUT')} />}
+    <div className="h-screen w-full font-sans bg-[#F8FAFC]">
+      {moodOpen && <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-6" onClick={() => setMoodOpen(false)}><div className="bg-white rounded-3xl p-6 w-full max-w-sm"><h3 className="text-xl font-bold text-center mb-4">Заряд?</h3><div className="grid grid-cols-2 gap-2">{['high','flow','ok','low'].map(m => (<button key={m} onClick={() => { setUser((p:any)=>({...p, currentMood: m})); setMoodOpen(false); }} className="p-3 bg-slate-50 rounded-xl font-bold text-slate-700">{m}</button>))}</div></div></div>}
+      <main className="flex-1 h-full overflow-hidden">
+        {view === 'HOME' && renderHome()}
+        {view === 'ONBOARDING' && <OnboardingScreen onComplete={(d) => { setUser((p:any) => ({...p, ...d, onboardingCompleted: true})); setView('ARCHETYPE_RESULT'); }} onBack={() => setView('HOME')} />}
+        {view === 'ARCHETYPE_RESULT' && <ArchetypeResult archetype={user.archetype} onContinue={() => setView('TUTORIAL')} />}
+        {view === 'TUTORIAL' && <Tutorial onFinish={() => setView('HOME')} />}
+        {view === 'DAILY' && <div className="p-6 pt-12"><h1>Карта дня</h1><p>{insight?.mindset}</p><button onClick={() => setView('HOME')} className="mt-4">Назад</button></div>}
+        {view === 'PROFILE' && <div className="p-6 pt-12"><h1>Профиль</h1><p>{user.archetype}</p></div>}
       </main>
-      {(['HOME', 'HISTORY', 'PROFILE', 'ABOUT', 'SETTINGS'].includes(currentView)) && <InternalBottomNav currentView={currentView} onChangeView={setCurrentView} />}
+      {['HOME', 'PROFILE'].includes(view) && <InternalBottomNav currentView={view} onChangeView={setView} />}
     </div>
   );
 };
