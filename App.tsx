@@ -136,8 +136,6 @@ const App: React.FC = () => {
         
         setUserProfile(prev => {
           const tgPhoto = user.photo_url || null;
-          // Only auto-update if current avatar is null OR it's a direct URL (not a manually uploaded base64 data URI)
-          // AND it's different from the new Telegram photo URL.
           const isManual = prev.avatarUrl?.startsWith('data:');
           const shouldUpdateAvatar = !isManual && prev.avatarUrl !== tgPhoto;
 
@@ -375,7 +373,7 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-2 w-full relative overflow-hidden">
+      <header className="mb-10 w-full relative overflow-hidden">
         {/* Narrow refined header with dot pattern and gradient */}
         <div className="absolute inset-0 bg-[#F8FAFC]">
            <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: `radial-gradient(#6366f1 0.8px, transparent 0.8px)`, backgroundSize: '16px 16px' }}></div>
@@ -384,7 +382,7 @@ const App: React.FC = () => {
         </div>
 
         <div className="relative flex flex-row items-center pt-4 pb-4 px-8 min-h-[90px]">
-          {/* Large Area-Filling Avatar Watermark - Brighter and Larger */}
+          {/* Large Area-Filling Avatar Watermark */}
           <div 
             className="absolute right-[-10%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
             onPointerDown={handleAdminTriggerStart}
@@ -424,7 +422,7 @@ const App: React.FC = () => {
         <div className="absolute bottom-0 left-0 w-full h-px bg-slate-100/30"></div>
       </header>
 
-      <div className="px-6 mb-7 relative z-20">
+      <div className="px-6 mb-10 relative z-20">
         <div className="grid grid-cols-3 gap-5">
           {[
             { id: 'DECISION', label: 'Решение', icon: Zap, color: 'indigo', iconColor: 'text-indigo-500', bgGrad: 'from-indigo-50 to-purple-50' },
@@ -606,8 +604,7 @@ const App: React.FC = () => {
 
   const renderSettings = () => {
     const tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
-    const isManualAvatar = userProfile.avatarUrl?.startsWith('data:');
-
+    
     return (
       <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
         <header className="mb-8 flex items-center space-x-4">
@@ -632,7 +629,6 @@ const App: React.FC = () => {
                <label className="absolute bottom-0 right-0 p-2 bg-indigo-500 rounded-full text-white cursor-pointer shadow-md"><Camera size={16} /><input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} /></label>
             </div>
             
-            {/* Show sync/reset button only if there's a custom avatar or we want to force refresh */}
             {tgPhoto && (
                <button 
                  onClick={resetToTelegramAvatar}
