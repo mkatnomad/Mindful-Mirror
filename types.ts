@@ -1,4 +1,4 @@
-export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'DAILY_GUIDE';
+export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'DAILY_GUIDE' | 'ARCHETYPE_RESULT' | 'TUTORIAL' | 'ARCHETYPE_RESULT_VIEW';
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
 
@@ -33,16 +33,16 @@ export interface UserProfile {
   isSetup: boolean;
   isRegistered: boolean;
   theme?: 'LIGHT' | 'SPACE';
-  
-  // Данные профиля
   onboardingCompleted?: boolean;
+  
+  // Поля теста
   archetype?: string; 
   focus?: string;
   struggle?: string;
   chronotype?: string;
   aiTone?: string;
   
-  // 👇 НОВОЕ ПОЛЕ: Текущее настроение
+  // Настроение
   currentMood?: 'high' | 'flow' | 'ok' | 'low';
 }
 
@@ -67,10 +67,9 @@ export interface JournalEntry {
 
 export interface DailyInsightData {
   date: string;
+  generatedForMood?: string;
   mindset: string;
   action: string;
   health: string;
   insight: string;
-  // Чтобы не перегенерировать одно и то же для одного настроения
-  generatedForMood?: string; 
 }
