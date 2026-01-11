@@ -19,7 +19,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   customLogoUrl: null,
   customWatermarkUrl: null,
   aboutParagraphs: [
-    "Mindful Mirror — это ваш персональный спутник в мире осознанности.",
+    "Mindful Mirror — это ваш персональный спутник.",
     "Мы используем ИИ, чтобы помочь вам лучше понять себя."
   ],
   quotes: [],
@@ -161,7 +161,6 @@ const App: React.FC = () => {
       const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Миграция старых данных: добавляем флаг, если его нет
         return { onboardingCompleted: false, ...parsed };
       }
       return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
@@ -181,24 +180,28 @@ const App: React.FC = () => {
   const [history, setHistory] = useState<ChatSession[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) { return []; }
   });
    
   const [totalSessions, setTotalSessions] = useState<number>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.SESSIONS);
-    return saved ? parseInt(saved, 10) : 0;
+    const val = saved ? parseInt(saved, 10) : 0;
+    return isNaN(val) ? 0 : val;
   });
    
   const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.TIME);
-    return saved ? parseInt(saved, 10) : 0;
+    const val = saved ? parseInt(saved, 10) : 0;
+    return isNaN(val) ? 0 : val;
   });
 
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.JOURNAL);
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch (e) { return []; }
   });
 
@@ -211,7 +214,6 @@ const App: React.FC = () => {
 
   const longPressTimer = useRef<number | null>(null);
 
-  // --- ГЕНЕРАЦИЯ СОВЕТА ---
   useEffect(() => {
     const generateDailyAdvice = async () => {
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
@@ -273,7 +275,6 @@ const App: React.FC = () => {
     generateDailyAdvice();
   }, [userProfile.name, journalEntries, userProfile.onboardingCompleted]);
 
-  // Standard effects
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history)); }, [history]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.SESSIONS, totalSessions.toString()); }, [totalSessions]);
@@ -282,7 +283,6 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.JOURNAL, JSON.stringify(journalEntries)); }, [journalEntries]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(siteConfig)); }, [siteConfig]);
 
-  // Telegram
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -301,7 +301,10 @@ const App: React.FC = () => {
 
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
-  const getCurrentRank = (steps: number) => RANKS.find(r => steps >= r.threshold) || RANKS[RANKS.length - 1];
+  const getCurrentRank = (steps: number) => {
+    const safeSteps = isNaN(steps) ? 0 : steps;
+    return RANKS.find(r => safeSteps >= r.threshold) || RANKS[RANKS.length - 1];
+  };
   const startMode = (mode: JournalMode) => { setSelectedMode(mode); setCurrentView('CHAT'); };
   
   const handleSaveJournalEntry = (entry: JournalEntry, isNew: boolean, duration: number) => {
@@ -378,11 +381,7 @@ const App: React.FC = () => {
                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
                </div>
              ) : siteConfig.customWatermarkUrl ? (
-               <img 
-                 src={siteConfig.customWatermarkUrl} 
-                 className="h-[80px] object-contain opacity-[0.08] grayscale pointer-events-none" 
-                 alt="Watermark" 
-               />
+               <img src={siteConfig.customWatermarkUrl} className="h-[80px] object-contain opacity-[0.08] grayscale pointer-events-none" alt="Watermark" />
              ) : (
                 <div className="w-[100px] h-[100px] flex items-center justify-center opacity-[0.02]">
                   <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -422,13 +421,11 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* --- КАРТОЧКА СОВЕТА / ОПРОСА --- */}
       <div className="px-6 space-y-3.5 mb-7">
         <h3 className="text-[10px] font-bold ml-2 text-slate-400 uppercase tracking-widest">
           {userProfile.onboardingCompleted ? "Совет дня" : "Персонализация"}
         </h3>
         
-        {/* ЕСЛИ ОПРОС НЕ ПРОЙДЕН */}
         {!userProfile.onboardingCompleted ? (
           <button 
             onClick={() => setCurrentView('ONBOARDING')}
@@ -452,7 +449,6 @@ const App: React.FC = () => {
              </div>
           </button>
         ) : (
-          /* ЕСЛИ ОПРОС ПРОЙДЕН (Показываем совет) */
           <div className="bg-white border-slate-50 p-6 rounded-[28px] border shadow-sm relative overflow-hidden min-h-[140px] flex flex-col justify-center">
              <div className="absolute top-0 left-0 w-24 h-24 bg-amber-50 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl"></div>
              <Quote size={24} className="text-amber-100 absolute top-4 left-4 opacity-50" />
@@ -475,7 +471,6 @@ const App: React.FC = () => {
           </div>
         )}
       </div>
-      {/* --- КОНЕЦ БЛОКА --- */}
 
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full text-left outline-none active:scale-[0.98] transition-all group bg-white border-white shadow-[0_15px_30px_-12px_rgba(200,210,255,0.25)] rounded-[28px] p-6 border relative overflow-hidden">
@@ -499,6 +494,97 @@ const App: React.FC = () => {
               </div>
             </div>
          </button>
+      </div>
+    </div>
+  );
+
+  const renderHistory = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+       <header className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">История</h1>
+      </header>
+      {history.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+          <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
+            <BookOpen size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-slate-700 font-medium text-lg">Пока пусто</h3>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {history.map((session) => {
+            // SAFE DATE PARSING
+            let dateStr = 'Дата неизвестна';
+            try {
+                if (session.date) {
+                    dateStr = new Date(session.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
+                }
+            } catch (e) {}
+
+            return (
+            <button key={session.id} onClick={() => { setSelectedSession(session); setCurrentView('READ_HISTORY'); }} className="w-full text-left p-4 rounded-[24px] bg-white border-slate-50 shadow-sm border flex items-start space-x-4 hover:shadow-md transition-shadow active:scale-98">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${session.mode === 'DECISION' ? 'bg-indigo-50 text-indigo-500' : session.mode === 'EMOTIONS' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                {session.mode === 'DECISION' ? <Zap size={20} fill="currentColor" strokeWidth={0} /> : session.mode === 'EMOTIONS' ? <Heart size={20} /> : <BookOpen size={20} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-1">
+                   <h4 className="font-semibold text-slate-700 text-sm">
+                      {session.mode === 'DECISION' ? 'Решение' : session.mode === 'EMOTIONS' ? 'Эмоции' : 'Дневник'}
+                   </h4>
+                   <span className="text-[10px] text-slate-400">{dateStr}</span>
+                </div>
+                <p className="text-xs text-slate-500 line-clamp-2">{session.preview}</p>
+              </div>
+            </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderProfile = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+       <header className="mb-8 flex items-center space-x-4">
+         <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">Профиль</h1>
+      </header>
+      
+      <div className="bg-white shadow-sm rounded-[32px] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border border-slate-50">
+        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-50"></div>
+        <div className="w-24 h-24 rounded-full bg-white p-1 shadow-sm relative z-10 -mt-2 overflow-hidden border border-slate-100">
+           {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}
+        </div>
+        <h3 className="text-xl font-bold mt-4 text-slate-800">{userProfile.name || 'Странник'}</h3>
+        <p className="text-sm text-indigo-400 font-medium">{currentRank.title}</p>
+      </div>
+
+      <div className="space-y-4">
+        <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Medal size={20} /></div>
+            <span className="text-sm font-semibold">Ранги</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
+
+        <button onClick={() => setCurrentView('SETTINGS')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Settings size={20} /></div>
+            <span className="text-sm font-semibold">Настройки</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
+
+        <button onClick={() => setCurrentView('ABOUT')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Info size={20} /></div>
+            <span className="text-sm font-semibold">О приложении</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
       </div>
     </div>
   );
@@ -551,6 +637,96 @@ const App: React.FC = () => {
       </div>
     );
   };
+
+  const renderRanksInfo = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
+      <header className="mb-8 flex items-center space-x-4 text-left">
+         <button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">Ранги пути</h1>
+      </header>
+
+      <div className="space-y-4">
+        {[...RANKS].reverse().map((rank) => (
+          <div 
+            key={rank.title} 
+            className={`p-5 rounded-[24px] border transition-all ${
+              totalSteps >= rank.threshold 
+                ? 'bg-indigo-50 border-indigo-100 shadow-sm'
+                : 'bg-slate-50/50 border-slate-100 opacity-50'
+            }`}
+          >
+            <div className="flex justify-between items-start mb-2">
+               <h4 className={`font-bold ${totalSteps >= rank.threshold ? 'text-indigo-700' : 'text-slate-400'}`}>
+                 {rank.title}
+               </h4>
+               {totalSteps >= rank.threshold && (
+                 <Award size={18} className="text-indigo-500" />
+               )}
+            </div>
+            <p className="text-xs leading-relaxed text-slate-500">
+              {rank.desc}
+            </p>
+            <div className="mt-3 text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-60">
+              Требуется: {rank.threshold} баллов
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderAbout = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
+      <header className="mb-8 flex items-center space-x-4 text-left">
+         <button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">О приложении</h1>
+      </header>
+      
+      <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0">
+           <StylizedMMText text={siteConfig.logoText} className="text-[200px]" color="#A78BFA" opacity="0.05" />
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center w-full">
+          <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">
+            {siteConfig.customLogoUrl ? (
+              <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" alt="App Logo" />
+            ) : (
+              <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />
+            )}
+          </div>
+          <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
+          
+          <div className="space-y-6 text-left w-full px-2">
+            {siteConfig.aboutParagraphs.map((p, i) => (
+              <p key={i} className="text-[16px] leading-relaxed text-slate-600">
+                {p}
+              </p>
+            ))}
+          </div>
+
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
+             <div className="text-center">
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
+                <p className="text-base font-semibold text-slate-700">1.3.0</p>
+             </div>
+             <div className="text-center">
+                <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
+                <p className="text-base font-semibold text-slate-700">09-2025</p>
+             </div>
+          </div>
+          
+          <p className="text-[12px] text-slate-400 font-medium italic mt-12">
+            "Познай самого себя, и ты познаешь мир."
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="h-screen w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
