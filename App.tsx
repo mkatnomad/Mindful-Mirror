@@ -131,9 +131,16 @@ const App: React.FC = () => {
       }
 
       const user = tg.initDataUnsafe?.user;
-      if (user && !userProfile.name) {
+      if (user) {
         const fullName = [user.first_name, user.last_name].filter(Boolean).join(' ');
-        setUserProfile(prev => ({ ...prev, name: fullName, isRegistered: true }));
+        
+        // Automatically sync name and avatar from Telegram if they aren't already set
+        setUserProfile(prev => ({ 
+          ...prev, 
+          name: prev.name || fullName, 
+          avatarUrl: prev.avatarUrl || user.photo_url || null,
+          isRegistered: true 
+        }));
       }
     }
   }, []);
@@ -365,19 +372,19 @@ const App: React.FC = () => {
         <div className="relative flex flex-row items-center pt-4 pb-4 px-8 min-h-[90px]">
           {/* Large Area-Filling Avatar Watermark - Brighter and Larger */}
           <div 
-            className="absolute right-[-10%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
+            className="absolute right-[-12%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
             onPointerDown={handleAdminTriggerStart}
             onPointerUp={handleAdminTriggerEnd}
             onPointerLeave={handleAdminTriggerEnd}
           >
              {userProfile.avatarUrl ? (
-               <div className="relative w-[240px] h-[240px] rounded-full overflow-hidden opacity-[0.14] grayscale brightness-110 pointer-events-none">
+               <div className="relative w-[240px] h-[240px] rounded-full overflow-hidden opacity-[0.18] grayscale brightness-110 pointer-events-none">
                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
                </div>
              ) : siteConfig.customWatermarkUrl ? (
                <img 
                  src={siteConfig.customWatermarkUrl} 
-                 className="h-[80px] object-contain opacity-[0.05] grayscale pointer-events-none" 
+                 className="h-[80px] object-contain opacity-[0.08] grayscale pointer-events-none" 
                  alt="Watermark" 
                />
              ) : (
