@@ -56,7 +56,7 @@ const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string,
   <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} />
 );
 
-// --- КОМПОНЕНТ ОПРОСА (Вызывается только по кнопке) ---
+// --- КОМПОНЕНТ ОПРОСА ---
 const OnboardingScreen: React.FC<{ onComplete: (data: { focus: string, struggle: string, tone: string }) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
   const [tempFocus, setTempFocus] = useState('');
@@ -148,13 +148,26 @@ const OnboardingScreen: React.FC<{ onComplete: (data: { focus: string, struggle:
 // --- MAIN APP ---
 const App: React.FC = () => {
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.CONFIG);
-    return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.CONFIG);
+      return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+    } catch (e) {
+      return DEFAULT_CONFIG;
+    }
   });
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-    return saved ? { onboardingCompleted: false, ...JSON.parse(saved) } : { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Миграция старых данных: добавляем флаг, если его нет
+        return { onboardingCompleted: false, ...parsed };
+      }
+      return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
+    } catch (e) {
+      return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
+    }
   });
 
   const isSpaceTheme = userProfile.theme === 'SPACE';
@@ -166,8 +179,10 @@ const App: React.FC = () => {
   const [isInsightLoading, setIsInsightLoading] = useState(false);
    
   const [history, setHistory] = useState<ChatSession[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.HISTORY);
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.HISTORY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
   });
    
   const [totalSessions, setTotalSessions] = useState<number>(() => {
@@ -181,13 +196,17 @@ const App: React.FC = () => {
   });
 
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.JOURNAL);
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.JOURNAL);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) { return []; }
   });
 
   const [weeklyActivity, setWeeklyActivity] = useState<number[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
-    return saved ? JSON.parse(saved) : [40, 60, 30, 80, 55, 30, 10];
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
+      return saved ? JSON.parse(saved) : [40, 60, 30, 80, 55, 30, 10];
+    } catch (e) { return [40, 60, 30, 80, 55, 30, 10]; }
   });
 
   const longPressTimer = useRef<number | null>(null);
@@ -195,7 +214,6 @@ const App: React.FC = () => {
   // --- ГЕНЕРАЦИЯ СОВЕТА ---
   useEffect(() => {
     const generateDailyAdvice = async () => {
-      // НЕ генерируем, если нет имени или опрос не пройден
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
 
       const todayStr = new Date().toDateString();
@@ -340,7 +358,7 @@ const App: React.FC = () => {
     }
   };
 
-  // --- ГЛАВНЫЙ ЭКРАН ---
+  // --- RENDER FUNCTIONS ---
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
       <header className="mb-10 w-full relative overflow-hidden">
@@ -360,7 +378,11 @@ const App: React.FC = () => {
                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
                </div>
              ) : siteConfig.customWatermarkUrl ? (
-               <img src={siteConfig.customWatermarkUrl} className="h-[80px] object-contain opacity-[0.08] grayscale pointer-events-none" alt="Watermark" />
+               <img 
+                 src={siteConfig.customWatermarkUrl} 
+                 className="h-[80px] object-contain opacity-[0.08] grayscale pointer-events-none" 
+                 alt="Watermark" 
+               />
              ) : (
                 <div className="w-[100px] h-[100px] flex items-center justify-center opacity-[0.02]">
                   <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
