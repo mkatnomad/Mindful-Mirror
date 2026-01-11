@@ -37,22 +37,23 @@ const RANKS = [
   { threshold: 0, title: "Наблюдатель", desc: "Ты присматриваешься." },
 ];
 
+// ВАЖНО: Я изменил ключи на _v2, чтобы сбросить старые (битые) данные на телефонах пользователей
 const STORAGE_KEYS = {
-  PROFILE: 'mm_profile',
-  HISTORY: 'mm_history',
-  SESSIONS: 'mm_total_sessions',
-  TIME: 'mm_total_time',
-  ACTIVITY: 'mm_weekly_activity',
-  JOURNAL: 'mm_journal_entries',
-  CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v9'
+  PROFILE: 'mm_profile_v2',
+  HISTORY: 'mm_history_v2',
+  SESSIONS: 'mm_total_sessions_v2',
+  TIME: 'mm_total_time_v2',
+  ACTIVITY: 'mm_weekly_activity_v2',
+  JOURNAL: 'mm_journal_entries_v2',
+  CONFIG: 'mm_site_config_v2',
+  DAILY_INSIGHT: 'mm_daily_insight_v10' 
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
   <span className={`${className} font-extrabold italic select-none pointer-events-none uppercase`} style={{ color, opacity, fontFamily: 'Manrope, sans-serif' }}>{text}</span>
 );
 
-// --- ЛОГИКА ТЕСТА НА АРХЕТИП (Расширенная) ---
+// --- ЛОГИКА ТЕСТА НА АРХЕТИП ---
 const ARCHETYPES = {
   CREATOR: { title: "Творец", icon: Feather, desc: "Вы видите мир как холст. Ваша сила — в создании нового и самовыражении." },
   RULER: { title: "Правитель", icon: Briefcase, desc: "Вы строите системы и берете ответственность. Ваша сила — контроль и структура." },
@@ -67,7 +68,6 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
   const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string, aiTone?: string }>({});
   const [resultArchetype, setResultArchetype] = useState<string | null>(null);
 
-  // 7 вопросов: 4 на архетип, 3 на настройки
   const questions = [
     {
       title: "Что наполняет вас энергией?",
@@ -109,7 +109,6 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
         { label: "Планирование будущих побед", type: 'RULER' },
       ]
     },
-    // Настройки
     {
       title: "Главный фокус сейчас?",
       key: 'focus',
@@ -142,11 +141,9 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
   ];
 
   const handleSelect = (option: any) => {
-    // Подсчет очков архетипа
     if (option.type) {
       setScores(prev => ({ ...prev, [option.type]: (prev[option.type as keyof typeof scores] || 0) + 1 }));
     }
-    // Сохранение настроек
     if (questions[step].key) {
       setFinalData(prev => ({ ...prev, [questions[step].key!]: option.value }));
     }
@@ -178,7 +175,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
         focus: finalData.focus,
         struggle: finalData.struggle,
         chronotype: finalData.chronotype,
-        aiTone: "Мудрый Наставник" // Дефолтный тон
+        aiTone: "Мудрый Наставник"
       });
     }
   };
@@ -187,8 +184,8 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
     const arch = ARCHETYPES[resultArchetype as keyof typeof ARCHETYPES];
     const Icon = arch.icon;
     return (
-      <div className="h-full flex flex-col items-center justify-center p-8 bg-white animate-fade-in text-center">
-        <div className="w-28 h-28 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-8 shadow-sm animate-bounce-slow">
+      <div className="h-full flex flex-col items-center justify-center p-8 bg-white animate-fade-in text-center safe-area-bottom">
+        <div className="w-28 h-28 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-8 shadow-sm">
           <Icon size={56} />
         </div>
         <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Ваш Архетип</h2>
@@ -203,14 +200,16 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
     );
   }
 
+  const currentStepData = questions[step];
+
   return (
-    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
+    <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50 safe-area-bottom">
       <div className="flex justify-start mb-6">
          <button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600">
            <ArrowLeft size={24} />
          </button>
       </div>
-      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
+      <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full pb-10">
         <div className="mb-10">
           <div className="flex space-x-1.5 mb-8 justify-center">
             {questions.map((_, i) => (
@@ -218,20 +217,20 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
             ))}
           </div>
           <h2 className="text-3xl font-black text-slate-800 text-center leading-tight mb-2">
-            {questions[step].title}
+            {currentStepData.title}
           </h2>
         </div>
-        <div className="space-y-3" key={step}>
-          {questions[step].options.map((option, idx) => {
+        <div className="space-y-3">
+          {currentStepData.options.map((option, idx) => {
             const Icon = (option as any).icon;
             return (
             <button
-              key={idx}
+              key={`${step}-${idx}`} 
               onClick={() => handleSelect(option)}
               className="w-full p-5 rounded-[24px] border border-slate-100 bg-slate-50 hover:bg-white hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/10 transition-all active:scale-[0.98] flex items-center text-left group focus:outline-none"
             >
               {Icon && (
-                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-indigo-500 shadow-sm mr-4 group-hover:scale-110 transition-transform">
+                <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center text-indigo-500 shadow-sm mr-4 group-hover:scale-110 transition-transform shrink-0">
                   <Icon size={20} />
                 </div>
               )}
@@ -247,6 +246,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
 
 // --- MAIN APP ---
 const App: React.FC = () => {
+  // Safe Init with new keys
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null') || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; }
   });
@@ -261,6 +261,7 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
+  
   const [dailyInsight, setDailyInsight] = useState<DailyInsightData | null>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_INSIGHT) || 'null'); } catch { return null; }
   });
@@ -291,7 +292,7 @@ const App: React.FC = () => {
 
   const longPressTimer = useRef<number | null>(null);
 
-  // --- ГЕНЕРАЦИЯ ПО СФЕРАМ ЖИЗНИ ---
+  // --- GENERATION LOGIC ---
   useEffect(() => {
     const generateDailyAdvice = async () => {
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
@@ -304,32 +305,38 @@ const App: React.FC = () => {
         const recentEntries = journalEntries.slice(0, 3).map(e => e.content).join(". ");
         const userName = userProfile.name || "Друг";
         
+        // Forced structure prompt
         const prompt = `
           Ты — мудрый наставник. Клиент: ${userName}.
-          Архетип: "${userProfile.archetype}". Цель: "${userProfile.focus}". Проблема: "${userProfile.struggle}".
-          Контекст: "${recentEntries}".
+          Архетип: "${userProfile.archetype || 'Искатель'}". 
+          Цель: "${userProfile.focus}". 
+          Проблема: "${userProfile.struggle}".
+          Биоритм: "${userProfile.chronotype}".
           
-          Составь карту дня из 4 сфер. Дай конкретные рекомендации.
-          Разделитель: "|||". Не используй Markdown заголовки.
+          Контекст (из дневника): "${recentEntries}".
           
-          1. МЫШЛЕНИЕ (Установка на день).
-          2. ДЕЙСТВИЕ (Главный шаг к цели).
-          3. ТЕЛО (Как сохранить энергию, учитывая биоритм ${userProfile.chronotype}).
-          4. ИНСАЙТ (Глубокая мысль).
+          СОСТАВЬ КАРТУ ДНЯ ПО 4 СФЕРАМ.
+          Раздели ответ СТРОГО символами "|||".
+          НЕ ПИШИ ЗАГОЛОВКИ (типа "Мышление:"). ПИШИ СРАЗУ СУТЬ.
           
-          Ответ: ТЕКСТ1|||ТЕКСТ2|||ТЕКСТ3|||ТЕКСТ4
+          1. Сфера МЫШЛЕНИЯ: На чем держать ментальный фокус сегодня? (2 предложения)
+          2. Сфера ДЕЙСТВИЙ: Какой один главный шаг сделает день успешным? (конкретно)
+          3. Сфера ТЕЛА: Как восстановить ресурс, учитывая проблему "${userProfile.struggle}"?
+          4. Сфера СМЫСЛОВ: Глубокая, философская мысль или инсайт дня.
+          
+          Ответ только текст: ТЕКСТ1|||ТЕКСТ2|||ТЕКСТ3|||ТЕКСТ4
         `;
 
         const responseText = await sendMessageToGemini(prompt);
-        // Очистка от возможных заголовков, которые ИИ любит добавлять
-        const cleanText = responseText.replace(/\*\*(.*?)\*\*/g, "").replace(/МЫШЛЕНИЕ:|ДЕЙСТВИЕ:|ТЕЛО:|ИНСАЙТ:/g, "");
+        // Clean up markdown if AI adds it
+        const cleanText = responseText.replace(/\*\*/g, "").replace(/##/g, "");
         const parts = cleanText.split('|||');
         
         const newInsight: DailyInsightData = {
           date: todayStr,
-          mindset: parts[0]?.trim() || "Фокусируйся на том, что ты можешь контролировать.",
-          action: parts[1]?.trim() || "Сделай самую важную задачу в первые 2 часа дня.",
-          health: parts[2]?.trim() || "Прогуляйся 15 минут без телефона.",
+          mindset: parts[0]?.trim() || "Фокусируйся на том, что под твоим контролем.",
+          action: parts[1]?.trim() || "Сделай самую важную задачу в первую очередь.",
+          health: parts[2]?.trim() || "Сделай паузу и подыши 5 минут.",
           insight: parts[3]?.trim() || "Куда направлено внимание, туда течет энергия.",
         };
 
@@ -339,10 +346,10 @@ const App: React.FC = () => {
       } catch (e) {
         setDailyInsight({
           date: todayStr,
-          mindset: "Сегодня день тишины.",
-          action: "Один шаг вперед.",
-          health: "Дыши глубоко.",
-          insight: "Ты на верном пути."
+          mindset: "Сегодня день внутренней тишины.",
+          action: "Один маленький шаг вперед.",
+          health: "Вдохни глубоко.",
+          insight: "Ты там, где должен быть."
         });
       } finally {
         setIsInsightLoading(false);
@@ -440,7 +447,7 @@ const App: React.FC = () => {
   };
 
   const renderDailyGuide = () => (
-    <div className="h-full flex flex-col bg-[#F8FAFC] px-6 pt-10 pb-32 animate-fade-in overflow-y-auto">
+    <div className="h-full flex flex-col bg-[#F8FAFC] px-6 pt-10 pb-32 animate-fade-in overflow-y-auto safe-area-bottom">
       <header className="mb-8 flex items-center space-x-4">
          <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button>
          <h1 className="text-3xl font-bold text-slate-800">Карта дня</h1>
@@ -484,23 +491,51 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
-      <header className="mb-4 w-full flex items-center justify-between px-6 pt-4">
-         <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden border border-white shadow-sm">
-               {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-400"><UserIcon size={20} /></div>}
-            </div>
-            <div>
-               <h3 className="text-sm font-bold text-slate-900 leading-tight">{userProfile.name || 'Странник'}</h3>
-               <p className="text-[10px] text-slate-400 font-medium">{userProfile.archetype || 'Начало пути'}</p>
-            </div>
-         </div>
-         <div className="w-10 h-10 flex items-center justify-center" onPointerDown={handleAdminTriggerStart} onPointerUp={handleAdminTriggerEnd} onPointerLeave={handleAdminTriggerEnd}><Logo className="w-8 h-8 opacity-20" /></div>
+      <header className="mb-8 w-full relative overflow-hidden">
+        <div className="absolute inset-0 bg-[#F8FAFC]">
+           <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: `radial-gradient(#6366f1 0.8px, transparent 0.8px)`, backgroundSize: '16px 16px' }}></div>
+           <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[120%] bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full blur-[40px] opacity-20"></div>
+        </div>
+        <div className="relative flex flex-row items-center pt-4 pb-4 px-8 min-h-[90px]">
+          <div 
+            className="absolute right-[-10%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
+            onPointerDown={handleAdminTriggerStart}
+            onPointerUp={handleAdminTriggerEnd}
+            onPointerLeave={handleAdminTriggerEnd}
+          >
+             {userProfile.avatarUrl ? (
+               <div className="relative w-[240px] h-[240px] rounded-full overflow-hidden opacity-[0.18] grayscale brightness-110 pointer-events-none">
+                 <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
+               </div>
+             ) : (
+                <div className="w-[100px] h-[100px] flex items-center justify-center opacity-[0.02]">
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="#6366f1" strokeWidth="1"/><path d="M50 10V90M10 50H90" stroke="#6366f1" strokeWidth="1"/></svg>
+                </div>
+             )}
+          </div>
+          <div className="relative z-10 flex-1 pr-16">
+            <h1 className="text-[19px] font-light tracking-tight text-slate-800/95 leading-tight">
+              Привет, <span className="font-bold text-slate-900">{userProfile.name || 'Странник'}</span>
+            </h1>
+            
+            {/* BUTTON: BATTERY */}
+            <button 
+              onClick={() => setIsBatteryModalOpen(true)}
+              className="mt-3 flex items-center space-x-2 bg-white shadow-sm border border-indigo-100 rounded-full pl-1 pr-4 py-1 active:scale-95 transition-all group"
+            >
+              <div className="w-6 h-6 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-colors">
+                <Smile size={14} />
+              </div>
+              <span className="text-xs font-bold text-slate-600 group-hover:text-slate-800">Как ты?</span>
+            </button>
+          </div>
+        </div>
       </header>
 
       {/* --- HERO SECTION --- */}
       <div className="px-6 mb-8">
         {!userProfile.onboardingCompleted ? (
-          // HERO: ЕСЛИ НЕТ ПРОФИЛЯ
+          // HERO: ONBOARDING
           <button onClick={() => setCurrentView('ONBOARDING')} className="w-full relative overflow-hidden rounded-[32px] bg-slate-900 p-8 text-left shadow-xl shadow-slate-200 group active:scale-95 transition-all">
              <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500 rounded-full blur-[60px] opacity-30 group-hover:opacity-50 transition-opacity"></div>
              <div className="relative z-10">
@@ -508,7 +543,7 @@ const App: React.FC = () => {
                  <Compass size={24} />
                </div>
                <h2 className="text-2xl font-bold text-white mb-2 leading-tight">Найти свой путь</h2>
-               <p className="text-slate-400 text-sm mb-6 leading-relaxed max-w-[200px]">Пройди тест архетипа, чтобы получить персональную карту дня.</p>
+               <p className="text-slate-400 text-sm mb-6 leading-relaxed max-w-[200px]">Узнайте свой архетип, чтобы получить персональную стратегию.</p>
                <div className="inline-flex items-center space-x-2 bg-white text-slate-900 px-5 py-2.5 rounded-full text-xs font-bold">
                  <span>Начать тест</span>
                  <ArrowLeft className="rotate-180" size={14} />
@@ -516,16 +551,12 @@ const App: React.FC = () => {
              </div>
           </button>
         ) : (
-          // HERO: ЕСЛИ ЕСТЬ ПРОФИЛЬ
+          // HERO: INSIGHT
           <div className="w-full relative overflow-hidden rounded-[32px] bg-white border border-slate-100 p-6 text-left shadow-lg shadow-indigo-100/50">
              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-3xl opacity-60"></div>
              <div className="relative z-10">
                <div className="flex justify-between items-start mb-4">
                  <span className="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2.5 py-1 rounded-lg uppercase tracking-wider">Фокус дня</span>
-                 <button onClick={() => setIsBatteryModalOpen(true)} className="flex items-center space-x-1.5 bg-slate-50 hover:bg-slate-100 px-3 py-1 rounded-full transition-colors">
-                    <Battery size={14} className={dailyInsight ? "text-emerald-500" : "text-slate-400"} />
-                    <span className="text-[10px] font-bold text-slate-600">Заряд</span>
-                 </button>
                </div>
                
                <div className="mb-6 min-h-[60px]">
@@ -548,7 +579,6 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* --- GRID MODES --- */}
       <div className="px-6 mb-8">
         <div className="grid grid-cols-3 gap-4">
           {[
@@ -566,7 +596,6 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* --- RANK CARD --- */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full flex items-center justify-between bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all">
             <div className="flex items-center space-x-4">
@@ -677,7 +706,7 @@ const App: React.FC = () => {
           <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
           <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">1.7.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">1.8.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
           <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
         </div>
       </div>
@@ -685,7 +714,7 @@ const App: React.FC = () => {
   );
 
   return (
-    <div className="h-screen w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
+    <div className="h-[100dvh] w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
       <div className="absolute inset-0 z-0 pointer-events-none">
          <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[50%] bg-blue-100 rounded-full blur-[100px] opacity-60"></div>
          <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[50%] bg-purple-100 rounded-full blur-[100px] opacity-60"></div>
