@@ -1,7 +1,6 @@
 // src/types.ts
 
-// Добавил 'ONBOARDING' в список экранов
-export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN';
+export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'DAILY_GUIDE'; // Добавили DAILY_GUIDE
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
 
@@ -29,7 +28,6 @@ export interface ChatSession {
   messages: Message[];
 }
 
-// Добавил новые поля (focus, struggle, aiTone, theme, onboardingCompleted)
 export interface UserProfile {
   name: string;
   email?: string;
@@ -60,4 +58,13 @@ export interface JournalEntry {
   date: number;
   type: JournalEntryType;
   content: string;
+}
+
+// Новая структура для Совета Дня
+export interface DailyInsightData {
+  date: string;
+  focus: string;
+  action: string;
+  thought: string;
+  isLoading?: boolean;
 }
