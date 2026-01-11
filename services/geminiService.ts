@@ -5,7 +5,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 // ID модели в OpenRouter. Сейчас стоит бесплатная Gemini.
 // Если захочешь GPT-4, просто поменяй эту строчку на "openai/gpt-4o"
-const MODEL_ID = "google/gemma-3-4b-it:free"; 
+const MODEL_ID = "deepseek/deepseek-r1-0528:free"; 
 
 export const sendMessageToGemini = async (
   message: string,
