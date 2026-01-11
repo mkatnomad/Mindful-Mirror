@@ -34,11 +34,16 @@ export interface UserProfile {
   isRegistered: boolean;
   theme?: 'LIGHT' | 'SPACE';
   
-  // Поля профиля
+  // Данные профиля
   onboardingCompleted?: boolean;
-  archetype?: string;  // Результат теста (Творец, Мудрец...)
-  focus?: string;      // Цель
-  struggle?: string;   // Проблема
+  archetype?: string; 
+  focus?: string;
+  struggle?: string;
+  chronotype?: string;
+  aiTone?: string;
+  
+  // 👇 НОВОЕ ПОЛЕ: Текущее настроение
+  currentMood?: 'high' | 'flow' | 'ok' | 'low';
 }
 
 export interface SiteConfig {
@@ -60,11 +65,12 @@ export interface JournalEntry {
   content: string;
 }
 
-// Новая структура "Карты Дня" по сферам
 export interface DailyInsightData {
   date: string;
-  mindset: string; // Сфера Мышления
-  action: string;  // Сфера Действий
-  health: string;  // Сфера Тела/Энергии
-  insight: string; // Сфера Смыслов
+  mindset: string;
+  action: string;
+  health: string;
+  insight: string;
+  // Чтобы не перегенерировать одно и то же для одного настроения
+  generatedForMood?: string; 
 }
