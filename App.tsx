@@ -5,7 +5,8 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, TreeDeciduous, Sprout, Leaf, TreePine, CircleDot, Flower } from 'lucide-react';
+// Используем только стандартные иконки, чтобы избежать ошибок импорта
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, TreeDeciduous, Sprout, Leaf, CheckCircle } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -26,48 +27,43 @@ const DEFAULT_CONFIG: SiteConfig = {
   adminPasscode: "0000"
 };
 
-// --- 8 СТАДИЙ РОСТА (ВОЗВРАЩЕНО) ---
+// --- СТАДИИ РОСТА (Безопасные иконки) ---
 const TREE_STAGES = [
-  { threshold: 50000, title: "Древо Жизни", icon: Flower, color: "text-amber-500", bg: "bg-amber-50", desc: "Вершина эволюции. Вы и есть осознанность." },
+  { threshold: 50000, title: "Древо Жизни", icon: CheckCircle, color: "text-amber-500", bg: "bg-amber-50", desc: "Вершина эволюции. Вы и есть осознанность." },
   { threshold: 20000, title: "Мудрое Древо", icon: TreeDeciduous, color: "text-emerald-800", bg: "bg-emerald-100", desc: "Глубокие корни, дающие тень и спокойствие." },
   { threshold: 5000, title: "Цветущий Сад", icon: TreeDeciduous, color: "text-pink-500", bg: "bg-pink-50", desc: "Ваша практика приносит плоды и вдохновляет." },
-  { threshold: 1500, title: "Могучее Древо", icon: TreePine, color: "text-emerald-700", bg: "bg-emerald-50", desc: "Никакие ветра не могут пошатнуть ваше спокойствие." },
-  { threshold: 300, title: "Крепкое Дерево", icon: TreeDeciduous, color: "text-emerald-600", bg: "bg-emerald-50", desc: "Ствол окреп. Вы уверенно стоите на ногах." },
+  { threshold: 1500, title: "Могучее Древо", icon: TreeDeciduous, color: "text-emerald-700", bg: "bg-emerald-50", desc: "Никакие ветра не могут пошатнуть ваше спокойствие." },
+  { threshold: 300, title: "Крепкое Древо", icon: TreeDeciduous, color: "text-emerald-600", bg: "bg-emerald-50", desc: "Ствол окреп. Вы уверенно стоите на ногах." },
   { threshold: 80, title: "Молодое Дерево", icon: TreeDeciduous, color: "text-emerald-500", bg: "bg-emerald-50", desc: "Вы быстро растете и тянетесь к свету." },
   { threshold: 15, title: "Саженец", icon: Leaf, color: "text-emerald-400", bg: "bg-emerald-50", desc: "Первые настоящие листья. Начало положено." },
   { threshold: 0, title: "Росток", icon: Sprout, color: "text-emerald-300", bg: "bg-emerald-50", desc: "Потенциал пробудился. Впереди большой путь." },
 ];
 
 const STORAGE_KEYS = {
-  PROFILE: 'mm_profile',
+  PROFILE: 'mm_profile_v2', // Сменил ключ для сброса битых данных
   HISTORY: 'mm_history',
   SESSIONS: 'mm_total_sessions',
   TIME: 'mm_total_time',
   ACTIVITY: 'mm_weekly_activity',
   JOURNAL: 'mm_journal_entries',
   CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v10'
+  DAILY_INSIGHT: 'mm_daily_insight_v11'
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
   <span className={`${className} font-extrabold italic select-none pointer-events-none uppercase`} style={{ color, opacity, fontFamily: 'Manrope, sans-serif' }}>{text}</span>
 );
 
-// --- ЛОГИКА ТЕСТА ---
-const ARCHETYPES = {
-  CREATOR: { title: "Творец", icon: Feather, desc: "Вы видите мир как холст. Ваша сила — в создании нового и самовыражении." },
-  RULER: { title: "Правитель", icon: Briefcase, desc: "Вы строите системы и берете ответственность. Ваша сила — контроль и структура." },
-  SAGE: { title: "Мудрец", icon: BookOpen, desc: "Вы ищете истину. Для вас главное — понять, как устроен этот мир." },
-  CAREGIVER: { title: "Хранитель", icon: Shield, desc: "Вы — опора для других. Ваша суперсила — эмпатия и забота." },
-  EXPLORER: { title: "Искатель", icon: Compass, desc: "Вы не терпите застоя. Ваша жизнь — это постоянный поиск новых горизонтов." }
-};
+const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string, bg?: string }) => (
+  <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} />
+);
 
+// --- КОМПОНЕНТ ОПРОСА ---
 const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0, EXPLORER: 0 });
   const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string, aiTone?: string }>({});
-  const [resultArchetype, setResultArchetype] = useState<string | null>(null);
-
+  
   const steps = [
     {
       title: "Что вас вдохновляет?",
@@ -132,47 +128,18 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       let winner = 'SAGE';
       let max = -1;
       Object.entries(scores).forEach(([k, v]) => { if (v > max) { max = v; winner = k; } });
-      setResultArchetype(winner);
+      const archMap: any = { CREATOR: "Творец", RULER: "Правитель", SAGE: "Мудрец", CAREGIVER: "Хранитель", EXPLORER: "Искатель" };
+      
+      onComplete({ 
+        archetype: archMap[winner] || "Искатель",
+        ...finalData,
+        [currentStepData.key!]: option.value 
+      });
     }
   };
 
-  const finish = () => {
-    if (resultArchetype) {
-      const arch = ARCHETYPES[resultArchetype as keyof typeof ARCHETYPES];
-      // ЗАЩИТА ОТ БЕЛОГО ЭКРАНА: Сначала сохраняем, потом вызываем коллбек
-      const completeData = { 
-        archetype: arch.title,
-        focus: finalData.focus,
-        struggle: finalData.struggle,
-        chronotype: finalData.chronotype,
-        aiTone: "Мудрый Наставник"
-      };
-      // Небольшая задержка для плавности
-      setTimeout(() => onComplete(completeData), 100);
-    }
-  };
-
+  // Safe access
   const questions = steps as any; 
-
-  if (resultArchetype) {
-    const arch = ARCHETYPES[resultArchetype as keyof typeof ARCHETYPES];
-    const Icon = arch.icon;
-    return (
-      <div className="h-full flex flex-col items-center justify-center p-8 bg-white animate-fade-in text-center">
-        <div className="w-28 h-28 bg-indigo-50 rounded-full flex items-center justify-center text-indigo-600 mb-8 shadow-sm">
-          <Icon size={56} />
-        </div>
-        <h2 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-3">Ваш Архетип</h2>
-        <h1 className="text-4xl font-black text-slate-800 mb-6">{arch.title}</h1>
-        <div className="bg-slate-50 p-6 rounded-3xl mb-10 border border-slate-100">
-           <p className="text-slate-600 leading-relaxed font-medium">{arch.desc}</p>
-        </div>
-        <button onClick={finish} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-xl shadow-indigo-200 active:scale-95 transition-all">
-          Далее
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
@@ -202,8 +169,9 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
   );
 };
 
-// --- ГЛАВНОЕ ПРИЛОЖЕНИЕ ---
+// --- MAIN APP ---
 const App: React.FC = () => {
+  // --- STATE INIT (SAFE PARSING) ---
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null') || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; }
   });
@@ -218,7 +186,6 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
-  
   const [dailyInsight, setDailyInsight] = useState<DailyInsightData | null>(() => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_INSIGHT) || 'null'); } catch { return null; }
   });
@@ -330,7 +297,7 @@ const App: React.FC = () => {
   const totalMinutes = Math.round(totalTimeSeconds / 60);
   const totalSteps = totalSessions + totalMinutes; 
   
-  // --- 8-STAGE TREE LOGIC ---
+  // SAFE RANK CALC
   const getTreeStage = (steps: number) => {
     const safeSteps = isNaN(steps) ? 0 : steps;
     return TREE_STAGES.find(r => safeSteps >= r.threshold) || TREE_STAGES[TREE_STAGES.length - 1];
@@ -451,7 +418,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО СОЗНАНИЯ (НОВЫЙ ВИД) */}
+      {/* ДРЕВО СОЗНАНИЯ (НОВЫЙ ВИД С ЦИФРАМИ) */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-gradient-to-br from-white to-slate-50 border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-60"></div>
@@ -525,7 +492,7 @@ const App: React.FC = () => {
         <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-50"></div>
         <div className="w-24 h-24 rounded-full bg-white p-1 shadow-sm relative z-10 -mt-2 overflow-hidden border border-slate-100">{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}</div>
         <h3 className="text-xl font-bold mt-4 text-slate-800">{userProfile.name || 'Странник'}</h3>
-        <p className="text-sm text-indigo-400 font-medium">{userProfile.archetype || "Странник"}</p>
+        <p className="text-sm text-indigo-400 font-medium">{userProfile.archetype || (currentTree.title)}</p>
       </div>
       <div className="space-y-4">
         <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between active:scale-95"><div className="flex items-center space-x-4"><div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Medal size={20} /></div><span className="text-sm font-semibold">Древо сознания</span></div><ChevronRight size={18} className="text-slate-300" /></button>
@@ -550,7 +517,7 @@ const App: React.FC = () => {
   );
 
   const renderAbout = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
       <header className="mb-8 flex items-center space-x-4 text-left"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500"><ArrowLeft size={24} /></button><h1 className="text-3xl font-bold text-slate-800">О приложении</h1></header>
       <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border flex flex-col items-center text-center relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-0"><StylizedMMText text={siteConfig.logoText} className="text-[200px]" color="#A78BFA" opacity="0.05" /></div>
@@ -558,7 +525,7 @@ const App: React.FC = () => {
           <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
           <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">1.8.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">1.9.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
           <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
         </div>
       </div>
