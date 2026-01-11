@@ -5,8 +5,8 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-// Безопасные иконки
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, TreeDeciduous, Sprout, Leaf, Lightbulb, CheckCircle } from 'lucide-react';
+// Только базовые иконки, которые есть везде
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, Lightbulb } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -27,16 +27,16 @@ const DEFAULT_CONFIG: SiteConfig = {
   adminPasscode: "0000"
 };
 
-// ВАЖНО: Новые ключи для сброса кеша и устранения белого экрана
+// НОВЫЕ КЛЮЧИ ДЛЯ ПОЛНОГО СБРОСА ОШИБОК
 const STORAGE_KEYS = {
-  PROFILE: 'mm_profile_v3_fixed', 
-  HISTORY: 'mm_history',
-  SESSIONS: 'mm_total_sessions',
-  TIME: 'mm_total_time',
-  ACTIVITY: 'mm_weekly_activity',
-  JOURNAL: 'mm_journal_entries',
-  CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v15'
+  PROFILE: 'mm_profile_v5_final', 
+  HISTORY: 'mm_history_v5',
+  SESSIONS: 'mm_sessions_v5',
+  TIME: 'mm_time_v5',
+  ACTIVITY: 'mm_activity_v5',
+  JOURNAL: 'mm_journal_v5',
+  CONFIG: 'mm_config_v5',
+  DAILY_INSIGHT: 'mm_insight_v5'
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
@@ -47,65 +47,75 @@ const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string,
   <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} />
 );
 
-// --- 8 СТАДИЙ РОСТА ДЕРЕВА ---
+// --- ВЕКТОРНЫЕ ДЕРЕВЬЯ (SVG) ---
+// Тот самый код, который вам понравился
 const TreeIllustration: React.FC<{ stage: number, className?: string }> = ({ stage, className }) => {
-  // Используем надежные иконки
-  const icons = [Sprout, Sprout, Leaf, Leaf, TreeDeciduous, TreeDeciduous, TreeDeciduous, TreeDeciduous];
-  const Icon = icons[stage] || TreeDeciduous;
-  return <Icon className={className} />;
+  // 0: Семя
+  if (stage === 0) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#FEF3C7" /><path d="M50 75C50 75 40 75 40 75" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="70" r="6" fill="#B45309" /></svg>
+  );
+  // 1: Росток
+  if (stage === 1) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#ECFDF5" /><path d="M50 80V60" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 60C50 60 35 55 35 45C35 55 50 60 50 60Z" fill="#10B981" /><path d="M50 60C50 60 65 55 65 45C65 55 50 60 50 60Z" fill="#34D399" /></svg>
+  );
+  // 2: Побег
+  if (stage === 2) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#D1FAE5" /><path d="M50 85V50" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 65L65 55" stroke="#059669" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="45" r="10" fill="#10B981" /><circle cx="65" cy="55" r="6" fill="#34D399" /></svg>
+  );
+  // 3: Саженец
+  if (stage === 3) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#A7F3D0" /><path d="M50 85V45" stroke="#92400E" strokeWidth="4" strokeLinecap="round"/><path d="M50 65L30 55" stroke="#92400E" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="40" r="15" fill="#10B981" /><circle cx="30" cy="55" r="8" fill="#34D399" /><circle cx="65" cy="50" r="8" fill="#34D399" /></svg>
+  );
+  // 4: Молодое дерево
+  if (stage === 4) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#6EE7B7" /><path d="M50 90V40" stroke="#92400E" strokeWidth="5" strokeLinecap="round"/><path d="M50 60L25 50" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><path d="M50 50L75 40" stroke="#92400E" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="35" r="20" fill="#059669" /><circle cx="25" cy="50" r="12" fill="#10B981" /><circle cx="75" cy="40" r="12" fill="#10B981" /></svg>
+  );
+  // 5: Крепкое дерево
+  if (stage === 5) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#34D399" /><path d="M50 90L50 35" stroke="#78350F" strokeWidth="6" strokeLinecap="round"/><path d="M50 70L20 60" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><path d="M50 60L80 50" stroke="#78350F" strokeWidth="3" strokeLinecap="round"/><circle cx="50" cy="30" r="25" fill="#047857" /><circle cx="20" cy="60" r="15" fill="#059669" /><circle cx="80" cy="50" r="15" fill="#059669" /></svg>
+  );
+  // 6: Ветвистое дерево
+  if (stage === 6) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#10B981" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="7" strokeLinecap="round"/><path d="M50 70L20 55" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><path d="M50 60L85 45" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><circle cx="50" cy="35" r="30" fill="#064E3B" /><circle cx="20" cy="55" r="18" fill="#065F46" /><circle cx="85" cy="45" r="18" fill="#065F46" /><circle cx="35" cy="80" r="5" fill="#064E3B" opacity="0.5"/></svg>
+  );
+  // 7: Цветущее дерево
+  if (stage === 7) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#FCE7F3" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="8" strokeLinecap="round"/><circle cx="50" cy="40" r="35" fill="#065F46" /><circle cx="25" cy="55" r="20" fill="#047857" /><circle cx="75" cy="55" r="20" fill="#047857" /><circle cx="40" cy="30" r="5" fill="#F472B6" /><circle cx="60" cy="30" r="5" fill="#F472B6" /><circle cx="25" cy="55" r="5" fill="#F472B6" /><circle cx="75" cy="55" r="5" fill="#F472B6" /><circle cx="50" cy="15" r="5" fill="#F472B6" /></svg>
+  );
+  // 8: Плодоносящее древо
+  if (stage === 8) return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><circle cx="50" cy="50" r="45" fill="#FEF3C7" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="9" strokeLinecap="round"/><circle cx="50" cy="40" r="38" fill="#14532D" /><circle cx="20" cy="60" r="22" fill="#166534" /><circle cx="80" cy="60" r="22" fill="#166534" /><circle cx="40" cy="40" r="6" fill="#F59E0B" /><circle cx="60" cy="30" r="6" fill="#F59E0B" /><circle cx="20" cy="60" r="6" fill="#F59E0B" /><circle cx="80" cy="60" r="6" fill="#F59E0B" /><circle cx="50" cy="20" r="6" fill="#F59E0B" /></svg>
+  );
+  // 9: Древо Мудрости
+  return (
+    <svg viewBox="0 0 100 100" className={className} fill="none"><defs><radialGradient id="grad1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style={{stopColor:'rgb(255,255,255)', stopOpacity:0.8}} /><stop offset="100%" style={{stopColor:'rgb(16, 185, 129)', stopOpacity:0}} /></radialGradient></defs><circle cx="50" cy="50" r="48" fill="url(#grad1)" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="10" strokeLinecap="round"/><circle cx="50" cy="40" r="40" fill="#064E3B" /><circle cx="20" cy="65" r="25" fill="#065F46" /><circle cx="80" cy="65" r="25" fill="#065F46" /><circle cx="50" cy="25" r="15" fill="#10B981" /><circle cx="30" cy="40" r="2" fill="#FCD34D" /><circle cx="70" cy="40" r="2" fill="#FCD34D" /><circle cx="50" cy="10" r="3" fill="#FCD34D" /><path d="M20 20L25 25" stroke="#FCD34D" strokeWidth="2" /><path d="M80 20L75 25" stroke="#FCD34D" strokeWidth="2" /></svg>
+  );
 };
 
+// 10 УРОВНЕЙ ДЕРЕВА
 const TREE_STAGES = [
-  { threshold: 50000, title: "Древо Жизни", stageIndex: 7, desc: "Вершина эволюции." },
-  { threshold: 20000, title: "Мудрое Древо", stageIndex: 6, desc: "Глубокие корни." },
-  { threshold: 5000, title: "Цветущий Сад", stageIndex: 5, desc: "Плоды практики." },
-  { threshold: 1500, title: "Могучее Древо", stageIndex: 4, desc: "Сила и покой." },
-  { threshold: 300, title: "Крепкое Древо", stageIndex: 3, desc: "Уверенность." },
-  { threshold: 80, title: "Молодое Дерево", stageIndex: 2, desc: "Быстрый рост." },
-  { threshold: 15, title: "Саженец", stageIndex: 1, desc: "Начало пути." },
-  { threshold: 0, title: "Росток", stageIndex: 0, desc: "Потенциал." },
+  { threshold: 5000, title: "Древо Мудрости", stageIndex: 9, desc: "Вы достигли вершины." },
+  { threshold: 2500, title: "Плодоносящее Древо", stageIndex: 8, desc: "Ваша практика приносит плоды." },
+  { threshold: 1200, title: "Цветущее Древо", stageIndex: 7, desc: "Вы раскрываете свой потенциал." },
+  { threshold: 600, title: "Ветвистое Древо", stageIndex: 6, desc: "Ваши знания расширяются." },
+  { threshold: 300, title: "Крепкое Древо", stageIndex: 5, desc: "Вы уверенно стоите на ногах." },
+  { threshold: 150, title: "Молодое Дерево", stageIndex: 4, desc: "Заметный рост и укрепление." },
+  { threshold: 75, title: "Саженец", stageIndex: 3, desc: "Корни становятся глубже." },
+  { threshold: 30, title: "Побег", stageIndex: 2, desc: "Второй шаг к свету." },
+  { threshold: 10, title: "Росток", stageIndex: 1, desc: "Первые всходы ваших усилий." },
+  { threshold: 0, title: "Семя", stageIndex: 0, desc: "Потенциал, готовый к пробуждению." },
 ];
 
-// --- ДАННЫЕ ОБ АРХЕТИПАХ ---
+// --- ДАННЫЕ АРХЕТИПОВ ---
 const ARCHETYPE_INFO: any = {
-  "Творец": {
-    desc: "Вы видите мир как полотно. Ваша суть — созидание и самовыражение.",
-    strength: "Воображение и новаторство",
-    shadow: "Перфекционизм и страх критики",
-    advice: "Не ждите вдохновения, создавайте его действием.",
-    icon: Feather, color: "text-purple-600", bg: "bg-purple-50"
-  },
-  "Правитель": {
-    desc: "Вы создаете порядок из хаоса. Ваша суть — ответственность и структура.",
-    strength: "Лидерство и стратегия",
-    shadow: "Желание всё контролировать",
-    advice: "Доверяйте процессу и делегируйте.",
-    icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50"
-  },
-  "Мудрец": {
-    desc: "Вы ищете истину. Ваша суть — понимание законов мира.",
-    strength: "Интеллект и аналитика",
-    shadow: "Бездействие из-за анализа",
-    advice: "Знание без действий бесполезно.",
-    icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50"
-  },
-  "Хранитель": {
-    desc: "Вы — опора. Ваша суть — забота, эмпатия и служение.",
-    strength: "Сострадание и надежность",
-    shadow: "Самопожертвование",
-    advice: "Сначала наденьте маску на себя.",
-    icon: Shield, color: "text-emerald-600", bg: "bg-emerald-50"
-  },
-  "Искатель": {
-    desc: "Вы — вечный путник. Ваша суть — свобода и открытие нового.",
-    strength: "Любознательность",
-    shadow: "Неумение пустить корни",
-    advice: "Счастье — это путь, но иногда нужен дом.",
-    icon: Compass, color: "text-amber-600", bg: "bg-amber-50"
-  }
+  "Творец": { desc: "Вы видите мир как полотно. Ваша суть — созидание.", strength: "Воображение", shadow: "Перфекционизм", advice: "Создавайте, не ожидая идеала.", icon: Feather, color: "text-purple-600", bg: "bg-purple-50" },
+  "Правитель": { desc: "Вы создаете порядок из хаоса.", strength: "Лидерство", shadow: "Контроль", advice: "Доверяйте процессу.", icon: Briefcase, color: "text-indigo-600", bg: "bg-indigo-50" },
+  "Мудрец": { desc: "Вы ищете истину и понимание.", strength: "Интеллект", shadow: "Бездействие", advice: "Знание требует действий.", icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50" },
+  "Хранитель": { desc: "Вы — опора и забота.", strength: "Эмпатия", shadow: "Самопожертвование", advice: "Сначала маску на себя.", icon: Shield, color: "text-emerald-600", bg: "bg-emerald-50" },
+  "Искатель": { desc: "Вы — вечный путник.", strength: "Свобода", shadow: "Непостоянство", advice: "Найдите дом внутри себя.", icon: Compass, color: "text-amber-600", bg: "bg-amber-50" }
 };
 
-// --- ЭКРАН РЕЗУЛЬТАТА (ИНФОГРАФИКА) ---
+// --- КОМПОНЕНТ: РЕЗУЛЬТАТ ТЕСТА (ИНФОГРАФИКА) ---
 const ArchetypeResultScreen: React.FC<{ archetype: string, onContinue: () => void, isReadOnly?: boolean, onBack?: () => void }> = ({ archetype, onContinue, isReadOnly, onBack }) => {
   const info = ARCHETYPE_INFO[archetype] || ARCHETYPE_INFO["Искатель"];
   const Icon = info.icon;
@@ -139,21 +149,29 @@ const ArchetypeResultScreen: React.FC<{ archetype: string, onContinue: () => voi
         </div>
 
         {!isReadOnly && (
-          <button onClick={onContinue} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-xl shadow-indigo-200 active:scale-95 transition-all">Далее</button>
+          <button onClick={onContinue} className="w-full py-4 rounded-2xl bg-indigo-600 text-white font-bold text-lg shadow-xl shadow-indigo-200 active:scale-95 transition-all">
+            Далее
+          </button>
         )}
       </div>
     </div>
   );
 };
 
-// --- ЭКРАН ОБУЧЕНИЯ (TUTORIAL) ---
+// --- КОМПОНЕНТ: ТУТОРИАЛ ---
 const TutorialScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
   const [slide, setSlide] = useState(0);
   const slides = [
-    { title: "Карта Дня", desc: "Каждое утро ИИ создает для вас персональный план. Он меняется, если вы отмечаете другое настроение.", icon: Map, color: "text-indigo-500", bg: "bg-indigo-50" },
-    { title: "Батарейка", desc: "На главной есть кнопка заряда. Если вы устали, план станет мягче. Если полны сил — амбициознее.", icon: Battery, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { title: "Древо Сознания", desc: "Ваш прогресс — это дерево. Каждая запись в дневнике помогает ему расти.", icon: Sprout, color: "text-amber-500", bg: "bg-amber-50" }
+    { title: "Карта Дня", desc: "Каждое утро ИИ создает для вас персональный план на основе вашего архетипа.", icon: Map, color: "text-indigo-500", bg: "bg-indigo-50" },
+    { title: "Настроение", desc: "Нажмите на кнопку 'Как ты?' на главной, чтобы адаптировать план под уровень энергии.", icon: Battery, color: "text-emerald-500", bg: "bg-emerald-50" },
+    { title: "Древо Сознания", desc: "Ваш прогресс визуализируется в виде дерева. Чем больше практик, тем оно сильнее.", icon: Sprout, color: "text-amber-500", bg: "bg-amber-50" }
   ];
+
+  // Защита от белого экрана, если слайд не найден
+  if (!slides[slide]) {
+      setSlide(0);
+      return null;
+  }
 
   return (
     <div className="h-full flex flex-col bg-white px-6 py-10 animate-fade-in relative z-50">
@@ -183,9 +201,9 @@ const TutorialScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
 const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
   const [step, setStep] = useState(0);
   const [scores, setScores] = useState({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0, EXPLORER: 0 });
-  const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string }>({});
+  const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string, aiTone?: string }>({});
   
-  const questions = [
+  const steps = [
     { title: "Что вас вдохновляет?", type: 'archetype', options: [{ label: "Создание нового", type: 'CREATOR', icon: Feather }, { label: "Управление и успех", type: 'RULER', icon: Target }, { label: "Познание мира", type: 'SAGE', icon: BookOpen }, { label: "Забота о людях", type: 'CAREGIVER', icon: Heart }] },
     { title: "Чего вы избегаете?", type: 'archetype', options: [{ label: "Скуки и рутины", type: 'CREATOR', icon: Activity }, { label: "Хаоса", type: 'RULER', icon: Lock }, { label: "Незнания", type: 'SAGE', icon: Search }, { label: "Застоя", type: 'EXPLORER', icon: Map }] },
     { title: "Идеальный выходной?", type: 'archetype', options: [{ label: "Путешествие", type: 'EXPLORER', icon: Compass }, { label: "Уют с семьей", type: 'CAREGIVER', icon: Coffee }, { label: "Изучение нового", type: 'SAGE', icon: Zap }, { label: "Планирование", type: 'RULER', icon: Briefcase }] },
@@ -204,9 +222,9 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
     { title: "Биоритмы?", key: 'chronotype', options: [{ label: "Жаворонок", value: "Утро", icon: Sun }, { label: "Сова", value: "Вечер", icon: Moon }, { label: "По-разному", value: "Плавающий", icon: Activity }] }
   ];
 
-  const currentStepData = questions[step];
+  const currentStepData = steps[step];
 
-  // Исправлено: проверка на существование данных шага
+  // Защита от белого экрана при рендере
   if (!currentStepData) return null;
 
   const handleSelect = (option: any) => {
@@ -217,15 +235,14 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       setFinalData(prev => ({ ...prev, [currentStepData.key!]: option.value }));
     }
 
-    if (step < questions.length - 1) {
+    if (step < steps.length - 1) {
       setStep(prev => prev + 1);
     } else {
       let winner = 'SAGE';
       let max = -1;
       Object.entries(scores).forEach(([k, v]) => { if (v > max) { max = v; winner = k; } });
       const archMap: any = { CREATOR: "Творец", RULER: "Правитель", SAGE: "Мудрец", CAREGIVER: "Хранитель", EXPLORER: "Искатель" };
-      
-      onComplete({ archetype: archMap[winner] || "Искатель", ...finalData });
+      onComplete({ archetype: archMap[winner] || "Искатель", ...finalData, [currentStepData.key!]: option.value });
     }
   };
 
@@ -234,7 +251,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       <div className="flex justify-start mb-6"><button onClick={onBack} className="p-2 -ml-2 text-slate-400 hover:text-slate-600"><ArrowLeft size={24} /></button></div>
       <div className="flex-1 flex flex-col justify-center max-w-md mx-auto w-full">
         <div className="mb-10">
-          <div className="flex space-x-1 mb-8 justify-center flex-wrap gap-y-2">{questions.map((_, i) => (<div key={i} className={`h-1.5 rounded-full transition-all duration-500 mx-0.5 ${i <= step ? 'w-4 bg-indigo-500' : 'w-2 bg-slate-100'}`} />))}</div>
+          <div className="flex space-x-1 mb-8 justify-center flex-wrap gap-y-2">{steps.map((_, i) => (<div key={i} className={`h-1.5 rounded-full transition-all duration-500 mx-0.5 ${i <= step ? 'w-4 bg-indigo-500' : 'w-2 bg-slate-100'}`} />))}</div>
           <h2 className="text-2xl font-black text-slate-800 text-center leading-tight mb-2">{currentStepData.title}</h2>
         </div>
         <div className="space-y-3" key={step}>
@@ -259,6 +276,7 @@ const App: React.FC = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null') || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; }
   });
 
+  // Защищенная загрузка профиля
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
@@ -297,7 +315,7 @@ const App: React.FC = () => {
   const longPressTimer = useRef<number | null>(null);
   const resetClicks = useRef<number>(0);
 
-  // --- INITIAL CHECK ---
+  // --- INITIAL VIEW CHECK ---
   useEffect(() => {
     if (!userProfile.onboardingCompleted) {
       setCurrentView('ONBOARDING');
@@ -504,7 +522,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО (С СУПЕР ГРАФИКОЙ И СТАТИСТИКОЙ) */}
+      {/* ДРЕВО (С ВЕКТОРНОЙ КАРТИНКОЙ) */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-gradient-to-br from-white to-slate-50 border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-60"></div>
@@ -601,7 +619,7 @@ const App: React.FC = () => {
           <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
           <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around cursor-pointer" onClick={() => { if(window.confirm("Сброс?")) localStorage.clear(); window.location.reload(); }}><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">2.5.0 (Final Fix)</p></div></div>
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around cursor-pointer" onClick={handleVersionClick}><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">3.0.0 (Stable)</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
           <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
         </div>
       </div>
