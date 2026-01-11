@@ -28,19 +28,17 @@ export interface ChatSession {
 
 export interface UserProfile {
   name: string;
-  email?: string;
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
   theme?: 'LIGHT' | 'SPACE';
   
-  // 👇 НОВЫЕ ПОЛЯ ДЛЯ ГЛУБОКОГО ПРОФИЛЯ
+  // 👇 ГЛУБИННЫЙ ПРОФИЛЬ (АРХЕТИП)
   onboardingCompleted?: boolean;
-  identity?: string;   // Кто я? (Творец, Предприниматель, Искатель...)
-  struggle?: string;   // Главная проблема
-  chronotype?: string; // Биоритмы (Утро/Вечер)
-  focus?: string;      // Главная цель
-  aiTone?: string;     // Тон общения
+  archetype?: string;    // Например: "Творец"
+  shadow?: string;       // Главный страх (Тень)
+  superpower?: string;   // Источник силы
+  aiTone?: string;       // Тон общения
 }
 
 export interface SiteConfig {
@@ -62,11 +60,11 @@ export interface JournalEntry {
   content: string;
 }
 
-// Новая структура "Протокола дня"
+// 👇 НОВАЯ СТРУКТУРА "АЛХИМИЧЕСКОЙ КАРТЫ"
 export interface DailyInsightData {
   date: string;
-  morning: string;   // Ритуал утра
-  focus: string;     // Главная задача
-  energy: string;    // Управление энергией
-  evening: string;   // Вечерняя рефлексия
+  archetype: string; // Роль дня (метафора)
+  trap: string;      // Ловушка/Щит
+  lens: string;      // Оптика/Призма
+  key: string;       // Артефакт/Практика
 }
