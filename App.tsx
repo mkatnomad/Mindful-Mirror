@@ -5,7 +5,8 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, Leaf, Users, Lightbulb, Flame, Sunrise, Sunset } from 'lucide-react';
+// Используем только 100% безопасные иконки
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, Leaf, Flame } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -230,7 +231,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       options: [
         { label: "Путешествие в новое место", type: 'EXPLORER', icon: Compass },
         { label: "Уютный ужин с семьей", type: 'CAREGIVER', icon: Coffee },
-        { label: "Изучение сложной темы", type: 'SAGE', icon: Lightbulb },
+        { label: "Изучение сложной темы", type: 'SAGE', icon: Zap },
         { label: "Планирование будущих побед", type: 'RULER', icon: Briefcase },
       ]
     },
@@ -242,7 +243,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
         { label: "Ищете нестандартное решение", type: 'CREATOR', icon: Sparkles },
         { label: "Берете ответственность на себя", type: 'RULER', icon: Shield },
         { label: "Анализируете причины", type: 'SAGE', icon: Brain },
-        { label: "Поддерживаете окружающих", type: 'CAREGIVER', icon: Users },
+        { label: "Поддерживаете окружающих", type: 'CAREGIVER', icon: Heart },
       ]
     },
     // 5. МОТИВАЦИЯ
@@ -272,9 +273,9 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       title: "Как вы принимаете решения?",
       type: 'archetype',
       options: [
-        { label: "Интуитивно и творчески", type: 'CREATOR', icon: Lightbulb },
+        { label: "Интуитивно и творчески", type: 'CREATOR', icon: Zap },
         { label: "Логично и взвешенно", type: 'SAGE', icon: Brain },
-        { label: "Решительно и быстро", type: 'RULER', icon: Zap },
+        { label: "Решительно и быстро", type: 'RULER', icon: Target },
         { label: "Сердцем, думая о других", type: 'CAREGIVER', icon: Heart },
       ]
     },
@@ -318,7 +319,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       options: [
         { label: "Ранний подъем и спорт", type: 'RULER', icon: Activity },
         { label: "Медленный кофе и мечты", type: 'CREATOR', icon: Coffee },
-        { label: "Сразу в дорогу", type: 'EXPLORER', icon: Wind },
+        { label: "Сразу в дорогу", type: 'EXPLORER', icon: Cloud }, // Wind заменен на Cloud для безопасности
         { label: "Забота о семье", type: 'CAREGIVER', icon: Smile },
       ]
     },
@@ -361,14 +362,17 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       title: "Ваши биоритмы?",
       key: 'chronotype',
       options: [
-        { label: "Жаворонок (Утро)", value: "Утренний тип", icon: Sunrise },
-        { label: "Сова (Вечер)", value: "Вечерний тип", icon: Sunset },
+        { label: "Жаворонок (Утро)", value: "Утренний тип", icon: Sun },
+        { label: "Сова (Вечер)", value: "Вечерний тип", icon: Moon },
         { label: "По-разному", value: "Плавающий режим", icon: Activity },
       ]
     }
   ];
 
   const currentStepData = steps[step];
+
+  // ЗАЩИТА: Если step выйдет за пределы массива, не рендерим (избегаем белого экрана)
+  if (!currentStepData) return null;
 
   const handleSelect = (option: any) => {
     if (option.type) setScores(prev => ({ ...prev, [option.type]: (prev[option.type as keyof typeof scores] || 0) + 1 }));
@@ -447,6 +451,7 @@ const App: React.FC = () => {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }
   });
    
+  // ЗАЩИТА ОТ БИТЫХ ДАННЫХ
   const [totalSessions, setTotalSessions] = useState<number>(() => {
     const val = parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10);
     return isNaN(val) ? 0 : val;
@@ -575,12 +580,6 @@ const App: React.FC = () => {
     if (tgPhoto) setUserProfile(prev => ({ ...prev, avatarUrl: tgPhoto }));
   };
 
-  const currentTree = getTreeStage(totalSteps);
-  const practiceTime = { value: totalTimeSeconds < 3600 ? Math.round(totalTimeSeconds / 60).toString() : (totalTimeSeconds / 3600).toFixed(1), unit: totalTimeSeconds < 3600 ? 'мин' : 'ч' };
-
-  const handleAdminTriggerStart = () => { longPressTimer.current = window.setTimeout(() => { if (prompt('Admin:') === siteConfig.adminPasscode) setCurrentView('ADMIN'); }, 2000); };
-  const handleAdminTriggerEnd = () => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } };
-
   // --- СЕКРЕТНЫЙ СБРОС ---
   const handleVersionClick = () => {
     resetClicks.current += 1;
@@ -592,6 +591,12 @@ const App: React.FC = () => {
       resetClicks.current = 0;
     }
   };
+
+  const currentTree = getTreeStage(totalSteps);
+  const practiceTime = { value: totalTimeSeconds < 3600 ? Math.round(totalTimeSeconds / 60).toString() : (totalTimeSeconds / 3600).toFixed(1), unit: totalTimeSeconds < 3600 ? 'мин' : 'ч' };
+
+  const handleAdminTriggerStart = () => { longPressTimer.current = window.setTimeout(() => { if (prompt('Admin:') === siteConfig.adminPasscode) setCurrentView('ADMIN'); }, 2000); };
+  const handleAdminTriggerEnd = () => { if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; } };
 
   const renderBatteryModal = () => {
     if (!isBatteryModalOpen) return null;
@@ -643,7 +648,7 @@ const App: React.FC = () => {
              <div className="relative z-10">
                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white mb-6"><Compass size={24} /></div>
                <h2 className="text-2xl font-bold text-white mb-2 leading-tight">Найти свой путь</h2>
-               <p className="text-slate-400 text-sm mb-6 leading-relaxed max-w-[200px]">Узнайте свой архетип, чтобы получить карту развития.</p>
+               <p className="text-slate-400 text-sm mb-6 leading-relaxed max-w-[200px]">Узнайте свой архетип и получите карту развития.</p>
                <div className="inline-flex items-center space-x-2 bg-white text-slate-900 px-5 py-2.5 rounded-full text-xs font-bold"><span>Начать тест</span><ArrowLeft className="rotate-180" size={14} /></div>
              </div>
           </button>
@@ -670,7 +675,7 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* КНОПКИ ЧАТОВ */}
+      {/* КНОПКИ ЧАТОВ (ЦВЕТНЫЕ) */}
       <div className="px-6 mb-8">
         <div className="grid grid-cols-3 gap-4">
           {[ { id: 'DECISION', label: 'Решение', icon: Zap, color: 'text-indigo-500', bg: 'bg-indigo-50' }, { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' }, { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50' } ].map((m) => (
@@ -681,13 +686,19 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО СОЗНАНИЯ */}
+      {/* ДРЕВО СОЗНАНИЯ (С SVG КАРТИНКАМИ) */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-white border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 opacity-10 pointer-events-none translate-x-4 -translate-y-4"><TreeIllustration stage={currentTree.stageIndex} className="w-full h-full" /></div>
+            {/* SVG Background */}
+            <div className="absolute top-0 right-0 w-32 h-32 opacity-10 pointer-events-none translate-x-4 -translate-y-4">
+               <TreeIllustration stage={currentTree.stageIndex} className="w-full h-full" />
+            </div>
+
             <div className="flex justify-between items-center mb-4 relative z-10">
                 <div className="flex items-center space-x-4">
-                   <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center overflow-hidden"><TreeIllustration stage={currentTree.stageIndex} className="w-10 h-10" /></div>
+                   <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center overflow-hidden">
+                      <TreeIllustration stage={currentTree.stageIndex} className="w-10 h-10" />
+                   </div>
                    <div className="text-left"><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Древо сознания</p><h4 className="text-base font-bold text-slate-800">{currentTree.title}</h4></div>
                 </div>
                 <ChevronRight size={20} className="text-slate-300" />
@@ -780,7 +791,14 @@ const App: React.FC = () => {
           <div className="mb-10 p-6 rounded-3xl bg-indigo-500/10 flex items-center justify-center min-w-[120px] min-h-[120px]">{siteConfig.customLogoUrl ? <img src={siteConfig.customLogoUrl} className="w-24 h-24 object-contain" /> : <StylizedMMText text={siteConfig.logoText} className="text-7xl" color="#6366f1" />}</div>
           <h2 className="text-2xl font-bold mb-6 text-slate-800">{siteConfig.appTitle}</h2>
           <div className="space-y-6 text-left w-full px-2">{siteConfig.aboutParagraphs.map((p, i) => (<p key={i} className="text-[16px] leading-relaxed text-slate-600">{p}</p>))}</div>
-          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around"><div className="text-center cursor-pointer active:scale-95 transition-transform" onClick={handleVersionClick}><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p><p className="text-base font-semibold text-slate-700">2.1.0</p></div><div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div></div>
+          {/* СЕКРЕТНЫЙ СБРОС ЗДЕСЬ: 5 КЛИКОВ ПО ВЕРСИИ */}
+          <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
+             <div className="text-center cursor-pointer active:scale-95 transition-transform" onClick={handleVersionClick}>
+               <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
+               <p className="text-base font-semibold text-slate-700">2.2.0</p>
+             </div>
+             <div className="text-center"><p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p><p className="text-base font-semibold text-slate-700">09-2025</p></div>
+          </div>
           <p className="text-[12px] text-slate-400 font-medium italic mt-12">"Познай самого себя, и ты познаешь мир."</p>
         </div>
       </div>
