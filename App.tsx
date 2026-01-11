@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, SiteConfig } from './types';
+import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, SiteConfig, DailyInsightData } from './types';
 import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles } from 'lucide-react';
+import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Target, Sun, Feather, Compass } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -19,7 +19,7 @@ const DEFAULT_CONFIG: SiteConfig = {
   customLogoUrl: null,
   customWatermarkUrl: null,
   aboutParagraphs: [
-    "Mindful Mirror — это ваш персональный спутник.",
+    "Mindful Mirror — это ваш персональный спутник в мире осознанности.",
     "Мы используем ИИ, чтобы помочь вам лучше понять себя."
   ],
   quotes: [],
@@ -45,7 +45,7 @@ const STORAGE_KEYS = {
   ACTIVITY: 'mm_weekly_activity',
   JOURNAL: 'mm_journal_entries',
   CONFIG: 'mm_site_config',
-  DAILY_INSIGHT: 'mm_daily_insight_v4'
+  DAILY_INSIGHT: 'mm_daily_insight_v5' // v5 для новой структуры
 };
 
 const StylizedMMText = ({ text = "mm", className = "", color = "white", opacity = "1" }: { text?: string, className?: string, color?: string, opacity?: string }) => (
@@ -57,7 +57,7 @@ const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string,
 );
 
 // --- КОМПОНЕНТ ОПРОСА ---
-const OnboardingScreen: React.FC<{ onComplete: (data: { focus: string, struggle: string, tone: string }) => void, onBack: () => void }> = ({ onComplete, onBack }) => {
+const OnboardingScreen: React.FC<{ onComplete: (data: { focus: string, struggle: string, tone: string }) => void, onBack: () => void, isUpdate?: boolean }> = ({ onComplete, onBack, isUpdate = false }) => {
   const [step, setStep] = useState(0);
   const [tempFocus, setTempFocus] = useState('');
   const [tempStruggle, setTempStruggle] = useState('');
@@ -67,7 +67,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: { focus: string, struggle:
       title: "Что для вас сейчас важнее всего?",
       options: [
         { label: "Внутреннее спокойствие", icon: Moon, value: "Найти внутренний покой и баланс" },
-        { label: "Поиск себя и целей", icon: Search, value: "Разобраться в себе и найти цель" },
+        { label: "Поиск себя и целей", icon: Compass, value: "Разобраться в себе и найти цель" },
         { label: "Продуктивность", icon: Zap, value: "Стать эффективнее и дисциплинированнее" },
         { label: "Отношения с людьми", icon: Heart, value: "Улучшить отношения и коммуникацию" },
       ]
@@ -148,25 +148,14 @@ const OnboardingScreen: React.FC<{ onComplete: (data: { focus: string, struggle:
 // --- MAIN APP ---
 const App: React.FC = () => {
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.CONFIG);
-      return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
-    } catch (e) {
-      return DEFAULT_CONFIG;
-    }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.CONFIG) || 'null') || DEFAULT_CONFIG; } catch { return DEFAULT_CONFIG; }
   });
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return { onboardingCompleted: false, ...parsed };
-      }
-      return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
-    } catch (e) {
-      return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
-    }
+      return saved ? { onboardingCompleted: false, ...JSON.parse(saved) } : { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
+    } catch { return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false }; }
   });
 
   const isSpaceTheme = userProfile.theme === 'SPACE';
@@ -174,98 +163,81 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
-  const [dailyInsight, setDailyInsight] = useState<{ text: string, date: string, author: string } | null>(null);
+  
+  // Состояние для РАСШИРЕННОГО совета
+  const [dailyInsight, setDailyInsight] = useState<DailyInsightData | null>(() => {
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.DAILY_INSIGHT) || 'null'); } catch { return null; }
+  });
+  
   const [isInsightLoading, setIsInsightLoading] = useState(false);
    
   const [history, setHistory] = useState<ChatSession[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.HISTORY);
-      const parsed = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) { return []; }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.HISTORY) || '[]'); } catch { return []; }
   });
    
-  const [totalSessions, setTotalSessions] = useState<number>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.SESSIONS);
-    const val = saved ? parseInt(saved, 10) : 0;
-    return isNaN(val) ? 0 : val;
-  });
-   
-  const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.TIME);
-    const val = saved ? parseInt(saved, 10) : 0;
-    return isNaN(val) ? 0 : val;
-  });
-
+  const [totalSessions, setTotalSessions] = useState<number>(() => parseInt(localStorage.getItem(STORAGE_KEYS.SESSIONS) || '0', 10) || 0);
+  const [totalTimeSeconds, setTotalTimeSeconds] = useState<number>(() => parseInt(localStorage.getItem(STORAGE_KEYS.TIME) || '0', 10) || 0);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.JOURNAL);
-      const parsed = saved ? JSON.parse(saved) : [];
-      return Array.isArray(parsed) ? parsed : [];
-    } catch (e) { return []; }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.JOURNAL) || '[]'); } catch { return []; }
   });
-
   const [weeklyActivity, setWeeklyActivity] = useState<number[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEYS.ACTIVITY);
-      return saved ? JSON.parse(saved) : [40, 60, 30, 80, 55, 30, 10];
-    } catch (e) { return [40, 60, 30, 80, 55, 30, 10]; }
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACTIVITY) || '[40, 60, 30, 80, 55, 30, 10]'); } catch { return [40, 60, 30, 80, 55, 30, 10]; }
   });
 
   const longPressTimer = useRef<number | null>(null);
 
+  // --- ГЕНЕРАЦИЯ ДЕТАЛЬНОГО СОВЕТА (Daily Guide) ---
   useEffect(() => {
     const generateDailyAdvice = async () => {
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
 
       const todayStr = new Date().toDateString();
-      const savedInsightRaw = localStorage.getItem(STORAGE_KEYS.DAILY_INSIGHT);
-      
-      let savedInsight = null;
-      if (savedInsightRaw) {
-        try { savedInsight = JSON.parse(savedInsightRaw); } catch (e) {}
-      }
-
-      if (savedInsight && savedInsight.date === todayStr) {
-        setDailyInsight(savedInsight);
-        return;
-      }
+      if (dailyInsight && dailyInsight.date === todayStr) return; // Уже есть на сегодня
 
       setIsInsightLoading(true);
       try {
         const recentEntries = journalEntries.slice(0, 3).map(e => e.content).join(". ");
         const userName = userProfile.name || "Друг";
         
+        // --- ПРОМПТ ДЛЯ СТРУКТУРИРОВАННОГО ОТВЕТА ---
         const prompt = `
-          Ты — персональный ментор. 
-          Пользователя зовут ${userName}.
-          Его профиль:
-          - Фокус: ${userProfile.focus || 'Развитие'}
-          - Трудность: ${userProfile.struggle || 'Нет'}
-          - Стиль: ${userProfile.aiTone || 'Мудрый'}
-
-          Последние записи: "${recentEntries}".
+          Ты — персональный ментор. Пользователя зовут ${userName}.
+          Профиль:
+          - Фокус: ${userProfile.focus}
+          - Трудность: ${userProfile.struggle}
+          - Стиль: ${userProfile.aiTone}
           
-          Дай ОДИН короткий, глубокий совет на сегодня. 
-          Без приветствий. Максимум 2 предложения.
+          Дневник: "${recentEntries}".
+          
+          Составь план на сегодня. Используй разделитель "|||" между секциями.
+          1. Краткий фокус дня (одна фраза).
+          2. Конкретное маленькое действие (практика).
+          3. Глубокая мысль или вопрос для рефлексии.
+          
+          Ответ дай в формате:
+          ФОКУС|||ДЕЙСТВИЕ|||МЫСЛЬ
         `;
 
-        const adviceText = await sendMessageToGemini(prompt);
+        const responseText = await sendMessageToGemini(prompt);
+        const parts = responseText.split('|||');
         
-        const newInsight = {
-          text: adviceText,
+        const newInsight: DailyInsightData = {
           date: todayStr,
-          author: "Mindful AI"
+          focus: parts[0]?.trim() || "Осознанность в каждом моменте",
+          action: parts[1]?.trim() || "Сделай 3 глубоких вдоха прямо сейчас",
+          thought: parts[2]?.trim() || "Что важного я могу сделать сегодня?",
         };
 
         setDailyInsight(newInsight);
         localStorage.setItem(STORAGE_KEYS.DAILY_INSIGHT, JSON.stringify(newInsight));
 
       } catch (e) {
+        console.error("Advice Error", e);
         setDailyInsight({
-          text: "Вдохни глубоко. Ты там, где должен быть.",
           date: todayStr,
-          author: "Mindful AI"
+          focus: "Тишина и покой",
+          action: "Улыбнись себе в зеркале",
+          thought: "Все ответы уже внутри тебя"
         });
       } finally {
         setIsInsightLoading(false);
@@ -273,8 +245,9 @@ const App: React.FC = () => {
     };
 
     generateDailyAdvice();
-  }, [userProfile.name, journalEntries, userProfile.onboardingCompleted]);
+  }, [userProfile.name, journalEntries, userProfile.onboardingCompleted, dailyInsight]);
 
+  // Effects
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(userProfile)); }, [userProfile]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history)); }, [history]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.SESSIONS, totalSessions.toString()); }, [totalSessions]);
@@ -283,6 +256,7 @@ const App: React.FC = () => {
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.JOURNAL, JSON.stringify(journalEntries)); }, [journalEntries]);
   useEffect(() => { localStorage.setItem(STORAGE_KEYS.CONFIG, JSON.stringify(siteConfig)); }, [siteConfig]);
 
+  // Telegram
   useEffect(() => {
     if (window.Telegram?.WebApp) {
       const tg = window.Telegram.WebApp;
@@ -361,7 +335,52 @@ const App: React.FC = () => {
     }
   };
 
-  // --- RENDER FUNCTIONS ---
+  // --- ЭКРАН "КАРТА ДНЯ" (DAILY GUIDE) ---
+  const renderDailyGuide = () => (
+    <div className="h-full flex flex-col bg-[#F8FAFC] px-6 pt-10 pb-32 animate-fade-in overflow-y-auto">
+      <header className="mb-8 flex items-center space-x-4">
+         <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">Ваш план</h1>
+      </header>
+
+      {dailyInsight ? (
+        <div className="space-y-6">
+          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-[32px] p-8 text-white shadow-lg shadow-indigo-200">
+            <div className="flex items-center space-x-3 mb-4 opacity-80">
+              <Target size={20} />
+              <span className="text-xs font-bold uppercase tracking-widest">Фокус дня</span>
+            </div>
+            <h2 className="text-2xl font-bold leading-snug">{dailyInsight.focus}</h2>
+          </div>
+
+          <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+            <div className="flex items-center space-x-3 mb-4 text-emerald-600">
+              <Zap size={20} />
+              <span className="text-xs font-bold uppercase tracking-widest">Практика</span>
+            </div>
+            <p className="text-lg text-slate-700 leading-relaxed font-medium">{dailyInsight.action}</p>
+          </div>
+
+          <div className="bg-white rounded-[32px] p-8 border border-slate-100 shadow-sm">
+            <div className="flex items-center space-x-3 mb-4 text-amber-500">
+              <Feather size={20} />
+              <span className="text-xs font-bold uppercase tracking-widest">Мысль</span>
+            </div>
+            <p className="text-lg text-slate-600 leading-relaxed italic">"{dailyInsight.thought}"</p>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center h-full">
+          <Loader2 className="animate-spin text-indigo-500 mb-4" size={32} />
+          <p className="text-slate-400">Составляю карту...</p>
+        </div>
+      )}
+    </div>
+  );
+
+  // --- ГЛАВНЫЙ ЭКРАН ---
   const renderHome = () => (
     <div className="h-full overflow-y-auto animate-fade-in relative z-10 pb-32">
       <header className="mb-10 w-full relative overflow-hidden">
@@ -421,9 +440,10 @@ const App: React.FC = () => {
         </div>
       </div>
 
+      {/* --- ИНТЕРАКТИВНЫЙ БЛОК: СОВЕТ ИЛИ ОПРОС --- */}
       <div className="px-6 space-y-3.5 mb-7">
         <h3 className="text-[10px] font-bold ml-2 text-slate-400 uppercase tracking-widest">
-          {userProfile.onboardingCompleted ? "Совет дня" : "Персонализация"}
+          {userProfile.onboardingCompleted ? "Ваш план на день" : "Персонализация"}
         </h3>
         
         {!userProfile.onboardingCompleted ? (
@@ -440,7 +460,7 @@ const App: React.FC = () => {
                 <div className="text-left">
                   <h4 className="font-bold text-lg mb-1">Настроить профиль</h4>
                   <p className="text-indigo-100 text-xs leading-relaxed max-w-[200px]">
-                    Ответьте на 3 вопроса, чтобы ИИ давал точные советы.
+                    Пройдите короткий опрос, чтобы получить персональный план.
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
@@ -449,26 +469,34 @@ const App: React.FC = () => {
              </div>
           </button>
         ) : (
-          <div className="bg-white border-slate-50 p-6 rounded-[28px] border shadow-sm relative overflow-hidden min-h-[140px] flex flex-col justify-center">
-             <div className="absolute top-0 left-0 w-24 h-24 bg-amber-50 rounded-full -translate-x-1/2 -translate-y-1/2 blur-2xl"></div>
-             <Quote size={24} className="text-amber-100 absolute top-4 left-4 opacity-50" />
-             <div className="relative z-10 text-center px-2 py-1">
-               {isInsightLoading ? (
-                 <div className="flex flex-col items-center justify-center space-y-3">
-                   <Loader2 className="animate-spin text-indigo-500" size={20} />
-                   <p className="text-[10px] text-slate-400 animate-pulse font-medium">Синхронизация с космосом...</p>
+          <button 
+            onClick={() => setCurrentView('DAILY_GUIDE')}
+            className="w-full bg-white border-slate-50 p-6 rounded-[28px] border shadow-sm relative overflow-hidden min-h-[140px] flex flex-col justify-center items-start text-left transition-all active:scale-95 group"
+          >
+             <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full blur-2xl group-hover:scale-110 transition-transform"></div>
+             
+             {isInsightLoading ? (
+               <div className="flex flex-col items-center justify-center w-full space-y-3">
+                 <Loader2 className="animate-spin text-indigo-500" size={20} />
+                 <p className="text-[10px] text-slate-400 animate-pulse font-medium">Создаю карту дня...</p>
+               </div>
+             ) : (
+               <>
+                 <div className="relative z-10 mb-3">
+                   <span className="bg-indigo-100 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-lg uppercase tracking-wider">
+                     Фокус дня
+                   </span>
                  </div>
-               ) : (
-                 <>
-                   <p className="text-slate-700 italic font-semibold text-[15px] leading-relaxed mb-4">
-                     "{dailyInsight?.text || 'Загрузка...'}"
-                   </p>
-                   <div className="w-8 h-1 bg-amber-200/40 mx-auto mb-2.5 rounded-full"></div>
-                   <p className="text-[9px] text-slate-400 uppercase tracking-[0.2em] font-bold">{dailyInsight?.author || 'Mindful AI'}</p>
-                 </>
-               )}
-             </div>
-          </div>
+                 <p className="text-slate-800 font-bold text-lg leading-tight mb-2 relative z-10">
+                   {dailyInsight?.focus || "Загрузка..."}
+                 </p>
+                 <div className="flex items-center text-indigo-500 text-xs font-bold mt-2 group-hover:translate-x-1 transition-transform">
+                   <span>Открыть полный разбор</span>
+                   <ChevronRight size={14} className="ml-1" />
+                 </div>
+               </>
+             )}
+          </button>
         )}
       </div>
 
@@ -494,97 +522,6 @@ const App: React.FC = () => {
               </div>
             </div>
          </button>
-      </div>
-    </div>
-  );
-
-  const renderHistory = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
-       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800">История</h1>
-      </header>
-      {history.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
-          <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
-            <BookOpen size={32} strokeWidth={1.5} />
-          </div>
-          <h3 className="text-slate-700 font-medium text-lg">Пока пусто</h3>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {history.map((session) => {
-            // SAFE DATE PARSING
-            let dateStr = 'Дата неизвестна';
-            try {
-                if (session.date) {
-                    dateStr = new Date(session.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' });
-                }
-            } catch (e) {}
-
-            return (
-            <button key={session.id} onClick={() => { setSelectedSession(session); setCurrentView('READ_HISTORY'); }} className="w-full text-left p-4 rounded-[24px] bg-white border-slate-50 shadow-sm border flex items-start space-x-4 hover:shadow-md transition-shadow active:scale-98">
-              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${session.mode === 'DECISION' ? 'bg-indigo-50 text-indigo-500' : session.mode === 'EMOTIONS' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
-                {session.mode === 'DECISION' ? <Zap size={20} fill="currentColor" strokeWidth={0} /> : session.mode === 'EMOTIONS' ? <Heart size={20} /> : <BookOpen size={20} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-center mb-1">
-                   <h4 className="font-semibold text-slate-700 text-sm">
-                      {session.mode === 'DECISION' ? 'Решение' : session.mode === 'EMOTIONS' ? 'Эмоции' : 'Дневник'}
-                   </h4>
-                   <span className="text-[10px] text-slate-400">{dateStr}</span>
-                </div>
-                <p className="text-xs text-slate-500 line-clamp-2">{session.preview}</p>
-              </div>
-            </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderProfile = () => (
-    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
-       <header className="mb-8 flex items-center space-x-4">
-         <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
-           <ArrowLeft size={24} />
-         </button>
-         <h1 className="text-3xl font-bold text-slate-800">Профиль</h1>
-      </header>
-      
-      <div className="bg-white shadow-sm rounded-[32px] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border border-slate-50">
-        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-50"></div>
-        <div className="w-24 h-24 rounded-full bg-white p-1 shadow-sm relative z-10 -mt-2 overflow-hidden border border-slate-100">
-           {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}
-        </div>
-        <h3 className="text-xl font-bold mt-4 text-slate-800">{userProfile.name || 'Странник'}</h3>
-        <p className="text-sm text-indigo-400 font-medium">{currentRank.title}</p>
-      </div>
-
-      <div className="space-y-4">
-        <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
-          <div className="flex items-center space-x-4">
-            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Medal size={20} /></div>
-            <span className="text-sm font-semibold">Ранги</span>
-          </div>
-          <ChevronRight size={18} className="text-slate-300" />
-        </button>
-
-        <button onClick={() => setCurrentView('SETTINGS')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
-          <div className="flex items-center space-x-4">
-            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Settings size={20} /></div>
-            <span className="text-sm font-semibold">Настройки</span>
-          </div>
-          <ChevronRight size={18} className="text-slate-300" />
-        </button>
-
-        <button onClick={() => setCurrentView('ABOUT')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
-          <div className="flex items-center space-x-4">
-            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Info size={20} /></div>
-            <span className="text-sm font-semibold">О приложении</span>
-          </div>
-          <ChevronRight size={18} className="text-slate-300" />
-        </button>
       </div>
     </div>
   );
@@ -630,6 +567,20 @@ const App: React.FC = () => {
           <div className="space-y-2">
              <label className="text-sm font-bold text-slate-700">Имя</label>
              <input type="text" value={userProfile.name} onChange={(e) => setUserProfile(prev => ({ ...prev, name: e.target.value }))} className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-slate-100 border focus:outline-none focus:border-indigo-500 focus:bg-white transition-all font-semibold" />
+          </div>
+
+          {/* НОВАЯ КНОПКА: СБРОСИТЬ ОПРОС */}
+          <div className="pt-4 border-t border-slate-100">
+             <label className="text-sm font-bold text-slate-700 mb-2 block">Персонализация</label>
+             <button 
+               onClick={() => {
+                 setCurrentView('ONBOARDING');
+               }}
+               className="w-full py-4 rounded-2xl bg-slate-50 text-slate-600 font-bold border border-slate-100 active:scale-95 transition-all flex items-center justify-center space-x-2"
+             >
+                <Compass size={18} />
+                <span>Пройти опрос заново</span>
+             </button>
           </div>
 
           <button onClick={() => setCurrentView('PROFILE')} className="w-full py-4 rounded-2xl bg-indigo-500 text-white font-bold shadow-lg mt-4 active:scale-98 transition-transform">Сохранить</button>
@@ -712,7 +663,7 @@ const App: React.FC = () => {
           <div className="w-full pt-8 mt-10 border-t border-slate-100 flex justify-around">
              <div className="text-center">
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Версия</p>
-                <p className="text-base font-semibold text-slate-700">1.3.0</p>
+                <p className="text-base font-semibold text-slate-700">1.4.0</p>
              </div>
              <div className="text-center">
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1">Сборка</p>
@@ -728,6 +679,91 @@ const App: React.FC = () => {
     </div>
   );
 
+  const renderHistory = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+       <header className="mb-8">
+        <h1 className="text-3xl font-bold text-slate-800">История</h1>
+      </header>
+      {history.length === 0 ? (
+        <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+          <div className="w-24 h-24 rounded-full bg-slate-50 flex items-center justify-center text-slate-300 mb-2">
+            <BookOpen size={32} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-slate-700 font-medium text-lg">Пока пусто</h3>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {history.map((session) => {
+            let dateStr = 'Дата неизвестна';
+            try { if (session.date) dateStr = new Date(session.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }); } catch (e) {}
+            return (
+            <button key={session.id} onClick={() => { setSelectedSession(session); setCurrentView('READ_HISTORY'); }} className="w-full text-left p-4 rounded-[24px] bg-white border-slate-50 shadow-sm border flex items-start space-x-4 hover:shadow-md transition-shadow active:scale-98">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${session.mode === 'DECISION' ? 'bg-indigo-50 text-indigo-500' : session.mode === 'EMOTIONS' ? 'bg-rose-50 text-rose-500' : 'bg-emerald-50 text-emerald-500'}`}>
+                {session.mode === 'DECISION' ? <Zap size={20} fill="currentColor" strokeWidth={0} /> : session.mode === 'EMOTIONS' ? <Heart size={20} /> : <BookOpen size={20} />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex justify-between items-center mb-1">
+                   <h4 className="font-semibold text-slate-700 text-sm">
+                      {session.mode === 'DECISION' ? 'Решение' : session.mode === 'EMOTIONS' ? 'Эмоции' : 'Дневник'}
+                   </h4>
+                   <span className="text-[10px] text-slate-400">{dateStr}</span>
+                </div>
+                <p className="text-xs text-slate-500 line-clamp-2">{session.preview}</p>
+              </div>
+            </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderProfile = () => (
+    <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+       <header className="mb-8 flex items-center space-x-4">
+         <button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+           <ArrowLeft size={24} />
+         </button>
+         <h1 className="text-3xl font-bold text-slate-800">Профиль</h1>
+      </header>
+      
+      <div className="bg-white shadow-sm rounded-[32px] p-8 mb-8 flex flex-col items-center text-center relative overflow-hidden border border-slate-50">
+        <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-r from-indigo-100 to-purple-100 opacity-50"></div>
+        <div className="w-24 h-24 rounded-full bg-white p-1 shadow-sm relative z-10 -mt-2 overflow-hidden border border-slate-100">
+           {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover rounded-full" /> : <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-400 to-purple-500 flex items-center justify-center text-white text-3xl font-bold">{userProfile.name ? userProfile.name.charAt(0).toUpperCase() : <UserIcon size={40} />}</div>}
+        </div>
+        <h3 className="text-xl font-bold mt-4 text-slate-800">{userProfile.name || 'Странник'}</h3>
+        <p className="text-sm text-indigo-400 font-medium">{currentRank.title}</p>
+      </div>
+
+      <div className="space-y-4">
+        <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Medal size={20} /></div>
+            <span className="text-sm font-semibold">Ранги</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
+
+        <button onClick={() => setCurrentView('SETTINGS')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Settings size={20} /></div>
+            <span className="text-sm font-semibold">Настройки</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
+
+        <button onClick={() => setCurrentView('ABOUT')} className="w-full p-5 rounded-[24px] bg-white border-slate-50 shadow-sm text-slate-600 border flex items-center justify-between transition-all active:scale-95">
+          <div className="flex items-center space-x-4">
+            <div className="p-2.5 rounded-xl bg-slate-50 text-slate-500"><Info size={20} /></div>
+            <span className="text-sm font-semibold">О приложении</span>
+          </div>
+          <ChevronRight size={18} className="text-slate-300" />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="h-screen w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -739,13 +775,7 @@ const App: React.FC = () => {
         {currentView === 'ONBOARDING' && (
           <OnboardingScreen 
             onComplete={(data) => {
-              setUserProfile(prev => ({
-                ...prev,
-                focus: data.focus,
-                struggle: data.struggle,
-                aiTone: data.tone,
-                onboardingCompleted: true
-              }));
+              setUserProfile(prev => ({ ...prev, focus: data.focus, struggle: data.struggle, aiTone: data.tone, onboardingCompleted: true }));
               localStorage.removeItem(STORAGE_KEYS.DAILY_INSIGHT);
               setDailyInsight(null);
               setCurrentView('HOME');
@@ -753,6 +783,7 @@ const App: React.FC = () => {
             onBack={() => setCurrentView('HOME')}
           />
         )}
+        {currentView === 'DAILY_GUIDE' && renderDailyGuide()}
         {currentView === 'HOME' && renderHome()}
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface entries={journalEntries} onSaveEntry={handleSaveJournalEntry} onDeleteEntry={handleDeleteJournalEntry} onUpdateOrder={handleReorderJournalEntries} onBack={() => setCurrentView('HOME')} />}
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface mode={selectedMode} onBack={() => setCurrentView('HOME')} onSessionComplete={handleSessionComplete} />}
@@ -762,13 +793,7 @@ const App: React.FC = () => {
         {currentView === 'SETTINGS' && renderSettings()}
         {currentView === 'ABOUT' && renderAbout()}
         {currentView === 'RANKS_INFO' && renderRanksInfo()}
-        {currentView === 'ADMIN' && (
-          <AdminInterface 
-            config={siteConfig} 
-            onSave={(newCfg) => setSiteConfig(newCfg)} 
-            onBack={() => setCurrentView('ABOUT')} 
-          />
-        )}
+        {currentView === 'ADMIN' && <AdminInterface config={siteConfig} onSave={(newCfg) => setSiteConfig(newCfg)} onBack={() => setCurrentView('ABOUT')} />}
       </main>
       
       {(['HOME', 'HISTORY', 'PROFILE', 'ABOUT', 'RANKS_INFO', 'SETTINGS'].includes(currentView)) && <BottomNav currentView={currentView} onChangeView={setCurrentView} />}
