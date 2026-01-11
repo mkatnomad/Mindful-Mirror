@@ -5,7 +5,8 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
-import { Heart, BookOpen, ChevronRight, Settings, Info, Bell, User as UserIcon, Activity, Calendar, Quote, Clock, Zap, Camera, Star, ArrowLeft, Footprints, MessageSquare, ArrowRight, Cloud, Lock, CheckCircle, Edit2, Mail, LogOut, LogIn, PenTool, Moon, Sun, Sparkles, ChevronUp, ChevronDown, Award, Medal, RefreshCw, Loader2, Check } from 'lucide-react';
+// 👇 Добавил Search в импорты
+import { Heart, BookOpen, ChevronRight, Settings, Info, Bell, User as UserIcon, Activity, Calendar, Quote, Clock, Zap, Camera, Star, ArrowLeft, Footprints, MessageSquare, ArrowRight, Cloud, Lock, CheckCircle, Edit2, Mail, LogOut, LogIn, PenTool, Moon, Sun, Sparkles, ChevronUp, ChevronDown, Award, Medal, RefreshCw, Loader2, Check, Search } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -64,7 +65,8 @@ const App: React.FC = () => {
 
   const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.PROFILE);
-    return saved ? JSON.parse(saved) : { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
+    // Инициализация с безопасными дефолтными значениями
+    return saved ? { onboardingCompleted: false, ...JSON.parse(saved) } : { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false };
   });
 
   const isSpaceTheme = userProfile.theme === 'SPACE';
@@ -245,7 +247,6 @@ const App: React.FC = () => {
   // --- КОМПОНЕНТ ОПРОСА (ONBOARDING) ---
   const renderOnboarding = () => {
     const [step, setStep] = useState(0);
-    // Временные состояния для опроса
     const [tempFocus, setTempFocus] = useState('');
     const [tempStruggle, setTempStruggle] = useState('');
     
@@ -254,7 +255,7 @@ const App: React.FC = () => {
         title: "Что для вас сейчас важнее всего?",
         options: [
           { label: "Внутреннее спокойствие", icon: Moon, value: "Найти внутренний покой и баланс" },
-          { label: "Поиск себя и целей", icon: SearchIcon, value: "Разобраться в себе и найти цель" },
+          { label: "Поиск себя и целей", icon: Search, value: "Разобраться в себе и найти цель" }, // Используем Search
           { label: "Продуктивность", icon: Zap, value: "Стать эффективнее и дисциплинированнее" },
           { label: "Отношения с людьми", icon: Heart, value: "Улучшить отношения и коммуникацию" },
         ]
@@ -284,7 +285,6 @@ const App: React.FC = () => {
       if (step === 0) setTempFocus(value);
       if (step === 1) setTempStruggle(value);
       if (step === 2) {
-        // Финал - сохраняем всё в профиль
         setUserProfile(prev => ({
           ...prev,
           focus: tempFocus,
@@ -292,7 +292,6 @@ const App: React.FC = () => {
           aiTone: value,
           onboardingCompleted: true
         }));
-        // Принудительно сбрасываем прошлый совет, чтобы сгенерировать новый с учетом данных
         localStorage.removeItem(STORAGE_KEYS.DAILY_INSIGHT);
         setDailyInsight(null);
         setCurrentView('HOME');
@@ -336,13 +335,26 @@ const App: React.FC = () => {
     );
   };
 
-  // Компонент иконки поиска (нужен для опроса)
-  const SearchIcon = ({ size, className }: { size?: number, className?: string }) => (
-    <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="11" cy="11" r="8"></circle>
-      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-    </svg>
-  );
+  const handleAdminTriggerStart = () => {
+    longPressTimer.current = window.setTimeout(() => {
+      const pass = prompt('Режим администратора. Введите пароль:');
+      if (pass === siteConfig.adminPasscode) {
+        if (window.Telegram?.WebApp?.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
+        setCurrentView('ADMIN');
+      } else if (pass !== null) {
+        alert('Неверный пароль');
+      }
+    }, 2000); 
+  };
+
+  const handleAdminTriggerEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
 
   // --- RENDER FUNCTIONS ---
   const renderHome = () => (
@@ -353,12 +365,30 @@ const App: React.FC = () => {
            <div className="absolute -top-[10%] -left-[5%] w-[50%] h-[120%] bg-gradient-to-br from-indigo-100/30 to-transparent rounded-full blur-[40px] opacity-20"></div>
         </div>
         <div className="relative flex flex-row items-center pt-4 pb-4 px-8 min-h-[90px]">
-          <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 pointer-events-auto select-none opacity-30 flex items-center justify-center overflow-hidden">
+          <div 
+            className="absolute right-[-10%] top-1/2 -translate-y-1/2 pointer-events-auto select-none transition-all duration-700 active:opacity-30 flex items-center justify-center overflow-hidden"
+            onPointerDown={handleAdminTriggerStart}
+            onPointerUp={handleAdminTriggerEnd}
+            onPointerLeave={handleAdminTriggerEnd}
+          >
              {userProfile.avatarUrl ? (
                <div className="relative w-[240px] h-[240px] rounded-full overflow-hidden opacity-[0.18] grayscale brightness-110 pointer-events-none">
                  <img src={userProfile.avatarUrl} className="w-full h-full object-cover scale-110" alt="Avatar Watermark" />
                </div>
-             ) : <Logo className="w-32 h-32 opacity-10" />}
+             ) : siteConfig.customWatermarkUrl ? (
+               <img 
+                 src={siteConfig.customWatermarkUrl} 
+                 className="h-[80px] object-contain opacity-[0.08] grayscale pointer-events-none" 
+                 alt="Watermark" 
+               />
+             ) : (
+                <div className="w-[100px] h-[100px] flex items-center justify-center opacity-[0.02]">
+                  <svg width="100%" height="100%" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="50" cy="50" r="40" stroke="#6366f1" strokeWidth="1"/>
+                    <path d="M50 10V90M10 50H90" stroke="#6366f1" strokeWidth="1"/>
+                  </svg>
+                </div>
+             )}
           </div>
           <div className="relative z-10 flex-1 pr-16">
             <h1 className="text-[19px] font-light tracking-tight text-slate-800/95 leading-tight">
@@ -440,30 +470,17 @@ const App: React.FC = () => {
     </div>
   );
 
-  return (
-    <div className="h-screen w-full overflow-hidden flex flex-col font-sans relative bg-[#F8FAFC]">
-      <div className="absolute inset-0 z-0 pointer-events-none">
-         <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[50%] bg-blue-100 rounded-full blur-[100px] opacity-60"></div>
-         <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[50%] bg-purple-100 rounded-full blur-[100px] opacity-60"></div>
-      </div>
+  const renderSettings = () => {
+    const tgPhoto = window.Telegram?.WebApp?.initDataUnsafe?.user?.photo_url;
+    
+    return (
+      <div className="p-6 pt-12 h-full overflow-y-auto animate-fade-in relative z-10 pb-24">
+        <header className="mb-8 flex items-center space-x-4">
+           <button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full hover:bg-slate-100 text-slate-500">
+             <ArrowLeft size={24} />
+           </button>
+           <h1 className="text-3xl font-bold text-slate-800">Настройки</h1>
+        </header>
 
-      <main className="flex-1 relative overflow-hidden z-10">
-        {currentView === 'ONBOARDING' && renderOnboarding()}
-        {currentView === 'HOME' && renderHome()}
-        {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface entries={journalEntries} onSaveEntry={handleSaveJournalEntry} onDeleteEntry={handleDeleteJournalEntry} onUpdateOrder={handleReorderJournalEntries} onBack={() => setCurrentView('HOME')} />}
-        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface mode={selectedMode} onBack={() => setCurrentView('HOME')} onSessionComplete={handleSessionComplete} />}
-        {currentView === 'READ_HISTORY' && selectedSession && <ChatInterface mode={selectedSession.mode} onBack={() => setCurrentView('HISTORY')} readOnly={true} initialMessages={selectedSession.messages} />}
-        {currentView === 'HISTORY' && renderHistory()}
-        {currentView === 'PROFILE' && renderProfile()}
-        {currentView === 'SETTINGS' && renderSettings()}
-        {currentView === 'ABOUT' && renderAbout()}
-        {currentView === 'RANKS_INFO' && renderRanksInfo()}
-        {currentView === 'ADMIN' && <AdminInterface config={siteConfig} onSave={(newCfg) => setSiteConfig(newCfg)} onBack={() => setCurrentView('ABOUT')} />}
-      </main>
-      
-      {(['HOME', 'HISTORY', 'PROFILE', 'ABOUT', 'RANKS_INFO', 'SETTINGS'].includes(currentView)) && <BottomNav currentView={currentView} onChangeView={setCurrentView} />}
-    </div>
-  );
-};
-
-export default App;
+        <div className="bg-white shadow-sm border-slate-100 rounded-[32px] p-8 border border-slate-50 space-y-8">
+          <div className="flex
