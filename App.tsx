@@ -5,6 +5,7 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { sendMessageToGemini } from './services/geminiService';
+// Используем безопасные иконки из Lucide
 import { Heart, BookOpen, ChevronRight, Settings, Info, User as UserIcon, Activity, Quote, Clock, Zap, Camera, Star, ArrowLeft, MessageSquare, Award, Medal, RefreshCw, Loader2, Cloud, Lock, Moon, Search, Sparkles, Sun, Coffee, Brain, Briefcase, Feather, Compass, Anchor, Target, Battery, X, Shield, Map, Smile, TreeDeciduous, Sprout, Leaf, Lightbulb, CheckCircle } from 'lucide-react';
 
 declare global {
@@ -47,8 +48,7 @@ const Logo = ({ className = "w-20 h-20" }: { className?: string, color?: string,
 
 // --- 8 СТАДИЙ РОСТА ДЕРЕВА ---
 const TreeIllustration: React.FC<{ stage: number, className?: string }> = ({ stage, className }) => {
-  // Упрощенная заглушка для SVG, чтобы не загромождать код. В идеале тут твои векторные деревья.
-  // Использую иконки Lucide для надежности, но сохраняю цвета.
+  // Используем разные иконки для визуализации роста
   const icons = [Sprout, Sprout, Leaf, Leaf, TreeDeciduous, TreeDeciduous, TreeDeciduous, TreeDeciduous];
   const Icon = icons[stage] || TreeDeciduous;
   return <Icon className={className} />;
@@ -59,13 +59,13 @@ const TREE_STAGES = [
   { threshold: 20000, title: "Мудрое Древо", stageIndex: 6, desc: "Глубокие корни." },
   { threshold: 5000, title: "Цветущий Сад", stageIndex: 5, desc: "Плоды практики." },
   { threshold: 1500, title: "Могучее Древо", stageIndex: 4, desc: "Сила и покой." },
-  { threshold: 300, title: "Крепкое Дерево", stageIndex: 3, desc: "Уверенность." },
+  { threshold: 300, title: "Крепкое Древо", stageIndex: 3, desc: "Уверенность." },
   { threshold: 80, title: "Молодое Дерево", stageIndex: 2, desc: "Быстрый рост." },
   { threshold: 15, title: "Саженец", stageIndex: 1, desc: "Начало пути." },
   { threshold: 0, title: "Росток", stageIndex: 0, desc: "Потенциал." },
 ];
 
-// --- ДАННЫЕ ОБ АРХЕТИПАХ (Для красивой инфографики) ---
+// --- ДАННЫЕ ОБ АРХЕТИПАХ ---
 const ARCHETYPE_INFO: any = {
   "Творец": {
     desc: "Вы видите мир как полотно. Ваша суть — созидание и самовыражение.",
@@ -151,7 +151,7 @@ const TutorialScreen: React.FC<{ onFinish: () => void }> = ({ onFinish }) => {
   const slides = [
     { title: "Карта Дня", desc: "Каждое утро ИИ создает для вас персональный план на основе вашего архетипа и дневника.", icon: Map, color: "text-indigo-500", bg: "bg-indigo-50" },
     { title: "Настроение", desc: "Нажмите на кнопку 'Как ты?' на главной, чтобы адаптировать план под ваш уровень энергии.", icon: Battery, color: "text-emerald-500", bg: "bg-emerald-50" },
-    { title: "Древо Сознания", desc: "Ваш прогресс визуализируется в виде дерева. Чем больше практик, тем оно сильнее.", icon: Sprout, color: "text-amber-500", bg: "bg-amber-50" }
+    { title: "Древо Сознания", desc: "Ваш прогресс визуализируется в виде дерева. Чем больше практик, тем выше оно растет.", icon: Sprout, color: "text-amber-500", bg: "bg-amber-50" }
   ];
 
   return (
@@ -184,7 +184,6 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
   const [scores, setScores] = useState({ CREATOR: 0, RULER: 0, SAGE: 0, CAREGIVER: 0, EXPLORER: 0 });
   const [finalData, setFinalData] = useState<{ focus?: string, struggle?: string, chronotype?: string, aiTone?: string }>({});
   
-  // 12 вопросов на Архетип + 3 настройки
   const steps = [
     { title: "Что вас вдохновляет?", type: 'archetype', options: [{ label: "Создание нового", type: 'CREATOR', icon: Feather }, { label: "Управление и успех", type: 'RULER', icon: Target }, { label: "Познание мира", type: 'SAGE', icon: BookOpen }, { label: "Забота о людях", type: 'CAREGIVER', icon: Heart }] },
     { title: "Чего вы избегаете?", type: 'archetype', options: [{ label: "Скуки и рутины", type: 'CREATOR', icon: Activity }, { label: "Хаоса", type: 'RULER', icon: Lock }, { label: "Незнания", type: 'SAGE', icon: Search }, { label: "Застоя", type: 'EXPLORER', icon: Map }] },
@@ -218,7 +217,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
       Object.entries(scores).forEach(([k, v]) => { if (v > max) { max = v; winner = k; } });
       const archMap: any = { CREATOR: "Творец", RULER: "Правитель", SAGE: "Мудрец", CAREGIVER: "Хранитель", EXPLORER: "Искатель" };
       
-      onComplete({ archetype: archMap[winner] || "Искатель", ...finalData });
+      onComplete({ archetype: archMap[winner] || "Искатель", ...finalData, [currentStepData.key!]: option.value });
     }
   };
 
@@ -261,7 +260,6 @@ const App: React.FC = () => {
     } catch { return { name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingCompleted: false, currentMood: 'ok' }; }
   });
 
-  // Views: 'HOME', 'CHAT', 'ONBOARDING', 'ARCHETYPE_RESULT', 'TUTORIAL', etc.
   const [currentView, setCurrentView] = useState<string>('HOME');
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
@@ -320,7 +318,7 @@ const App: React.FC = () => {
         if (currentMood === 'high') moodInstruction = "КЛИЕНТ НА ПИКЕ. Дай амбициозные задачи.";
         
         const prompt = `
-          Ты — мудрый ментор. Клиент: ${userName}. Архетип: "${userProfile.archetype}".
+          Ты — ментор. Клиент: ${userName}. Архетип: "${userProfile.archetype}".
           Цель: "${userProfile.focus}". Состояние: ${moodInstruction}.
           Карта дня (4 блока). Разделитель "|||". Без заголовков.
           1. МЫШЛЕНИЕ (Установка).
@@ -489,7 +487,7 @@ const App: React.FC = () => {
         )}
       </div>
 
-      {/* ЧАТЫ (ВЕРНУЛ ЦВЕТНЫЕ) */}
+      {/* ЧАТЫ */}
       <div className="px-6 mb-8">
         <div className="grid grid-cols-3 gap-4">
           {[ { id: 'DECISION', label: 'Решение', icon: Zap, color: 'text-indigo-500', bg: 'bg-indigo-50' }, { id: 'EMOTIONS', label: 'Эмоции', icon: Heart, color: 'text-rose-500', bg: 'bg-rose-50' }, { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: 'text-emerald-500', bg: 'bg-emerald-50' } ].map((m) => (
@@ -500,7 +498,7 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* ДРЕВО (ВЕРНУЛ СТАТИСТИКУ) */}
+      {/* ДРЕВО СОЗНАНИЯ */}
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className="w-full bg-gradient-to-br from-white to-slate-50 border border-slate-100 p-5 rounded-[24px] shadow-sm active:scale-95 transition-all relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl opacity-60"></div>
