@@ -50,25 +50,25 @@ interface ChatSession { id: string; mode: JournalMode; date: number; duration: n
 interface UserProfile { name: string; avatarUrl: string | null; onboardingCompleted?: boolean; archetype?: string; focus?: string; struggle?: string; chronotype?: string; currentMood?: 'high' | 'flow' | 'ok' | 'low'; }
 interface DailyInsightData { date: string; generatedForMood?: string; mindset: string; action: string; health: string; insight: string; }
 
-// --- КЛЮЧИ ---
+// --- КЛЮЧИ (НЕ МЕНЯЕМ, ЧТОБЫ СОХРАНИТЬ ДАННЫЕ) ---
 const STORAGE_KEYS = {
-  PROFILE: 'mm_profile_beautiful_prod_final', 
-  HISTORY: 'mm_history_beautiful_prod_final',
-  SESSIONS: 'mm_sessions_beautiful_prod_final',
-  TIME: 'mm_time_beautiful_prod_final',
-  JOURNAL: 'mm_journal_beautiful_prod_final',
-  DAILY_INSIGHT: 'mm_insight_beautiful_prod_final',
-  CONFIG: 'mm_config_beautiful_prod_final'
+  PROFILE: 'mm_profile_beautiful_prod_v1', 
+  HISTORY: 'mm_history_beautiful_prod_v1',
+  SESSIONS: 'mm_sessions_beautiful_prod_v1',
+  TIME: 'mm_time_beautiful_prod_v1',
+  JOURNAL: 'mm_journal_beautiful_prod_v1',
+  DAILY_INSIGHT: 'mm_insight_beautiful_prod_v1'
 };
 
 const Logo = ({ className = "w-20 h-20" }: { className?: string }) => (
   <img src="/logo.png" alt="Mindful Mirror" className={`${className} object-contain`} onError={(e) => e.currentTarget.style.display = 'none'} />
 );
 
-// --- ВЕКТОРНЫЕ ДЕРЕВЬЯ (SVG) ---
+// --- ВЕКТОРНЫЕ ДЕРЕВЬЯ (КРАСИВЫЕ С ГРАДИЕНТАМИ) ---
 const TreeIllustration: React.FC<{ stage: number, className?: string }> = ({ stage, className }) => {
   const c = className || "w-full h-full";
-  const gid = `grad-tree-fixed-${stage}`;
+  // Статичный ID для градиента
+  const gid = `grad-tree-${stage}`;
 
   if (stage <= 1) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#FEF3C7" /><path d="M50 75C50 75 40 75 40 75" stroke="#D97706" strokeWidth="2" strokeLinecap="round"/><circle cx="50" cy="70" r="6" fill="#B45309" /></svg>;
   if (stage === 2) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#ECFDF5" /><path d="M50 80V60" stroke="#059669" strokeWidth="3" strokeLinecap="round"/><path d="M50 60C50 60 35 55 35 45C35 55 50 60 50 60Z" fill="#10B981" /><path d="M50 60C50 60 65 55 65 45C65 55 50 60 50 60Z" fill="#34D399" /></svg>;
@@ -79,26 +79,26 @@ const TreeIllustration: React.FC<{ stage: number, className?: string }> = ({ sta
   if (stage === 7) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#10B981" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="7" strokeLinecap="round"/><path d="M50 70L20 55" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><path d="M50 60L85 45" stroke="#451A03" strokeWidth="4" strokeLinecap="round"/><circle cx="50" cy="35" r="30" fill="#064E3B" /><circle cx="20" cy="55" r="18" fill="#065F46" /><circle cx="85" cy="45" r="18" fill="#065F46" /><circle cx="35" cy="80" r="5" fill="#064E3B" opacity="0.5"/></svg>;
   if (stage === 8) return <svg viewBox="0 0 100 100" className={c} fill="none"><circle cx="50" cy="50" r="45" fill="#FCE7F3" /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="8" strokeLinecap="round"/><circle cx="50" cy="40" r="35" fill="#065F46" /><circle cx="25" cy="55" r="20" fill="#047857" /><circle cx="75" cy="55" r="20" fill="#047857" /><circle cx="40" cy="30" r="5" fill="#F472B6" /><circle cx="60" cy="30" r="5" fill="#F472B6" /><circle cx="25" cy="55" r="5" fill="#F472B6" /><circle cx="75" cy="55" r="5" fill="#F472B6" /><circle cx="50" cy="15" r="5" fill="#F472B6" /></svg>;
   
-  // 9: Древо Мудрости
+  // 9+: Древо
   return (<svg viewBox="0 0 100 100" className={c} fill="none"><defs><radialGradient id={gid} cx="50%" cy="50%" r="50%" fx="50%" fy="50%"><stop offset="0%" style={{stopColor:'rgb(255,255,255)', stopOpacity:0.8}} /><stop offset="100%" style={{stopColor:'rgb(16, 185, 129)', stopOpacity:0}} /></radialGradient></defs><circle cx="50" cy="50" r="48" fill={`url(#${gid})`} /><path d="M50 95L50 40" stroke="#451A03" strokeWidth="10" strokeLinecap="round"/><circle cx="50" cy="40" r="40" fill="#064E3B" /><circle cx="20" cy="65" r="25" fill="#065F46" /><circle cx="80" cy="65" r="25" fill="#065F46" /><circle cx="50" cy="25" r="15" fill="#10B981" /><path d="M20 20L25 25" stroke="#FCD34D" strokeWidth="2" /><path d="M80 20L75 25" stroke="#FCD34D" strokeWidth="2" /></svg>);
 };
 
 const TREE_STAGES = [
-  { threshold: 5000, title: "Древо Мудрости", stageIndex: 9 },
-  { threshold: 2500, title: "Плодоносящее Древо", stageIndex: 9 },
-  { threshold: 1200, title: "Цветущее Древо", stageIndex: 8 },
-  { threshold: 600, title: "Ветвистое Древо", stageIndex: 7 },
-  { threshold: 300, title: "Крепкое Древо", stageIndex: 6 },
-  { threshold: 150, title: "Молодое Дерево", stageIndex: 5 },
-  { threshold: 75, title: "Саженец", stageIndex: 4 },
-  { threshold: 30, title: "Побег", stageIndex: 3 },
-  { threshold: 10, title: "Росток", stageIndex: 2 },
-  { threshold: 0, title: "Семя", stageIndex: 1 },
+  { threshold: 5000, title: "Древо Мудрости", stageIndex: 9, desc: "Вы достигли вершины." },
+  { threshold: 2500, title: "Плодоносящее Древо", stageIndex: 9, desc: "Ваша практика приносит плоды." },
+  { threshold: 1200, title: "Цветущее Древо", stageIndex: 8, desc: "Вы раскрываете свой потенциал." },
+  { threshold: 600, title: "Ветвистое Древо", stageIndex: 7, desc: "Ваши знания расширяются." },
+  { threshold: 300, title: "Крепкое Древо", stageIndex: 6, desc: "Вы уверенно стоите на ногах." },
+  { threshold: 150, title: "Молодое Дерево", stageIndex: 5, desc: "Заметный рост и укрепление." },
+  { threshold: 75, title: "Саженец", stageIndex: 4, desc: "Корни становятся глубже." },
+  { threshold: 30, title: "Побег", stageIndex: 3, desc: "Второй шаг к свету." },
+  { threshold: 10, title: "Росток", stageIndex: 2, desc: "Первые всходы ваших усилий." },
+  { threshold: 0, title: "Семя", stageIndex: 1, desc: "Потенциал, готовый к пробуждению." },
 ];
 
 const ARCHETYPE_INFO: any = {
   "Творец": { 
-    desc: "Для вас жизнь — это чистый холст, требующий выражения. Вы не переносите серость, рутину и застой. Ваша миссия — материализовать свои идеи, будь то бизнес, искусство или уникальный стиль жизни. Вы видите потенциал там, где другие видят пустоту.",
+    desc: "Для вас жизнь — это чистый холст, требующий выражения. Вы не переносите серость, рутину и застой. Ваша миссия — материализовать свои идеи.",
     strength: "Способность создавать нечто уникальное из хаоса. Визионерство.", 
     shadow: "Перфекционизм, который парализует. Страх, что результат будет недостаточно идеальным.", 
     advice: "Не ждите вдохновения — оно приходит во время работы. «Сделанное» лучше «идеального».", 
@@ -240,7 +240,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
   const steps = [
     { title: "Что дает вам энергию?", type: 'archetype', options: [{ label: "Создание нового", type: 'CREATOR', icon: Icons.Feather }, { label: "Управление и успех", type: 'RULER', icon: Icons.Target }, { label: "Поиск истины", type: 'SAGE', icon: Icons.Book }, { label: "Помощь людям", type: 'CAREGIVER', icon: Icons.Heart }] },
     { title: "Чего вы избегаете?", type: 'archetype', options: [{ label: "Скуки и рутины", type: 'CREATOR', icon: Icons.Zap }, { label: "Хаоса", type: 'RULER', icon: Icons.Briefcase }, { label: "Незнания", type: 'SAGE', icon: Icons.Search }, { label: "Застоя", type: 'EXPLORER', icon: Icons.Map }] },
-    { title: "Идеальный выходной?", type: 'archetype', options: [{ label: "Путешествие", type: 'EXPLORER', icon: Icons.Compass }, { label: "Уют с семьей", type: 'CAREGIVER', icon: Icons.Coffee }, { label: "Изучение нового", type: 'SAGE', icon: Icons.Zap }, { label: "Планирование недели", type: 'RULER', icon: Icons.Briefcase }] },
+    { title: "Идеальный выходной?", type: 'archetype', options: [{ label: "Путешествие", type: 'EXPLORER', icon: Icons.Compass }, { label: "Уют с семьей", type: 'CAREGIVER', icon: Icons.Coffee }, { label: "Изучение новой темы", type: 'SAGE', icon: Icons.Zap }, { label: "Планирование недели", type: 'RULER', icon: Icons.Briefcase }] },
     { title: "В кризис вы...", type: 'archetype', options: [{ label: "Ищу нестандартный выход", type: 'CREATOR', icon: Icons.Star }, { label: "Беру ответственность", type: 'RULER', icon: Icons.Shield }, { label: "Анализирую ситуацию", type: 'SAGE', icon: Icons.Brain }, { label: "Забочусь об эмоциях", type: 'CAREGIVER', icon: Icons.Heart }] },
     { title: "Драйвер жизни?", type: 'archetype', options: [{ label: "Самовыражение", type: 'CREATOR', icon: Icons.Feather }, { label: "Статус", type: 'RULER', icon: Icons.Star }, { label: "Истина", type: 'SAGE', icon: Icons.Search }, { label: "Свобода", type: 'EXPLORER', icon: Icons.Map }] },
     { title: "Ценность в людях?", type: 'archetype', options: [{ label: "Уникальность", type: 'CREATOR', icon: Icons.Star }, { label: "Верность", type: 'CAREGIVER', icon: Icons.Anchor }, { label: "Ум", type: 'SAGE', icon: Icons.Book }, { label: "Легкость", type: 'EXPLORER', icon: Icons.Compass }] },
@@ -248,7 +248,7 @@ const OnboardingScreen: React.FC<{ onComplete: (data: Partial<UserProfile>) => v
     { title: "Лидерство?", type: 'archetype', options: [{ label: "Вдохновитель", type: 'CREATOR', icon: Icons.Sun }, { label: "Стратег", type: 'RULER', icon: Icons.Target }, { label: "Наставник", type: 'SAGE', icon: Icons.Book }, { label: "Защитник", type: 'CAREGIVER', icon: Icons.Shield }] },
     { title: "Перемены?", type: 'archetype', options: [{ label: "Приключение!", type: 'EXPLORER', icon: Icons.Send }, { label: "Изучаю", type: 'SAGE', icon: Icons.Search }, { label: "Внедряю", type: 'RULER', icon: Icons.Briefcase }, { label: "Осторожно", type: 'CAREGIVER', icon: Icons.Lock }] },
     { title: "Подарок?", type: 'archetype', options: [{ label: "С душой", type: 'CAREGIVER', icon: Icons.Heart }, { label: "Билет", type: 'EXPLORER', icon: Icons.Map }, { label: "Книга", type: 'SAGE', icon: Icons.Book }, { label: "Статус", type: 'RULER', icon: Icons.Star }] },
-    { title: "Утро?", type: 'archetype', options: [{ label: "План", type: 'RULER', icon: Icons.Activity }, { label: "Кофе", type: 'CREATOR', icon: Icons.Coffee }, { label: "В путь", type: 'EXPLORER', icon: Icons.Cloud }, { label: "Семья", type: 'CAREGIVER', icon: Icons.Smile }] },
+    { title: "Утро?", type: 'archetype', options: [{ label: "План", type: 'RULER', icon: Icons.Activity }, { label: "Мечты", type: 'CREATOR', icon: Icons.Coffee }, { label: "В путь", type: 'EXPLORER', icon: Icons.Cloud }, { label: "Семья", type: 'CAREGIVER', icon: Icons.Smile }] },
     { title: "Наследие?", type: 'archetype', options: [{ label: "Искусство", type: 'CREATOR', icon: Icons.Feather }, { label: "Империя", type: 'RULER', icon: Icons.Briefcase }, { label: "Открытие", type: 'SAGE', icon: Icons.Book }, { label: "Память", type: 'CAREGIVER', icon: Icons.Heart }] },
     // Настройки
     { title: "Главный фокус?", key: 'focus', options: [{ label: "Доходы", value: "Рост доходов", icon: Icons.Zap }, { label: "Спокойствие", value: "Снижение стресса", icon: Icons.Cloud }, { label: "Дисциплина", value: "Дисциплина", icon: Icons.Brain }, { label: "Семья", value: "Семья", icon: Icons.Heart }] },
@@ -360,7 +360,7 @@ const App: React.FC = () => {
     const generateDailyAdvice = async () => {
       if (!userProfile.onboardingCompleted || !userProfile.name) return;
       const todayStr = new Date().toDateString();
-      if (dailyInsight && dailyInsight.date === todayStr && dailyInsight.generatedForMood === currentMood) return;
+      if (dailyInsight && dailyInsight.date === todayStr && dailyInsight.generatedForMood === userProfile.currentMood) return;
 
       setIsInsightLoading(true);
       try {
