@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useMemo } from 'react';
-import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
 import { JournalEntry, JournalEntryType } from '../types';
 
@@ -10,6 +10,7 @@ interface JournalInterfaceProps {
   onDeleteEntry: (id: string) => void;
   onUpdateOrder: (entries: JournalEntry[]) => void;
   onBack: () => void;
+  rpgMode?: boolean;
 }
 
 const TYPE_CONFIG: Record<JournalEntryType, {
@@ -18,6 +19,7 @@ const TYPE_CONFIG: Record<JournalEntryType, {
   color: string;
   bg: string;
   gradient: string;
+  rpgGradient: string;
   placeholder: string;
 }> = {
   INSIGHT: {
@@ -26,7 +28,8 @@ const TYPE_CONFIG: Record<JournalEntryType, {
     color: 'text-amber-600',
     bg: 'bg-amber-100',
     gradient: 'from-amber-50 to-orange-50',
-    placeholder: 'Какая идея пришла к вам? Что вы осознали?'
+    rpgGradient: 'from-amber-100 to-orange-100',
+    placeholder: 'Какая искра озарила ваш разум?'
   },
   GRATITUDE: {
     label: 'Благодарность',
@@ -34,7 +37,8 @@ const TYPE_CONFIG: Record<JournalEntryType, {
     color: 'text-rose-600',
     bg: 'bg-rose-100',
     gradient: 'from-rose-50 to-pink-50',
-    placeholder: 'За что вы благодарны? Кому вы хотите сказать спасибо?'
+    rpgGradient: 'from-rose-100 to-pink-100',
+    placeholder: 'За какие дары судьбы вы благодарны?'
   },
   INTENTION: {
     label: 'Намерение',
@@ -42,7 +46,8 @@ const TYPE_CONFIG: Record<JournalEntryType, {
     color: 'text-indigo-600',
     bg: 'bg-indigo-100',
     gradient: 'from-indigo-50 to-blue-50',
-    placeholder: 'Какое действие вы хотите совершить? Как вы примените свои знания?'
+    rpgGradient: 'from-red-100 to-red-200',
+    placeholder: 'Какую клятву вы дадите себе на завтра?'
   }
 };
 
@@ -50,10 +55,12 @@ const JournalCard: React.FC<{
   entry: JournalEntry; 
   onEdit: (entry: JournalEntry) => void; 
   onDelete: (id: string) => void;
+  rpgMode?: boolean;
 }> = ({ 
   entry, 
   onEdit,
-  onDelete
+  onDelete,
+  rpgMode = false
 }) => {
   const config = TYPE_CONFIG[entry.type] || TYPE_CONFIG['INSIGHT'];
   const Icon = config.icon;
@@ -143,7 +150,7 @@ const JournalCard: React.FC<{
       whileDrag={{ 
         scale: 1.05, 
         zIndex: 1000,
-        boxShadow: "0px 25px 50px -12px rgba(0,0,0,0.25)"
+        boxShadow: rpgMode ? "0px 25px 50px -12px rgba(185,28,28,0.4)" : "0px 25px 50px -12px rgba(0,0,0,0.25)"
       }}
       className="relative mb-4 bg-transparent select-none outline-none"
     >
@@ -155,13 +162,13 @@ const JournalCard: React.FC<{
         onClick={handleCardClick}
         onContextMenu={(e) => e.preventDefault()}
         className={`
-           relative rounded-[24px] p-5 bg-gradient-to-br ${config.gradient} 
-           border border-white/70 shadow-sm
-           transition-all duration-300 transform-gpu
-           ${isLongPressed ? 'ring-2 ring-indigo-500/50 scale-[1.03] shadow-2xl z-[1000]' : 'active:scale-[0.98]'}
+           relative rounded-[24px] p-5 transition-all duration-300 transform-gpu border
+           ${rpgMode 
+             ? `rpg-card bg-white/60` 
+             : `bg-gradient-to-br ${config.gradient} border-white/70 shadow-sm`}
+           ${isLongPressed ? 'ring-2 ring-red-500/50 scale-[1.03] shadow-2xl z-[1000]' : 'active:scale-[0.98]'}
         `}
       >
-        {/* Horizontal Drag Hint Arrows */}
         <AnimatePresence>
           {isLongPressed && (
             <motion.div 
@@ -173,14 +180,14 @@ const JournalCard: React.FC<{
               <motion.div 
                 animate={{ x: [-2, 2, -2] }} 
                 transition={{ repeat: Infinity, duration: 1.5 }}
-                className="bg-indigo-500 text-white rounded-full p-1 shadow-lg"
+                className="bg-red-800 text-white rounded-full p-1 shadow-lg"
               >
                 <ChevronLeft size={16} strokeWidth={3} />
               </motion.div>
               <motion.div 
                 animate={{ x: [2, -2, 2] }} 
                 transition={{ repeat: Infinity, duration: 1.5 }}
-                className="bg-indigo-500 text-white rounded-full p-1 shadow-lg"
+                className="bg-red-800 text-white rounded-full p-1 shadow-lg"
               >
                 <ChevronRight size={16} strokeWidth={3} />
               </motion.div>
@@ -189,12 +196,14 @@ const JournalCard: React.FC<{
         </AnimatePresence>
 
         <div className="flex items-center justify-between mb-2 pointer-events-none">
-            <div className="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-white/60 backdrop-blur-md shadow-sm border border-white/50">
-              <Icon size={12} className={config.color} strokeWidth={2.5} />
-              <span className={`text-[9px] font-bold uppercase tracking-wider ${config.color}`}>{config.label}</span>
+            <div className={`flex items-center space-x-2 px-2.5 py-1 rounded-full shadow-sm border ${
+              rpgMode ? 'bg-red-800 text-white border-red-950' : 'bg-white/60 backdrop-blur-md border-white/50'
+            }`}>
+              <Icon size={12} className={rpgMode ? 'text-white' : config.color} strokeWidth={2.5} />
+              <span className={`text-[9px] font-bold uppercase tracking-wider ${rpgMode ? 'text-white' : config.color}`}>{config.label}</span>
             </div>
             <div className="flex items-center space-x-2">
-                <span className="text-[10px] text-slate-400 font-semibold opacity-70">
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${rpgMode ? 'text-red-900/60 font-display-fantasy' : 'text-slate-400 opacity-70'}`}>
                   {new Date(entry.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                 </span>
                 <button 
@@ -205,7 +214,9 @@ const JournalCard: React.FC<{
                 </button>
             </div>
         </div>
-        <p className="text-slate-700 text-[14px] leading-relaxed font-medium pointer-events-none">
+        <p className={`text-[14px] leading-relaxed font-medium pointer-events-none ${
+          rpgMode ? 'text-red-950' : 'text-slate-700'
+        }`}>
           {previewText}
         </p>
       </div>
@@ -213,7 +224,7 @@ const JournalCard: React.FC<{
   );
 };
 
-export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onSaveEntry, onDeleteEntry, onUpdateOrder, onBack }) => {
+export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onSaveEntry, onDeleteEntry, onUpdateOrder, onBack, rpgMode = false }) => {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<JournalEntryType>('INSIGHT');
@@ -254,22 +265,36 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
   };
 
   const renderEditor = () => (
-    <div className="absolute inset-0 z-[100] bg-white flex flex-col animate-fade-in">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/80 backdrop-blur-xl sticky top-0 z-10">
-        <button onClick={() => setIsEditorOpen(false)} className="p-2 -ml-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-50">
+    <div className={`absolute inset-0 z-[100] flex flex-col animate-fade-in transition-all duration-500 ${
+      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'
+    }`}>
+      <div className={`flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10 transition-all duration-500 ${
+        rpgMode ? 'bg-white/50 border-red-800/20' : 'bg-white/80 border-slate-100'
+      }`}>
+        <button onClick={() => setIsEditorOpen(false)} className={`p-2 -ml-2 rounded-full transition-colors ${
+          rpgMode ? 'text-red-800 hover:bg-red-100' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+        }`}>
           <X size={24} />
         </button>
-        <span className="font-bold text-slate-800">{editingId ? 'Редактировать' : 'Новая запись'}</span>
+        <span className={`font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy italic' : 'text-slate-800'}`}>
+          {editingId ? (rpgMode ? 'Правка свитков' : 'Редактировать') : (rpgMode ? 'Новое заклятие' : 'Новая запись')}
+        </span>
         <button 
           onClick={handleSave} 
           disabled={!content.trim()} 
-          className={`font-bold text-sm transition-colors ${content.trim() ? 'text-indigo-600' : 'text-slate-300'}`}
+          className={`font-black uppercase tracking-widest text-xs transition-colors ${
+            content.trim() 
+              ? (rpgMode ? 'text-red-800 font-display-fantasy' : 'text-indigo-600') 
+              : 'text-slate-300'
+          }`}
         >
-          Готово
+          {rpgMode ? 'Запечатлеть' : 'Готово'}
         </button>
       </div>
 
-      <div className="flex p-4 space-x-2 bg-slate-50/50 border-b border-slate-100 overflow-x-auto no-scrollbar">
+      <div className={`flex p-4 space-x-2 border-b overflow-x-auto no-scrollbar transition-all duration-500 ${
+        rpgMode ? 'bg-white/20 border-red-800/10' : 'bg-slate-50/50 border-slate-100'
+      }`}>
         {(Object.keys(TYPE_CONFIG) as JournalEntryType[]).map((type) => {
           const config = TYPE_CONFIG[type];
           const isSelected = selectedType === type;
@@ -279,13 +304,13 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
               key={type} 
               onClick={() => setSelectedType(type)} 
               className={`
-                flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl text-xs font-bold transition-all min-w-[120px]
-                ${isSelected ? 'bg-white shadow-md text-slate-800 ring-1 ring-black/5' : 'text-slate-400 hover:bg-white/50'}
+                flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all min-w-[120px]
+                ${isSelected 
+                  ? (rpgMode ? 'rpg-button font-display-fantasy shadow-none' : 'bg-white shadow-md text-slate-800 ring-1 ring-black/5') 
+                  : (rpgMode ? 'text-red-800/50 hover:bg-red-800/10' : 'text-slate-400 hover:bg-white/50')}
               `}
             >
-              <div className={`w-4 h-4 flex items-center justify-center ${isSelected ? config.color : 'text-slate-400'}`}>
-                <Icon size={16} strokeWidth={isSelected ? 3 : 2} />
-              </div>
+              <Icon size={16} strokeWidth={isSelected ? 3 : 2} />
               <span>{config.label}</span>
             </button>
           );
@@ -297,7 +322,9 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
           value={content} 
           onChange={(e) => setContent(e.target.value)} 
           placeholder={TYPE_CONFIG[selectedType].placeholder} 
-          className="w-full h-full resize-none text-lg text-slate-700 placeholder:text-slate-300 focus:outline-none leading-relaxed" 
+          className={`w-full h-full resize-none text-lg focus:outline-none leading-relaxed transition-all duration-500 ${
+            rpgMode ? 'bg-transparent text-red-950 placeholder:text-red-900/30' : 'bg-transparent text-slate-700 placeholder:text-slate-300'
+          }`} 
           autoFocus 
         />
       </div>
@@ -305,48 +332,55 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
   );
 
   return (
-    <div className="flex flex-col h-full bg-[#F8FAFC] relative overflow-hidden">
+    <div className={`flex flex-col h-full relative overflow-hidden transition-all duration-500 ${
+      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8FAFC]'
+    }`}>
       {isEditorOpen && renderEditor()}
 
-      <div className="bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20 px-6 py-4">
+      <div className={`border-b sticky top-0 z-20 px-6 py-4 transition-all duration-500 ${
+        rpgMode ? 'bg-white/50 border-red-800/20' : 'bg-white/80 backdrop-blur-xl border-slate-100'
+      }`}>
         <div className="flex items-center justify-between">
             <div className="flex items-center">
-                <button onClick={onBack} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
+                <button onClick={onBack} className={`p-2 -ml-2 rounded-full transition-colors ${
+                  rpgMode ? 'text-red-800 hover:bg-red-800/10' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                }`}>
                   <ArrowLeft size={20} />
                 </button>
-                <h2 className="ml-2 text-xl font-bold text-slate-800 tracking-tight">Дневник</h2>
+                <h2 className={`ml-2 text-xl font-black italic uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+                  {rpgMode ? 'Свитки мудрости' : 'Дневник'}
+                </h2>
             </div>
         </div>
         <div className="mt-4 flex items-center space-x-2">
            <div className="relative flex-1">
-             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+             <Search size={16} className={`absolute left-3 top-1/2 -translate-y-1/2 ${rpgMode ? 'text-red-800/50' : 'text-slate-400'}`} />
              <input 
                type="text" 
-               placeholder="Поиск..."
+               placeholder={rpgMode ? "Искать в летописи..." : "Поиск..."}
                value={searchQuery}
                onChange={(e) => setSearchQuery(e.target.value)}
-               className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none focus:bg-white transition-all text-slate-700"
+               className={`w-full border rounded-xl py-2 pl-9 pr-4 text-sm focus:outline-none transition-all ${
+                 rpgMode 
+                   ? 'bg-white/60 border-red-800/20 text-red-950 placeholder:text-red-900/20 focus:border-red-800' 
+                   : 'bg-slate-50 border-slate-100 text-slate-700 focus:bg-white'
+               }`}
              />
            </div>
            <div className="flex space-x-1 overflow-x-auto no-scrollbar max-w-[140px]">
-              <button 
-                onClick={() => setActiveFilter(activeFilter === 'INSIGHT' ? 'ALL' : 'INSIGHT')}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'INSIGHT' ? 'bg-amber-100 text-amber-600 shadow-sm' : 'bg-slate-50 text-slate-400'}`}
-              >
-                <Lightbulb size={14} strokeWidth={activeFilter === 'INSIGHT' ? 2.5 : 2} />
-              </button>
-              <button 
-                onClick={() => setActiveFilter(activeFilter === 'GRATITUDE' ? 'ALL' : 'GRATITUDE')}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'GRATITUDE' ? 'bg-rose-100 text-rose-600 shadow-sm' : 'bg-slate-50 text-slate-400'}`}
-              >
-                <Heart size={14} strokeWidth={activeFilter === 'GRATITUDE' ? 2.5 : 2} />
-              </button>
-              <button 
-                onClick={() => setActiveFilter(activeFilter === 'INTENTION' ? 'ALL' : 'INTENTION')}
-                className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${activeFilter === 'INTENTION' ? 'bg-indigo-100 text-indigo-600 shadow-sm' : 'bg-slate-50 text-slate-400'}`}
-              >
-                <Target size={14} strokeWidth={activeFilter === 'INTENTION' ? 2.5 : 2} />
-              </button>
+              {(['INSIGHT', 'GRATITUDE', 'INTENTION'] as JournalEntryType[]).map(type => (
+                <button 
+                  key={type}
+                  onClick={() => setActiveFilter(activeFilter === type ? 'ALL' : type)}
+                  className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all ${
+                    activeFilter === type 
+                      ? (rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-100 text-indigo-600 shadow-sm') 
+                      : (rpgMode ? 'bg-white/40 text-red-800/50 border border-red-800/10' : 'bg-slate-50 text-slate-400')
+                  }`}
+                >
+                  {React.createElement(TYPE_CONFIG[type].icon, { size: 14, strokeWidth: activeFilter === type ? 2.5 : 2 })}
+                </button>
+              ))}
            </div>
         </div>
       </div>
@@ -363,6 +397,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                <JournalCard 
                  key={entry.id} 
                  entry={entry} 
+                 rpgMode={rpgMode}
                  onEdit={(e) => {
                     setEditingId(e.id);
                     setSelectedType(e.type);
@@ -375,11 +410,13 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
              ))}
           </Reorder.Group>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center opacity-40 space-y-4 text-slate-400">
-             <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center">
-                <Search size={32} />
+          <div className="h-full flex flex-col items-center justify-center opacity-40 space-y-4">
+             <div className={`w-16 h-16 rounded-full flex items-center justify-center ${rpgMode ? 'bg-white/40 text-red-800/30' : 'bg-slate-100 text-slate-400'}`}>
+                <Sparkles size={32} />
              </div>
-             <p className="text-sm font-medium">Ничего не найдено</p>
+             <p className={`text-sm font-bold uppercase tracking-widest ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-400'}`}>
+               {rpgMode ? 'Тишина в залах' : 'Ничего не найдено'}
+             </p>
           </div>
         )}
       </div>
@@ -387,9 +424,13 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
       <div className="absolute bottom-8 right-6 z-30">
         <button 
           onClick={openNewEntry} 
-          className="w-14 h-14 rounded-full bg-slate-900 text-white shadow-xl shadow-slate-900/20 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+          className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all ${
+            rpgMode 
+              ? 'rpg-button shadow-red-900/40' 
+              : 'bg-slate-900 text-white shadow-slate-900/20'
+          }`}
         >
-          <Plus size={28} />
+          {rpgMode ? <Sparkles size={28} /> : <Plus size={28} />}
         </button>
       </div>
     </div>

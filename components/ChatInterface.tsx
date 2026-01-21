@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, Loader2 } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { JournalMode, Message, DecisionData } from '../types';
 import { InsightCard } from './InsightCard';
-// Импортируем нашу единственную рабочую функцию
-import { sendMessageToGemini } from '../services/geminiService';
+import { sendMessageToGemini, analyzeDecision, refineDecision } from '../services/geminiService';
 
 interface ChatInterfaceProps {
   mode: JournalMode;
@@ -11,6 +10,7 @@ interface ChatInterfaceProps {
   onSessionComplete?: (messages: Message[], durationSeconds: number) => void;
   readOnly?: boolean;
   initialMessages?: Message[];
+  rpgMode?: boolean;
 }
 
 const PRO_VARIANTS = [
@@ -45,50 +45,13 @@ const formatMessage = (content: string) => {
   });
 };
 
-// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ДЛЯ РЕШЕНИЙ (Адаптированы под OpenRouter) ---
-
-const analyzeDecisionAI = async (data: DecisionData): Promise<string> => {
-  const prompt = `
-    Проанализируй данные по решению:
-    Тема: ${data.topic}
-    Плюсы: ${data.pros.join(', ')}
-    Минусы: ${data.cons.join(', ')}
-    
-    Дай краткий, взвешенный совет. Какой вариант выглядит предпочтительнее? На что обратить внимание?
-  `;
-  return await sendMessageToGemini(prompt);
-};
-
-const refineDecisionAI = async (data: DecisionData, userMessage: string): Promise<{ text: string, data: DecisionData }> => {
-  // Простая логика обработки уточнений
-  const newData = { ...data };
-  const lowerMsg = userMessage.toLowerCase();
-  
-  let responseText = "Принято.";
-
-  if (lowerMsg.includes("плюс") || lowerMsg.includes("добавь")) {
-     newData.pros.push(userMessage);
-     responseText = "Добавил новый аргумент в плюсы. Что-то еще?";
-  } else if (lowerMsg.includes("минус") || lowerMsg.includes("риск")) {
-     newData.cons.push(userMessage);
-     responseText = "Добавил этот риск в минусы. Еще что-то?";
-  } else {
-     // Если просто текст, спросим ИИ
-     const prompt = `Пользователь уточнил по поводу решения "${data.topic}": "${userMessage}". Как это влияет на ситуацию? Ответь кратко.`;
-     responseText = await sendMessageToGemini(prompt);
-  }
-
-  return { text: responseText, data: newData };
-};
-
-// --- ОСНОВНОЙ КОМПОНЕНТ ---
-
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
   mode, 
   onBack, 
   onSessionComplete, 
   readOnly = false,
-  initialMessages = EMPTY_MESSAGES
+  initialMessages = EMPTY_MESSAGES,
+  rpgMode = false
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -96,24 +59,33 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const startTimeRef = useRef<number>(Date.now());
 
-  // Decision Flow State
   const [decisionStep, setDecisionStep] = useState<number>(0); 
   const [decisionData, setDecisionData] = useState<DecisionData>({ topic: '', pros: [], cons: [] });
 
-  // Initial Greeting
   useEffect(() => {
-    if (readOnly && initialMessages.length > 0) {
+    if (readOnly && initialMessages && initialMessages.length > 0) {
       setMessages(initialMessages);
+      // Try to extract decision data if it's a decision card session
+      const cardMsg = initialMessages.find(m => m.type === 'decision-card');
+      if (cardMsg?.decisionData) {
+        setDecisionData(cardMsg.decisionData);
+      }
       return;
     }
 
     let greeting = '';
     if (mode === 'DECISION') {
-      greeting = "Сложный выбор? Давайте разложим всё по полочкам. Какое решение вы пытаетесь принять?";
+      greeting = rpgMode 
+        ? "Вас терзают сомнения? Давайте воззовем к мудрости и разберем этот выбор. О чем вы просите совета?"
+        : "Сложный выбор? Давайте разложим всё по полочкам. Какое решение вы пытаетесь принять?";
     } else if (mode === 'EMOTIONS') {
-      greeting = "Привет. Какие эмоции вы испытываете сейчас? Опишите свое состояние, и мы вместе попробуем его понять.";
+      greeting = rpgMode
+        ? "Приветствую. Какая буря бушует в вашей душе? Опишите свои чувства, и мы найдем в них скрытую силу."
+        : "Привет. Какие эмоции вы испытываете сейчас? Опишите свое состояние, и мы вместе попробуем его понять.";
     } else {
-      greeting = "Давайте немного замедлимся. Расскажите, как прошел ваш день или что важного вы сегодня осознали?";
+      greeting = rpgMode
+        ? "Присядьте у очага. Расскажите о своих подвигах за день или об откровениях, что посетили вас."
+        : "Давайте немного замедлимся. Расскажите, как прошел ваш день или что важного вы сегодня осознали?";
     }
 
     setMessages([{
@@ -124,9 +96,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }]);
     
     startTimeRef.current = Date.now();
-  }, [mode, readOnly, initialMessages]);
+  }, [mode, readOnly, initialMessages, rpgMode]);
 
-  // Auto-scroll
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
@@ -152,7 +123,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setDecisionData(nextData);
       setDecisionStep(1);
       return { 
-        text: `Хорошо. Давайте начнем с плюсов. Какие преимущества у этого варианта?\n\n(Напишите 'далее', когда перечислите всё)`, 
+        text: rpgMode 
+          ? `Ясно. Начнем со Светлых сторон. Какие дары принесет этот выбор?\n\n(Напишите 'далее', когда закончите список)` 
+          : `Хорошо. Давайте начнем с плюсов. Какие преимущества у этого варианта?\n\n(Напишите 'далее', когда перечислите всё)`, 
         done: false,
         latestData: nextData
       };
@@ -171,7 +144,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (isCommand) {
         setDecisionStep(2);
         return { 
-          text: `Понял. Теперь давайте честно посмотрим на минусы и риски. Что вас смущает?\n\n(Напишите 'готово', когда перечислите всё)`, 
+          text: rpgMode
+            ? `Вижу. А теперь взглянем в Тень. Какие риски или потери таятся за этим шагом?\n\n(Напишите 'готово', когда закончите)`
+            : `Понял. Теперь давайте честно посмотрим на минусы и риски. Что вас смущает?\n\n(Напишите 'готово', когда перечислите всё)`, 
           done: false,
           latestData: nextData
         };
@@ -196,7 +171,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
 
       if (isCommand) {
-        setDecisionStep(3); 
+        setDecisionStep(3);
         return { text: "", done: true, latestData: nextData }; 
       } else {
         const response = getRandomResponse(CON_VARIANTS);
@@ -212,7 +187,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || readOnly) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
@@ -227,14 +202,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     try {
       if (mode === 'DECISION') {
-        // Режим уточнения (Шаг 4)
         if (decisionStep === 4) {
            await new Promise(r => setTimeout(r, 600));
-           // Используем нашу новую локальную функцию
-           const { text, data } = await refineDecisionAI(decisionData, userMsg.content);
-           
+           const { text, data } = await refineDecision(decisionData, userMsg.content);
            setDecisionData(data);
-           
            setMessages(prev => [
              ...prev,
              {
@@ -256,7 +227,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
            return;
         }
 
-        // Обычные шаги (0-3)
         await new Promise(r => setTimeout(r, 600)); 
         const { text, done, latestData } = handleDecisionFlowStep(userMsg.content, decisionData);
         
@@ -269,23 +239,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           };
           setMessages(prev => [...prev, botMsg]);
         } else {
-          // Финализация
           const analysisMsg: Message = {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: "Анализирую ваши данные... Минутку.",
+            content: rpgMode ? "Собираю крупицы мудрости..." : "Анализирую ваши данные... Минутку.",
             timestamp: Date.now()
           };
           setMessages(prev => [...prev, analysisMsg]);
           
-          // Вызываем ИИ через наш сервис
-          const analysisText = await analyzeDecisionAI(latestData);
-          
+          const analysisText = await analyzeDecision(latestData);
           setDecisionStep(4);
 
           setMessages(prev => {
              const newArr = [...prev];
-             newArr.pop(); // удаляем "analyzing..."
+             newArr.pop();
              return [
                ...newArr,
                {
@@ -305,22 +272,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                {
                  id: (Date.now() + 4).toString(),
                  role: 'assistant',
-                 content: "Если хотите что-то добавить, просто напишите.",
+                 content: rpgMode 
+                  ? "Если ваше видение изменилось, просто поведайте мне об этом (например, 'добавь в светлое...')."
+                  : "Если хотите что-то добавить или изменить, просто напишите мне об этом (например, 'добавь плюс...').",
                  timestamp: Date.now() + 200
                }
              ];
           });
         }
       } else {
-        // Обычный чат (Эмоции, Дневник)
-        // Формируем историю для контекста
-        const historyForAi = messages.slice(-10).map(m => ({
-            role: m.role,
-            content: m.content
-        }));
-        
-        const botResponseText = await sendMessageToGemini(userMsg.content, historyForAi);
-        
+        const botResponseText = await sendMessageToGemini(messages, userMsg.content, mode as 'EMOTIONS' | 'REFLECTION');
         const botMsg: Message = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
@@ -335,7 +296,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'assistant',
-        content: "Произошла ошибка связи. Пожалуйста, попробуйте еще раз.",
+        content: "Магия дала сбой. Пожалуйста, повторите свой запрос.",
         timestamp: Date.now()
       }]);
     } finally {
@@ -351,22 +312,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white/50 backdrop-blur-sm animate-fade-in relative z-10">
+    <div className={`flex flex-col h-full animate-fade-in relative z-10 transition-all duration-500 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white/50 backdrop-blur-sm'}`}>
       {/* Header */}
-      <div className="flex items-center px-6 py-4 bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-20 shadow-sm">
-        <button onClick={handleBack} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 transition-colors rounded-full hover:bg-slate-100">
+      <div className={`flex items-center px-6 py-4 border-b sticky top-0 z-20 shadow-sm transition-all duration-500 ${
+        rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'
+      }`}>
+        <button onClick={handleBack} className={`p-2 -ml-2 transition-colors rounded-full ${
+          rpgMode ? 'text-red-800 hover:bg-red-800/10' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+        }`}>
           <ArrowLeft size={20} />
         </button>
         <div className="ml-4">
-          <h2 className="text-base font-bold text-slate-800 tracking-tight">
-            {readOnly ? 'Просмотр истории' : (
-              mode === 'DECISION' ? 'Сложное решение' : mode === 'EMOTIONS' ? 'Эмоции' : 'Рефлексия'
+          <h2 className={`text-base font-bold tracking-tight ${rpgMode ? 'text-red-950 font-display-fantasy italic uppercase' : 'text-slate-800'}`}>
+            {readOnly ? (rpgMode ? 'Летопись' : 'Просмотр истории') : (
+              mode === 'DECISION' ? (rpgMode ? 'Алхимия выбора' : 'Сложное решение') : 
+              mode === 'EMOTIONS' ? (rpgMode ? 'Свиток чувств' : 'Состояние') : 
+              (rpgMode ? 'Дневник странника' : 'Рефлексия')
             )}
           </h2>
           {!readOnly && (
             <div className="flex items-center space-x-1.5">
-               <div className="w-1.5 h-1.5 rounded-full bg-green-400"></div>
-               <p className="text-xs text-slate-400 font-medium">Онлайн</p>
+               <div className={`w-1.5 h-1.5 rounded-full ${rpgMode ? 'bg-red-800 animate-pulse shadow-[0_0_8px_rgba(185,28,28,0.8)]' : 'bg-green-400'}`}></div>
+               <p className={`text-[10px] font-bold uppercase tracking-widest ${rpgMode ? 'text-red-800/70 font-display-fantasy' : 'text-slate-400'}`}>
+                 {rpgMode ? 'Эфир открыт' : 'Онлайн'}
+               </p>
             </div>
           )}
         </div>
@@ -385,16 +354,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               ) : (
                 <div 
                   className={`
-                    px-5 py-4 rounded-[20px] text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap
+                    px-5 py-4 rounded-[20px] text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap transition-all duration-300
                     ${msg.role === 'user' 
-                      ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-sm shadow-indigo-200' 
-                      : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-slate-200'}
+                      ? (rpgMode 
+                          ? 'rpg-button rounded-br-sm lowercase' 
+                          : 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-br-sm shadow-indigo-200')
+                      : (rpgMode
+                          ? 'bg-white border-2 border-red-800/20 text-red-950 rounded-bl-sm shadow-inner'
+                          : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-slate-200')}
                   `}
                 >
                   {formatMessage(msg.content)}
                 </div>
               )}
-              <span className="text-[10px] text-slate-400 mt-1.5 px-2 font-medium">
+              <span className={`text-[10px] mt-1.5 px-2 font-bold uppercase tracking-wider ${rpgMode ? 'text-red-800/40 font-display-fantasy' : 'text-slate-400'}`}>
                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -402,41 +375,54 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-white px-5 py-4 rounded-[20px] rounded-bl-sm border border-slate-100 shadow-sm">
+            <div className={`px-5 py-4 rounded-[20px] rounded-bl-sm border shadow-sm transition-all duration-500 ${
+              rpgMode ? 'bg-white border-red-800/20' : 'bg-white border-slate-100'
+            }`}>
               <div className="flex space-x-1.5">
-                <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                <div className="w-1.5 h-1.5 bg-slate-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                <div className={`w-1.5 h-1.5 rounded-full animate-bounce ${rpgMode ? 'bg-red-800' : 'bg-slate-300'}`} style={{ animationDelay: '0ms' }}></div>
+                <div className={`w-1.5 h-1.5 rounded-full animate-bounce ${rpgMode ? 'bg-red-800' : 'bg-slate-300'}`} style={{ animationDelay: '150ms' }}></div>
+                <div className={`w-1.5 h-1.5 rounded-full animate-bounce ${rpgMode ? 'bg-red-800' : 'bg-slate-300'}`} style={{ animationDelay: '300ms' }}></div>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Input Area - Only show if not Read Only */}
+      {/* Input Area */}
       {!readOnly && (
-        <div className="absolute bottom-0 w-full p-4 safe-area-bottom z-20 bg-gradient-to-t from-white via-white/95 to-transparent">
-          <div className="relative flex items-center bg-white rounded-[24px] border border-slate-200 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all focus-within:shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] focus-within:border-indigo-200">
+        <div className={`absolute bottom-0 w-full p-4 safe-area-bottom z-20 transition-all duration-500 ${
+          rpgMode ? 'bg-gradient-to-t from-[#fdf6e3] via-[#fdf6e3]/95 to-transparent' : 'bg-gradient-to-t from-white via-white/95 to-transparent'
+        }`}>
+          <div className={`relative flex items-center rounded-[24px] border shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all ${
+            rpgMode 
+              ? 'bg-white border-red-800/30 focus-within:border-red-800' 
+              : 'bg-white border-slate-200 focus-within:shadow-[0_4px_20px_-4px_rgba(99,102,241,0.15)] focus-within:border-indigo-200'
+          }`}>
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={
-                decisionStep === 1 ? "Добавить плюс..." : 
-                decisionStep === 2 ? "Добавить минус..." : 
-                decisionStep === 4 ? "Добавить плюс/минус или уточнить..." : 
-                "Напишите сообщение..."
+                decisionStep === 1 ? (rpgMode ? "Записать в Светлое..." : "Добавить плюс...") : 
+                decisionStep === 2 ? (rpgMode ? "Записать в Темное..." : "Добавить минус...") : 
+                "Ваш голос..."
               }
-              className="flex-1 bg-transparent text-slate-800 text-[15px] px-6 py-4 focus:outline-none placeholder:text-slate-400"
+              className={`flex-1 bg-transparent text-[15px] px-6 py-4 focus:outline-none placeholder:text-slate-400 ${
+                rpgMode ? 'text-red-950' : 'text-slate-800'
+              }`}
               disabled={isLoading}
             />
             <button 
               onClick={handleSend}
               disabled={!input.trim() || isLoading}
-              className="p-3 mr-2 text-indigo-500 hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors rounded-full hover:bg-indigo-50"
+              className={`p-3 mr-2 disabled:opacity-30 disabled:cursor-not-allowed transition-all rounded-full ${
+                rpgMode 
+                  ? 'text-red-800 hover:bg-red-100' 
+                  : 'text-indigo-500 hover:text-indigo-600 hover:bg-indigo-50'
+              }`}
             >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : (rpgMode ? <Sparkles size={20} /> : <Send size={20} />)}
             </button>
           </div>
         </div>

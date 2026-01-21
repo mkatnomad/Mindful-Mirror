@@ -1,66 +1,105 @@
-// src/services/geminiService.ts
 
-// Получаем ключ из переменных окружения
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
+import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
+import { Message, DecisionData, Archetype } from '../types';
 
-// ID модели в OpenRouter. Сейчас стоит бесплатная Gemini.
-// Если захочешь GPT-4, просто поменяй эту строчку на "openai/gpt-4o"
-const MODEL_ID = "deepseek/deepseek-r1-0528:free"; 
+const SYSTEM_INSTRUCTION_RPG_QUEST = `
+Ты — Мастер Игры в мире психологического фэнтези. 
+Твой игрок — архетип [ИМЯ_АРХЕТИПА]. 
+Создай короткую, яркую игровую ситуацию (1-2 предложения), требующую морального выбора. 
+Избегай запутанных слов, пиши понятно, но атмосферно.
+Предложи 2 варианта действий (А и Б). 
+Формат ответа строго: СЦЕНАРИЙ|||ВАРИАНТ_А|||ВАРИАНТ_Б
+Язык: Русский.
+`;
 
-export const sendMessageToGemini = async (
-  message: string,
-  history: { role: string; content: string }[] = []
-): Promise<string> => {
+const SYSTEM_INSTRUCTION_RPG_CHOICE = `
+Ты — Мастер Игры. Игрок сделал выбор.
+Опиши краткое последствия этого шага (1 предложение). 
+Придумай название полученного ментального артефакта (1-2 слова, например "Осколок Истины"). 
+Формат ответа строго: ПОСЛЕДСТВИЕ|||АРТЕФАКТ
+Язык: Русский.
+`;
+
+export const generateRPGQuest = async (archetype: Archetype): Promise<{ scene: string; optA: string; optB: string }> => {
   try {
-    if (!API_KEY) {
-      console.error("API Key is missing!");
-      return "Ошибка: Не найден API ключ.";
-    }
-
-    // --- ВАЖНО: Мы используем fetch, а НЕ GoogleGenerativeAI ---
-    
-    const messages = [
-      {
-        role: "system",
-        content: `Ты — эмпатичный ИИ-психолог в приложении "Mindful Mirror". Отвечай кратко и тепло.`
-      },
-      ...history.map(msg => ({
-        role: msg.role === 'user' ? 'user' : 'assistant',
-        content: msg.content
-      })),
-      { role: "user", content: message }
-    ];
-
-    // Отправляем запрос на OpenRouter
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "https://mindful-mirror.app", 
-        "X-Title": "Mindful Mirror"
-      },
-      body: JSON.stringify({
-        model: MODEL_ID,
-        messages: messages,
-        temperature: 0.7, 
-        max_tokens: 1000, 
-      })
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Архетип игрока: ${archetype.name}. Описание: ${archetype.description}`,
+      config: { systemInstruction: SYSTEM_INSTRUCTION_RPG_QUEST }
     });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("OpenRouter Error Details:", errorData);
-      throw new Error(`Ошибка OpenRouter: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const reply = data.choices[0]?.message?.content || "Ошибка: пустой ответ от нейросети.";
-    
-    return reply;
-
+    const parts = (response.text || "").split('|||');
+    return { 
+      scene: parts[0]?.trim() || "Перед вами развилка в тумане осознанности.", 
+      optA: parts[1]?.trim() || "Шагнуть в неизвестность", 
+      optB: parts[2]?.trim() || "Оглядеться в поисках знаков" 
+    };
   } catch (error) {
-    console.error("GLOBAL AI ERROR:", error);
-    return "Не удалось связаться с OpenRouter. Проверьте консоль.";
+    console.error("RPG Quest Error:", error);
+    return { scene: "Мастер временно недоступен. Путь окутан туманом.", optA: "Ждать", optB: "Вернуться позже" };
   }
+};
+
+export const processRPGChoice = async (archetype: Archetype, choice: string): Promise<{ outcome: string; artifact: string }> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Архетип: ${archetype.name}. Выбор: ${choice}`,
+      config: { systemInstruction: SYSTEM_INSTRUCTION_RPG_CHOICE }
+    });
+    const parts = (response.text || "").split('|||');
+    return { 
+      outcome: parts[0]?.trim() || "Ваш выбор укрепил вашу внутреннюю опору.", 
+      artifact: parts[1]?.trim() || "Свет Сознания" 
+    };
+  } catch (error) {
+    console.error("RPG Choice Error:", error);
+    return { outcome: "Ваш опыт стал ценнее.", artifact: "Мудрость" };
+  }
+};
+
+export const sendMessageToGemini = async (history: Message[], newMessage: string, mode: 'EMOTIONS' | 'REFLECTION'): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const modelId = 'gemini-3-flash-preview';
+  const systemInstruction = mode === 'EMOTIONS' ? "Ты эмпатичный психолог-собеседник. Поддерживай пользователя." : "Ты помощник в глубокой рефлексии. Задавай наводящие вопросы.";
+  const chat = ai.chats.create({ model: modelId, config: { systemInstruction } });
+  const result = await chat.sendMessage({ message: newMessage });
+  return result.text || "...";
+};
+
+export const analyzeDecision = async (data: DecisionData): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const prompt = `Проанализируй решение: ${data.topic}. Плюсы: ${data.pros.join(', ')}. Минусы: ${data.cons.join(', ')}. Дай совет в 3-4 предложениях.`;
+  const result = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: prompt });
+  return result.text || "...";
+};
+
+export const refineDecision = async (currentData: DecisionData, userInput: string): Promise<{ text: string; data: DecisionData }> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const result = await ai.models.generateContent({
+    model: 'gemini-3-pro-preview',
+    contents: `Обнови список аргументов. Ввод пользователя: ${userInput}. Данные: ${JSON.stringify(currentData)}`,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          updatedData: {
+            type: Type.OBJECT,
+            properties: {
+              topic: { type: Type.STRING },
+              pros: { type: Type.ARRAY, items: { type: Type.STRING } },
+              cons: { type: Type.ARRAY, items: { type: Type.STRING } },
+            },
+            required: ['topic', 'pros', 'cons']
+          },
+          analysis: { type: Type.STRING }
+        },
+        required: ['updatedData', 'analysis']
+      }
+    }
+  });
+  const response = JSON.parse(result.text || "{}");
+  return { text: response.analysis, data: response.updatedData };
 };

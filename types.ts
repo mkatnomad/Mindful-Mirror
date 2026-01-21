@@ -1,6 +1,19 @@
-export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'DAILY_GUIDE' | 'ARCHETYPE_RESULT' | 'TUTORIAL' | 'ARCHETYPE_RESULT_VIEW';
+
+export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'ARCHETYPE_TEST' | 'ARCHETYPE_RESULT' | 'ARCHETYPE_GLOSSARY';
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
+
+export interface Archetype {
+  id: string;
+  name: string;
+  role: string;
+  description: string;
+  motto: string;
+  strength: string;
+  weakness: string;
+  quote: string;
+  meaning: string;
+}
 
 export interface Message {
   id: string;
@@ -20,30 +33,24 @@ export interface DecisionData {
 export interface ChatSession {
   id: string;
   mode: JournalMode;
-  date: number;
-  duration: number;
-  preview: string;
+  date: number; // timestamp
+  duration: number; // seconds
+  preview: string; // short text preview
   messages: Message[];
 }
 
 export interface UserProfile {
   name: string;
-  email?: string;
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
-  theme?: 'LIGHT' | 'SPACE';
-  onboardingCompleted?: boolean;
-  
-  // Поля теста
-  archetype?: string; 
-  focus?: string;
-  struggle?: string;
-  chronotype?: string;
-  aiTone?: string;
-  
-  // Настроение
-  currentMood?: 'high' | 'flow' | 'ok' | 'low';
+  archetype?: Archetype | null;
+  xp: number;
+  lastQuestDate: number | null;
+  artifacts: string[];
+  totalSessions: number;
+  totalMinutes: number;
+  rpgMode: boolean;
 }
 
 export interface SiteConfig {
@@ -63,13 +70,4 @@ export interface JournalEntry {
   date: number;
   type: JournalEntryType;
   content: string;
-}
-
-export interface DailyInsightData {
-  date: string;
-  generatedForMood?: string;
-  mindset: string;
-  action: string;
-  health: string;
-  insight: string;
 }
