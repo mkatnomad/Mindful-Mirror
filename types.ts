@@ -45,6 +45,7 @@ export interface UserProfile {
   isSetup: boolean;
   isRegistered: boolean;
   archetype?: Archetype | null;
+  secondaryArchetypes?: { name: string; percent: number }[];
   xp: number;
   lastQuestDate: number | null;
   artifacts: string[];

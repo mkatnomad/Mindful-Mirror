@@ -44,7 +44,7 @@ export const processRPGChoice = async (archetype: Archetype, choice: string): Pr
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash-lite',
       contents: `Архетип: ${archetype.name}. Выбор: ${choice}`,
       config: { systemInstruction: SYSTEM_INSTRUCTION_RPG_CHOICE }
     });
@@ -61,7 +61,7 @@ export const processRPGChoice = async (archetype: Archetype, choice: string): Pr
 
 export const sendMessageToGemini = async (history: Message[], newMessage: string, mode: 'EMOTIONS' | 'REFLECTION'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const modelId = 'gemini-3-flash-preview';
+  const modelId = 'gemini-2.5-flash-lite';
   const systemInstruction = mode === 'EMOTIONS' ? "Ты эмпатичный психолог-собеседник. Поддерживай пользователя." : "Ты помощник в глубокой рефлексии. Задавай наводящие вопросы.";
   const chat = ai.chats.create({ model: modelId, config: { systemInstruction } });
   const result = await chat.sendMessage({ message: newMessage });
@@ -71,14 +71,14 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
 export const analyzeDecision = async (data: DecisionData): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const prompt = `Проанализируй решение: ${data.topic}. Плюсы: ${data.pros.join(', ')}. Минусы: ${data.cons.join(', ')}. Дай совет в 3-4 предложениях.`;
-  const result = await ai.models.generateContent({ model: 'gemini-3-pro-preview', contents: prompt });
+  const result = await ai.models.generateContent({ model: 'gemini-2.5-flash-lite', contents: prompt });
   return result.text || "...";
 };
 
 export const refineDecision = async (currentData: DecisionData, userInput: string): Promise<{ text: string; data: DecisionData }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const result = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
+    model: 'gemini-2.5-flash-lite',
     contents: `Обнови список аргументов. Ввод пользователя: ${userInput}. Данные: ${JSON.stringify(currentData)}`,
     config: {
       responseMimeType: "application/json",
