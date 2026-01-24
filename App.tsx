@@ -498,6 +498,9 @@ const App: React.FC = () => {
         {currentView === 'RANKS_INFO' && (
            <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
              <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Ранги Древа</h1></header>
+             <p className={`text-sm leading-relaxed mb-8 ${userProfile.rpgMode ? 'text-red-900/80 italic' : 'text-slate-600'}`}>
+                Древо сознания — это живое отражение вашего пути самопознания. Получайте опыт (XP) за квесты, принятые решения, записи в дневнике и глубокие размышления, чтобы превратить скромное зерно в величественное Древо Мудрости. Каждый ранг открывает новую грань вашей осознанности.
+             </p>
              <div className="space-y-4">
                 {RANKS.map((r, i) => (
                   <div key={i} className={`p-6 rounded-[28px] border transition-all flex items-center space-x-6 ${userProfile.xp >= r.threshold ? (userProfile.rpgMode ? 'rpg-card' : 'bg-emerald-50/50 border-emerald-100 shadow-sm') : 'opacity-30 grayscale'}`}>
