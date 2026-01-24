@@ -5,7 +5,7 @@ const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 // Модель на OpenRouter (бесплатная и быстрая)
 const MODEL = 'deepseek/deepseek-r1-0528:free'; 
-// Или попробуй: 'deepseek/deepseek-r1:free'
+// Или попрбуй: 'deepseek/deepseek-r1:free'
 
 const SITE_URL = 'https://mindful-mirror.app'; // Для статистики OpenRouter
 const SITE_NAME = 'Mindful Mirror';
