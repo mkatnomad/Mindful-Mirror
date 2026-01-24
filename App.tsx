@@ -5,7 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -133,6 +133,7 @@ const App: React.FC = () => {
   const syncSubscription = useCallback(async (userId: number) => {
     try {
       const resp = await fetch(`/api/check-sub?userId=${userId}`);
+      if (!resp.ok) return;
       const data = await resp.json();
       if (data.isSubscribed) {
         setUserProfile(prev => ({ ...prev, isSubscribed: true }));
@@ -149,8 +150,12 @@ const App: React.FC = () => {
         const hist = await cloudStorage.getItem<ChatSession[]>('mm_history');
         const entries = await cloudStorage.getItem<JournalEntry[]>('mm_journal_entries');
 
-        if (profile) setUserProfile(profile);
-        else setUserProfile(prev => ({ ...prev, firstRunDate: Date.now() }));
+        if (profile) {
+            setUserProfile(profile);
+        } else {
+            const now = Date.now();
+            setUserProfile(prev => ({ ...prev, firstRunDate: now }));
+        }
 
         if (hist) setHistory(hist);
         if (entries) setJournalEntries(entries);
@@ -490,6 +495,21 @@ const App: React.FC = () => {
            <h3 className={`text-2xl font-bold mb-1 ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{userProfile.name || 'Странник'}</h3>
            {isSubscribed && <div className={`mt-4 inline-flex items-center space-x-2 px-4 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'bg-amber-100 border-amber-800 text-amber-900' : 'bg-indigo-50 border-indigo-200 text-indigo-600'}`}><Star size={12} fill="currentColor" /><span>Premium</span></div>}
         </div>
+
+        {!isSubscribed && (
+          <div className={`p-8 rounded-[32px] mb-8 shadow-sm border transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-indigo-600 text-white'}`} onClick={handlePay}>
+            <div className="flex items-center space-x-3 mb-3">
+              <CreditCard size={20} />
+              <p className="text-[10px] font-black uppercase tracking-widest">Активация Premium</p>
+            </div>
+            <h4 className="text-xl font-black mb-2 leading-tight">Откройте все ИИ-функции</h4>
+            <p className="text-xs opacity-80 mb-6">Получите бесконечные квесты, анализ решений и глубокую рефлексию без ограничений.</p>
+            <button className={`w-full py-3 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-indigo-600 shadow-lg active:scale-95'}`}>
+              {isPaying ? <Loader2 size={16} className="animate-spin" /> : <Star size={16} fill="currentColor" />}
+              <span>{isPaying ? 'Обработка...' : 'Подключить за 1 Star'}</span>
+            </button>
+          </div>
+        )}
 
         {userProfile.archetype && (
           <div className={`p-8 rounded-[32px] mb-8 shadow-sm border relative overflow-hidden group transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
