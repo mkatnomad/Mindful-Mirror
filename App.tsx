@@ -107,10 +107,10 @@ const RANKS = [
 ];
 
 const TRIAL_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
-const SUB_DURATION_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 const App: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isPaying, setIsPaying] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile>({ 
     name: '', avatarUrl: null, isSetup: true, isRegistered: false, archetype: null, xp: 0, 
     lastQuestDate: null, artifacts: [], totalSessions: 0, totalMinutes: 0, rpgMode: false,
@@ -128,6 +128,19 @@ const App: React.FC = () => {
   const [gameStatus, setGameStatus] = useState<'IDLE' | 'LOADING' | 'QUEST' | 'RESULT'>('IDLE');
   const [questData, setQuestData] = useState<{ scene: string; optA: string; optB: string } | null>(null);
   const [questOutcome, setQuestOutcome] = useState<{ outcome: string; artifact: string } | null>(null);
+
+  // Синхронизация статуса подписки с сервером
+  const syncSubscription = useCallback(async (userId: number) => {
+    try {
+      const resp = await fetch(`/api/check-sub?userId=${userId}`);
+      const data = await resp.json();
+      if (data.isSubscribed) {
+        setUserProfile(prev => ({ ...prev, isSubscribed: true }));
+      }
+    } catch (e) {
+      console.error("Sub check error", e);
+    }
+  }, []);
 
   useEffect(() => {
     const initData = async () => {
@@ -153,6 +166,8 @@ const App: React.FC = () => {
               name: prev.name || user.first_name, 
               avatarUrl: prev.avatarUrl || user.photo_url || null 
             }));
+            // Проверяем подписку при старте
+            await syncSubscription(user.id);
           }
         }
       } catch (err) {
@@ -162,7 +177,7 @@ const App: React.FC = () => {
       }
     };
     initData();
-  }, []);
+  }, [syncSubscription]);
 
   useEffect(() => {
     if (!isInitializing) cloudStorage.setItem('mm_profile', userProfile);
@@ -177,7 +192,7 @@ const App: React.FC = () => {
   }, [journalEntries, isInitializing]);
 
   const isTrialExpired = useCallback(() => {
-    if (userProfile.isSubscribed && userProfile.subscriptionExpiry && userProfile.subscriptionExpiry > Date.now()) return false;
+    if (userProfile.isSubscribed) return false;
     if (!userProfile.firstRunDate) return false;
     return (Date.now() - userProfile.firstRunDate) > TRIAL_DURATION_MS;
   }, [userProfile]);
@@ -186,10 +201,49 @@ const App: React.FC = () => {
     setJournalEntries(newEntries);
   };
 
-  const handlePay = () => {
-    const expiry = Date.now() + SUB_DURATION_MS;
-    setUserProfile(prev => ({ ...prev, isSubscribed: true, subscriptionExpiry: expiry }));
-    setCurrentView('HOME');
+  const handlePay = async () => {
+    if (isPaying) return;
+    
+    const tg = window.Telegram?.WebApp;
+    const userId = tg?.initDataUnsafe?.user?.id;
+
+    if (!userId) {
+      alert("Ошибка: Не удалось определить ID пользователя Telegram");
+      return;
+    }
+
+    setIsPaying(true);
+    try {
+      // 1. Создаем инвойс на нашем бэкенде
+      const response = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+
+      const data = await response.json();
+      
+      if (!data.ok || !data.result) {
+        throw new Error(data.description || "Ошибка создания счета");
+      }
+
+      // 2. Открываем нативное окно оплаты
+      tg.openInvoice(data.result, (status: string) => {
+        if (status === 'paid') {
+          setUserProfile(prev => ({ ...prev, isSubscribed: true }));
+          setCurrentView('HOME');
+          if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        } else if (status === 'cancelled') {
+           // Оплата отменена
+        } else {
+           alert("Проблема с оплатой: " + status);
+        }
+      });
+    } catch (e: any) {
+      alert("Ошибка: " + e.message);
+    } finally {
+      setIsPaying(false);
+    }
   };
 
   const currentRank = [...RANKS].reverse().find(r => userProfile.xp >= r.threshold) || RANKS[0];
@@ -424,7 +478,7 @@ const App: React.FC = () => {
   );
 
   const renderProfile = () => {
-    const isSubscribed = userProfile.isSubscribed && userProfile.subscriptionExpiry && userProfile.subscriptionExpiry > Date.now();
+    const isSubscribed = userProfile.isSubscribed;
     return (
       <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8FAFC]'}`}>
         <header className="mb-10 flex items-center justify-between"><h1 className={`text-3xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Профиль</h1></header>
@@ -526,8 +580,16 @@ const App: React.FC = () => {
               <div className="w-24 h-24 rounded-[32px] bg-indigo-600 text-white flex items-center justify-center mb-8 shadow-xl"><Lock size={48} /></div>
               <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter italic">Пробный период завершен</h2>
               <p className="mb-10 text-sm opacity-70">Ваше путешествие только начинается. Активируйте доступ для продолжения роста.</p>
-              <button onClick={handlePay} className="w-full py-5 rounded-[24px] font-bold text-lg bg-slate-900 text-white shadow-xl mb-4">Активировать (30 дней)</button>
+              <button 
+                onClick={handlePay} 
+                disabled={isPaying}
+                className={`w-full py-5 rounded-[24px] font-bold text-lg bg-slate-900 text-white shadow-xl mb-4 flex items-center justify-center space-x-3 transition-all ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95'}`}
+              >
+                {isPaying ? <Loader2 size={20} className="animate-spin" /> : <Star size={20} fill="currentColor" />}
+                <span>{isPaying ? 'Подготовка...' : 'Активировать Premium'}</span>
+              </button>
               <button onClick={() => setCurrentView('HOME')} className="text-slate-400 font-bold text-sm">Вернуться назад</button>
+              <p className="mt-8 text-[10px] text-slate-400 px-6 leading-relaxed">Нажимая кнопку, вы соглашаетесь с условиями обслуживания. Оплата производится в Telegram Stars (XTR).</p>
            </div>
         )}
       </main>
