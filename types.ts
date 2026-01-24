@@ -55,7 +55,12 @@ export interface UserProfile {
   // Subscription fields
   firstRunDate: number | null;
   isSubscribed: boolean;
-  subscriptionExpiry: number | null; // New: expiration timestamp
+  subscriptionExpiry: number | null;
+  // Limit tracking
+  lastUsageDate: string | null; // YYYY-MM-DD
+  dailyDecisionCount: number;
+  dailyEmotionsCount: number;
+  totalQuestsDone: number;
 }
 
 export interface SiteConfig {

@@ -1,17 +1,20 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon, Gift, RefreshCcw } from 'lucide-react';
 import { SiteConfig } from '../types';
 
 interface AdminInterfaceProps {
   config: SiteConfig;
   onSave: (newConfig: SiteConfig) => void;
   onBack: () => void;
+  onGift: (userId: string) => void;
+  onReset: () => void;
 }
 
-export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, onBack }) => {
+export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, onBack, onGift, onReset }) => {
   const [editedConfig, setEditedConfig] = useState<SiteConfig>({ ...config });
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'DESIGN' | 'ABOUT' | 'QUOTES' | 'SECURITY'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'GENERAL' | 'DESIGN' | 'ABOUT' | 'QUOTES' | 'SECURITY' | 'GIFT'>('GENERAL');
+  const [giftId, setGiftId] = useState('');
 
   const handleSave = () => {
     onSave(editedConfig);
@@ -87,7 +90,8 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
           { id: 'DESIGN', label: 'Брендинг' },
           { id: 'ABOUT', label: 'Контент' },
           { id: 'QUOTES', label: 'Цитаты' },
-          { id: 'SECURITY', label: 'Доступ' }
+          { id: 'SECURITY', label: 'Доступ' },
+          { id: 'GIFT', label: 'Дары' }
         ].map(tab => (
           <button 
             key={tab.id}
@@ -266,6 +270,39 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
                 />
               </div>
             </div>
+            <div className="pt-4 border-t border-slate-100">
+               <button 
+                onClick={onReset}
+                className="w-full py-4 rounded-2xl bg-rose-50 text-rose-600 text-sm font-bold flex items-center justify-center space-x-2 border border-rose-100"
+               >
+                 <RefreshCcw size={16} />
+                 <span>Сбросить текущий статус (тест)</span>
+               </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'GIFT' && (
+          <div className="space-y-6 animate-fade-in">
+            <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Вручить дар</h3>
+            <p className="text-xs text-slate-500 leading-relaxed">Здесь вы можете вручную активировать Premium статус для любого пользователя на 30 дней.</p>
+            <div>
+              <label className="block text-sm font-bold text-slate-700 mb-2">Telegram User ID</label>
+              <input 
+                type="text" 
+                value={giftId}
+                onChange={(e) => setGiftId(e.target.value)}
+                className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 font-mono"
+                placeholder="Напр: 379881747"
+              />
+            </div>
+            <button 
+              onClick={() => { onGift(giftId); setGiftId(''); }}
+              className="w-full py-5 rounded-[24px] bg-blue-600 text-white shadow-xl flex items-center justify-center space-x-3 active:scale-95 transition-all"
+            >
+              <Gift size={20} />
+              <span className="font-bold">Активировать статус</span>
+            </button>
           </div>
         )}
       </div>
