@@ -5,7 +5,12 @@ import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3 } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert } from 'lucide-react';
+
+// === НАСТРОЙКА АДМИНА ===
+// Замените этот ID на ваш реальный Telegram ID, чтобы видеть админ-панель
+const ADMIN_ID = 0; 
+// ========================
 
 declare global {
   interface Window {
@@ -131,6 +136,8 @@ const App: React.FC = () => {
   const [questData, setQuestData] = useState<{ scene: string; optA: string; optB: string } | null>(null);
   const [questOutcome, setQuestOutcome] = useState<{ outcome: string; artifact: string } | null>(null);
 
+  const getTelegramUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+
   const syncSubscription = useCallback(async (userId: number) => {
     try {
       const resp = await fetch(`/api/check-sub?userId=${userId}`);
@@ -187,7 +194,10 @@ const App: React.FC = () => {
             await syncSubscription(user.id);
           }
         }
-        await fetchStats();
+        // Статистику подгружаем только если мы админ
+        if (getTelegramUserId() === ADMIN_ID) {
+          await fetchStats();
+        }
       } catch (err) {
         console.error("Initialization error:", err);
       } finally {
@@ -222,7 +232,7 @@ const App: React.FC = () => {
   const handlePay = async () => {
     if (isPaying) return;
     const tg = window.Telegram?.WebApp;
-    const userId = tg?.initDataUnsafe?.user?.id;
+    const userId = getTelegramUserId();
     if (!userId) { alert("Ошибка: ID пользователя не найден"); return; }
 
     setIsPaying(true);
@@ -251,24 +261,24 @@ const App: React.FC = () => {
   };
 
   const handleResetSub = async () => {
-    const tg = window.Telegram?.WebApp;
-    const userId = tg?.initDataUnsafe?.user?.id;
+    const userId = getTelegramUserId();
     if (!userId) return;
 
-    if (!confirm("Вы уверены, что хотите сбросить статус подписки в базе данных? Это удалит запись в Redis.")) return;
+    if (!confirm("Вы уверены, что хотите сбросить Premium?")) return;
 
     setIsResetting(true);
     try {
       const resp = await fetch(`/api/reset-sub?userId=${userId}`);
-      if (resp.ok) {
+      const data = await resp.json();
+      if (resp.ok && data.success) {
         setUserProfile(prev => ({ ...prev, isSubscribed: false }));
-        alert("Статус успешно сброшен. Теперь вы можете протестировать покупку заново.");
+        alert("Статус успешно сброшен.");
         fetchStats();
       } else {
-        alert("Ошибка при сбросе.");
+        alert("Ошибка сервера при сбросе.");
       }
     } catch (e) {
-      alert("Ошибка соединения.");
+      alert("Ошибка соединения с API.");
     } finally {
       setIsResetting(false);
     }
@@ -342,73 +352,6 @@ const App: React.FC = () => {
     }));
     setGameStatus('IDLE');
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-  };
-
-  const renderArchetypeResult = () => {
-    if (!userProfile.archetype) return null;
-    const arc = userProfile.archetype;
-    return (
-      <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
-        <header className="mb-10 flex items-center justify-between">
-          <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800 hover:bg-red-800/10' : 'text-slate-400'}`}><ArrowLeft size={24} /></button>
-          <h1 className={`text-xl font-bold uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-red-900 font-display-fantasy' : 'text-slate-800'}`}>
-            {userProfile.rpgMode ? 'Свиток судьбы' : 'Ваш Архетип'}
-          </h1>
-        </header>
-
-        <div className="text-center mb-10">
-          <div className={`inline-block px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}>Путь: {arc.role}</div>
-          <h2 className={`text-5xl font-black italic uppercase tracking-tighter mb-4 ${userProfile.rpgMode ? 'text-red-900 font-display-fantasy' : 'text-slate-900'}`}>{arc.name}</h2>
-          <p className={`${userProfile.rpgMode ? 'text-red-700 font-bold' : 'text-indigo-400 font-bold'} italic text-sm`}>"{arc.motto}"</p>
-        </div>
-
-        <div className={`p-6 rounded-[32px] mb-8 italic text-center leading-relaxed border ${userProfile.rpgMode ? 'bg-white/50 border-red-800/20 text-red-950' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>"{arc.quote}"</div>
-
-        <div className="space-y-8">
-          <div className="grid grid-cols-2 gap-4">
-            <div className={`p-4 rounded-2xl border ${userProfile.rpgMode ? 'bg-white/60 border-red-800' : 'bg-emerald-50 border-emerald-100'}`}>
-              <span className={`text-[9px] font-bold uppercase tracking-widest block mb-1 ${userProfile.rpgMode ? 'text-red-800' : 'text-emerald-600'}`}>Сила</span>
-              <span className={`text-xs font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>{arc.strength}</span>
-            </div>
-            <div className={`p-4 rounded-2xl border ${userProfile.rpgMode ? 'bg-white/60 border-red-800' : 'bg-rose-50 border-rose-100'}`}>
-              <span className={`text-[9px] font-bold uppercase tracking-widest block mb-1 ${userProfile.rpgMode ? 'text-red-800' : 'text-rose-500'}`}>Тень</span>
-              <span className={`text-xs font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>{arc.weakness}</span>
-            </div>
-          </div>
-
-          <div>
-             <h4 className={`text-xs font-bold uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Суть архетипа</h4>
-             <p className={`text-sm leading-relaxed ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-600'}`}>{arc.description}</p>
-          </div>
-
-          <div>
-             <h4 className={`text-xs font-bold uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Высший смысл</h4>
-             <p className={`text-sm leading-relaxed italic ${userProfile.rpgMode ? 'text-red-900' : 'text-slate-500'}`}>{arc.meaning}</p>
-          </div>
-
-          {userProfile.secondaryArchetypes && (
-            <div>
-              <h4 className={`text-xs font-bold uppercase tracking-widest mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Резонанс духа</h4>
-              <div className="space-y-4">
-                {userProfile.secondaryArchetypes.map((sa, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-1">
-                      <span className={userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}>{sa.name}</span>
-                      <span className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}>{sa.percent}%</span>
-                    </div>
-                    <div className={`h-1 rounded-full ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-100'}`}>
-                      <div className={`h-full rounded-full ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-500'}`} style={{ width: `${sa.percent}%` }}></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <button onClick={() => setCurrentView('HOME')} className={`w-full mt-12 py-5 rounded-[24px] font-bold shadow-xl active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button font-display-fantasy' : 'bg-slate-900 text-white'}`}>Принять путь</button>
-      </div>
-    );
   };
 
   const renderHome = () => (
@@ -507,6 +450,8 @@ const App: React.FC = () => {
 
   const renderProfile = () => {
     const isSubscribed = userProfile.isSubscribed;
+    const isOwner = getTelegramUserId() === ADMIN_ID;
+
     return (
       <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8FAFC]'}`}>
         <header className="mb-10 flex items-center justify-between"><h1 className={`text-3xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Профиль</h1></header>
@@ -534,74 +479,59 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* Секция статистики */}
-        <div className={`p-8 rounded-[32px] mb-8 border transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white/40 backdrop-blur-md border-slate-100 shadow-sm'}`}>
-            <div className="flex items-center space-x-3 mb-6">
-                <BarChart3 size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'} />
-                <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Статистика системы</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-white/50 rounded-2xl border border-white/50">
-                    <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Всего душ</p>
-                    <p className={`text-xl font-black ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{appStats.total}</p>
-                </div>
-                <div className="p-4 bg-white/50 rounded-2xl border border-white/50">
-                    <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Избранные</p>
-                    <p className={`text-xl font-black ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{appStats.premium}</p>
-                </div>
-            </div>
-            <button onClick={fetchStats} className="w-full mt-4 flex items-center justify-center space-x-2 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-300 hover:text-slate-500 transition-colors">
-                <RefreshCcw size={12} />
-                <span>Обновить данные</span>
-            </button>
-        </div>
-
-        {userProfile.archetype && (
-          <div className={`p-8 rounded-[32px] mb-8 shadow-sm border relative overflow-hidden group transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
-             <div className="flex justify-between items-start mb-4">
-               <div>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>Ваш Архетип</p>
-                  <h4 className={`text-2xl font-black uppercase italic tracking-tighter ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{userProfile.archetype.name}</h4>
-               </div>
-               <button onClick={() => setCurrentView('ARCHETYPE_RESULT')} className={`p-2 rounded-xl ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-                  <Info size={18} />
-               </button>
-             </div>
-             
-             <div className="flex space-x-2 mb-6">
-                <span className={`px-3 py-1 rounded-full text-[9px] font-bold uppercase ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-100 text-slate-500'}`}>{userProfile.archetype.role}</span>
-             </div>
-
-             <div className={`p-4 rounded-2xl mb-6 text-xs italic border ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
-               "{userProfile.archetype.quote}"
-             </div>
-
-             <button onClick={(e) => { e.stopPropagation(); setTestQuestionIdx(0); setTestAnswers([]); setCurrentView('ARCHETYPE_TEST'); }} className={`w-full py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest border border-dashed transition-colors ${userProfile.rpgMode ? 'border-red-800/30 text-red-800 hover:bg-red-50' : 'border-slate-200 text-slate-400 hover:bg-slate-50'}`}>
-                Пройти тест заново
-             </button>
-          </div>
-        )}
-
         <div className="space-y-4">
            <button onClick={() => setUserProfile(p => ({...p, rpgMode: !p.rpgMode}))} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Star size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>RPG Режим</span></div><div className={`w-12 h-6 rounded-full transition-all relative ${userProfile.rpgMode ? 'bg-red-800' : 'bg-slate-200'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${userProfile.rpgMode ? 'left-7' : 'left-1'}`}></div></div></button>
            <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий архетипов</span></div><ChevronRight size={18} /></button>
         </div>
 
-        {/* Секретная функция для сброса подписки */}
-        <div className="mt-12 pt-8 border-t border-slate-100 opacity-50">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-4 text-center">Инструменты разработчика</p>
-            <button 
-                onClick={handleResetSub} 
-                disabled={isResetting}
-                className="w-full py-4 rounded-2xl border-2 border-red-100 text-red-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-3 active:bg-red-50"
-            >
-                {isResetting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
-                <span>Сбросить статус подписки</span>
-            </button>
-        </div>
+        {/* Ссылка на админку только для владельца */}
+        {isOwner && (
+          <div className="mt-8 pt-8 border-t border-slate-100">
+             <button onClick={() => setCurrentView('ADMIN')} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card border-amber-500' : 'bg-amber-50 border-amber-100 text-amber-900'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-amber-600 text-white shadow-lg' : 'bg-amber-200 text-amber-700'}`}><ShieldAlert size={20} /></div><span className="font-bold">Админ-панель</span></div><ChevronRight size={18} /></button>
+          </div>
+        )}
       </div>
     );
   };
+
+  const renderAdmin = () => (
+    <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
+      <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Система</h1></header>
+
+      {/* Карточка статистики */}
+      <div className={`p-8 rounded-[32px] mb-8 border transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-slate-50 border-slate-100 shadow-sm'}`}>
+          <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                  <BarChart3 size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'} />
+                  <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Статистика Redis</p>
+              </div>
+              <button onClick={fetchStats} className="p-2 bg-white rounded-lg shadow-sm active:scale-90 transition-all text-indigo-500"><RefreshCcw size={14} /></button>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-white rounded-2xl border border-slate-100">
+                  <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Всего душ</p>
+                  <p className={`text-xl font-black ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{appStats.total}</p>
+              </div>
+              <div className="p-4 bg-white rounded-2xl border border-slate-100">
+                  <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Избранные</p>
+                  <p className={`text-xl font-black ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{appStats.premium}</p>
+              </div>
+          </div>
+      </div>
+
+      <div className="space-y-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 px-4">Действия</p>
+          <button 
+              onClick={handleResetSub} 
+              disabled={isResetting}
+              className="w-full p-6 rounded-[28px] border-2 border-red-100 text-red-500 bg-red-50/30 flex items-center justify-between active:bg-red-50 transition-all"
+          >
+              <div className="flex items-center space-x-4"><RefreshCcw size={20} className={isResetting ? 'animate-spin' : ''} /><span className="font-bold">Сбросить свой Premium</span></div>
+          </button>
+          <p className="text-[10px] text-slate-400 p-4 leading-relaxed italic">Сброс удаляет ваш ID из ключа user_sub и сета premium_users в Redis. Позволяет повторно протестировать цикл оплаты.</p>
+      </div>
+    </div>
+  );
 
   if (isInitializing) return <div className="h-screen w-full flex items-center justify-center bg-slate-50"><Loader2 className="text-indigo-500 animate-spin" size={48} /></div>;
 
@@ -617,7 +547,13 @@ const App: React.FC = () => {
              <div className="flex-1 flex flex-col justify-center"><h2 className={`text-3xl font-black mb-12 italic ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2><div className="space-y-3">{QUESTIONS[testQuestionIdx].options.map((opt, idx) => (<button key={idx} onClick={() => handleTestAnswer(idx)} className={`w-full text-left p-6 rounded-[28px] border-2 transition-all ${localSelectedIdx === idx ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white') : (userProfile.rpgMode ? 'bg-white/60 border-red-800/20' : 'bg-white border-slate-50')}`}><span className="text-lg font-bold">{opt}</span></button>))}</div></div>
            </div>
         )}
-        {currentView === 'ARCHETYPE_RESULT' && renderArchetypeResult()}
+        {currentView === 'ARCHETYPE_RESULT' && (
+          <div className="h-full p-8 overflow-y-auto animate-fade-in pb-32">
+            <header className="mb-10 flex items-center justify-between"><button onClick={() => setCurrentView('HOME')} className="p-2 -ml-2 text-slate-400 rounded-full"><ArrowLeft size={24} /></button><h1 className="text-xl font-bold uppercase tracking-tighter italic">Ваш Архетип</h1></header>
+            <div className="text-center mb-10"><h2 className="text-5xl font-black italic uppercase tracking-tighter mb-4">{userProfile.archetype?.name}</h2></div>
+            <button onClick={() => setCurrentView('HOME')} className="w-full mt-12 py-5 rounded-[24px] bg-slate-900 text-white font-bold shadow-xl">Принять путь</button>
+          </div>
+        )}
         {currentView === 'ARCHETYPE_GLOSSARY' && (
            <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
              <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>Глоссарий</h1></header>
@@ -625,21 +561,15 @@ const App: React.FC = () => {
            </div>
         )}
         {currentView === 'PROFILE' && renderProfile()}
+        {currentView === 'ADMIN' && renderAdmin()}
         {currentView === 'RANKS_INFO' && (
            <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
              <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Ранги Древа</h1></header>
-             <p className={`text-sm leading-relaxed mb-8 ${userProfile.rpgMode ? 'text-red-900/80 italic' : 'text-slate-600'}`}>
-                Древо сознания — это живое отражение вашего пути самопознания. Получайте опыт (XP) за квесты, принятые решения, записи в дневнике и глубокие размышления, чтобы превратить скромное зерно в величественное Древо Мудрости. Каждый ранг открывает новую грань вашей осознанности.
-             </p>
              <div className="space-y-4">
                 {RANKS.map((r, i) => (
                   <div key={i} className={`p-6 rounded-[28px] border transition-all flex items-center space-x-6 ${userProfile.xp >= r.threshold ? (userProfile.rpgMode ? 'rpg-card' : 'bg-emerald-50/50 border-emerald-100 shadow-sm') : 'opacity-30 grayscale'}`}>
                      <TreeIcon stage={i} size={48} />
-                     <div className="flex-1">
-                        <h4 className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{r.title}</h4>
-                        <p className={`text-xs ${userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}`}>{r.desc}</p>
-                        <span className={`text-[10px] uppercase font-bold mt-2 block ${userProfile.rpgMode ? 'text-red-800' : 'text-emerald-600'}`}>{r.threshold} XP</span>
-                     </div>
+                     <div className="flex-1"><h4 className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{r.title}</h4><p className={`text-xs ${userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}`}>{r.desc}</p></div>
                   </div>
                 ))}
              </div>
@@ -657,21 +587,12 @@ const App: React.FC = () => {
            <div className={`h-full flex flex-col items-center justify-center p-8 text-center animate-fade-in ${userProfile.rpgMode ? 'bg-parchment' : 'bg-white'}`}>
               <div className="w-24 h-24 rounded-[32px] bg-indigo-600 text-white flex items-center justify-center mb-8 shadow-xl"><Lock size={48} /></div>
               <h2 className="text-3xl font-black mb-4 uppercase tracking-tighter italic">Пробный период завершен</h2>
-              <p className="mb-10 text-sm opacity-70">Ваше путешествие только начинается. Активируйте доступ для продолжения роста.</p>
-              <button 
-                onClick={handlePay} 
-                disabled={isPaying}
-                className={`w-full py-5 rounded-[24px] font-bold text-lg bg-slate-900 text-white shadow-xl mb-4 flex items-center justify-center space-x-3 transition-all ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95'}`}
-              >
-                {isPaying ? <Loader2 size={20} className="animate-spin" /> : <Star size={20} fill="currentColor" />}
-                <span>{isPaying ? 'Подготовка...' : 'Активировать Premium'}</span>
-              </button>
+              <button onClick={handlePay} disabled={isPaying} className={`w-full py-5 rounded-[24px] font-bold text-lg bg-slate-900 text-white shadow-xl mb-4 flex items-center justify-center space-x-3 transition-all ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95'}`}>{isPaying ? <Loader2 size={20} className="animate-spin" /> : <Star size={20} fill="currentColor" />}<span>{isPaying ? 'Подготовка...' : 'Активировать Premium'}</span></button>
               <button onClick={() => setCurrentView('HOME')} className="text-slate-400 font-bold text-sm">Вернуться назад</button>
-              <p className="mt-8 text-[10px] text-slate-400 px-6 leading-relaxed">Нажимая кнопку, вы соглашаетесь с условиями обслуживания. Оплата производится в Telegram Stars (XTR).</p>
            </div>
         )}
       </main>
-      {['HOME', 'PROFILE', 'HISTORY', 'RANKS_INFO'].includes(currentView) && <BottomNav rpgMode={userProfile.rpgMode} currentView={currentView} onChangeView={setCurrentView} />}
+      {['HOME', 'PROFILE', 'HISTORY', 'RANKS_INFO', 'ADMIN'].includes(currentView) && <BottomNav rpgMode={userProfile.rpgMode} currentView={currentView} onChangeView={setCurrentView} />}
     </div>
   );
 };

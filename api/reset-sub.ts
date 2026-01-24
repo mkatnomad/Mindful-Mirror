@@ -8,21 +8,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { userId } = req.query;
 
   if (!userId || !kvUrl || !kvToken) {
-    return res.status(400).json({ success: false });
+    return res.status(400).json({ success: false, error: "Missing parameters or KV config" });
   }
 
   try {
-    // Удаляем флаг подписки
-    await fetch(`${kvUrl}/del/user_sub_${userId}`, {
+    // 1. Удаляем основной ключ подписки
+    const delSub = await fetch(`${kvUrl}/del/user_sub_${userId}`, {
       headers: { Authorization: `Bearer ${kvToken}` }
     });
-    // Удаляем из списка премиум (опционально)
-    await fetch(`${kvUrl}/srem/premium_users/${userId}`, {
+    
+    // 2. Удаляем из списка премиум-пользователей
+    const delPrem = await fetch(`${kvUrl}/srem/premium_users/${userId}`, {
       headers: { Authorization: `Bearer ${kvToken}` }
     });
 
-    return res.status(200).json({ success: true });
-  } catch (e) {
-    return res.status(500).json({ success: false });
+    if (delSub.ok && delPrem.ok) {
+      return res.status(200).json({ success: true });
+    } else {
+      const errorText = await delSub.text();
+      return res.status(500).json({ success: false, error: errorText });
+    }
+  } catch (e: any) {
+    return res.status(500).json({ success: false, error: e.message });
   }
 }
