@@ -9,7 +9,7 @@ import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Co
 
 // === НАСТРОЙКА АДМИНА ===
 // Замените этот ID на ваш реальный Telegram ID, чтобы видеть админ-панель
-const ADMIN_ID = 0; 
+const ADMIN_ID = 379881747; 
 // ========================
 
 declare global {
