@@ -1,109 +1,116 @@
 import { Message, DecisionData } from '../types';
 
-// Получаем ключ правильным способом для Vite/Vercel
+// Получаем ключ (Убедись, что в Vercel это ключ от OpenRouter: sk-or-v1...)
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const MODEL = 'gemini-1.5-flash'; // Используем самую стабильную модель
 
-// Вспомогательная функция для запросов (чтобы не дублировать код)
-const callGemini = async (prompt: string, systemInstruction?: string) => {
+// Модель на OpenRouter (бесплатная и быстрая)
+const MODEL = 'deepseek/deepseek-r1-0528:free'; 
+// Или попробуй: 'deepseek/deepseek-r1:free'
+
+const SITE_URL = 'https://mindful-mirror.app'; // Для статистики OpenRouter
+const SITE_NAME = 'Mindful Mirror';
+
+// Универсальная функция запроса к OpenRouter
+const callOpenRouter = async (messages: any[], temperature = 0.7) => {
   if (!API_KEY) {
     console.error("API Key is missing!");
-    return "Ошибка: Нет API ключа.";
+    return "Ошибка: Нет API ключа. Проверьте настройки Vercel.";
   }
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          systemInstruction: systemInstruction ? { parts: [{ text: systemInstruction }] } : undefined,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 1000,
-          }
-        })
-      }
-    );
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${API_KEY}`,
+        "Content-Type": "application/json",
+        "HTTP-Referer": SITE_URL,
+        "X-Title": SITE_NAME,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages: messages,
+        temperature: temperature,
+        max_tokens: 2000,
+      })
+    });
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error("Gemini API Error:", errorData);
-      return "ИИ временно недоступен. Попробуйте позже.";
+      console.error("OpenRouter API Error:", errorData);
+      return `Ошибка OpenRouter: ${response.status}`;
     }
 
     const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    return data.choices?.[0]?.message?.content || "";
+
   } catch (error) {
     console.error("Network Error:", error);
-    return "Ошибка сети.";
+    return "Ошибка сети. Проверьте интернет.";
   }
+};
+
+// --- ЧАТ И СОВЕТЫ ---
+
+export const sendMessageToGemini = async (message: string, history: any[] = []): Promise<string> => {
+  const messages = [
+    {
+      role: "system",
+      content: "Ты — эмпатичный ИИ-ментор и психолог в приложении Mindful Mirror. Твоя цель — поддерживать, направлять и помогать пользователю разобраться в себе. Отвечай тепло, мудро и кратко (если не просят длинного ответа)."
+    },
+    ...history.map(msg => ({
+      role: msg.role === 'user' ? 'user' : 'assistant',
+      content: msg.content
+    })),
+    { role: "user", content: message }
+  ];
+
+  return await callOpenRouter(messages);
+};
+
+export const analyzeDecision = async (data: DecisionData): Promise<string> => {
+  const prompt = `Проанализируй решение: "${data.topic}".\nПлюсы: ${data.pros.join(', ')}.\nМинусы: ${data.cons.join(', ')}.\nДай взвешенный совет и перспективу.`;
+  return await callOpenRouter([{ role: "user", content: prompt }]);
+};
+
+export const refineDecision = async (currentData: DecisionData, userInput: string): Promise<{ text: string; data: DecisionData }> => {
+  // Для простоты пока возвращаем только текстовый анализ, 
+  // так как JSON-режим в бесплатных моделях OpenRouter может работать нестабильно.
+  const prompt = `У нас есть решение: "${currentData.topic}".\nПлюсы: ${currentData.pros.join(', ')}.\nМинусы: ${currentData.cons.join(', ')}.\n\nПользователь говорит: "${userInput}".\n\nОбнови анализ ситуации с учетом этого.`;
+  const text = await callOpenRouter([{ role: "user", content: prompt }]);
+  
+  return { text, data: currentData };
 };
 
 // --- RPG КВЕСТЫ (ПУТЬ ГЕРОЯ) ---
 
-const SYSTEM_INSTRUCTION_RPG_QUEST = `
-Ты — Мастер Игры в мире психологического фэнтези. 
-Твоя задача — создать короткую ситуацию выбора для игрока.
-Формат ответа строго: СЦЕНАРИЙ|||ВАРИАНТ_А|||ВАРИАНТ_Б
-Сценарий должен быть коротким (1-2 предложения), атмосферным.
-Варианты должны быть краткими действиями.
-Язык: Русский.
-`;
-
-const SYSTEM_INSTRUCTION_RPG_CHOICE = `
-Ты — Мастер Игры. Игрок сделал выбор.
-Опиши кратко (1 предложение) позитивное психологическое последствие этого выбора.
-Придумай название полученного ментального артефакта (1-2 слова, красиво).
-Формат ответа строго: ПОСЛЕДСТВИЕ|||АРТЕФАКТ
-Язык: Русский.
-`;
-
 export const generateRPGQuest = async (archetype: string): Promise<{ scene: string; optA: string; optB: string }> => {
-  const prompt = `Игрок: архетип ${archetype}. Создай ситуацию выбора.`;
-  const text = await callGemini(prompt, SYSTEM_INSTRUCTION_RPG_QUEST);
+  const prompt = `
+    Ты — Мастер Игры. Игрок — архетип "${archetype}".
+    Создай короткую ситуацию выбора (фэнтези/психология).
+    Формат ответа строго: СЦЕНАРИЙ|||ВАРИАНТ_А|||ВАРИАНТ_Б
+    Сценарий: 1-2 предложения. Варианты: краткие действия.
+  `;
+  const text = await callOpenRouter([{ role: "user", content: prompt }], 0.9);
   
   const parts = text.split('|||');
   return { 
-    scene: parts[0]?.trim() || "Туман рассеивается, и вы видите развилку.", 
-    optA: parts[1]?.trim() || "Пойти налево", 
-    optB: parts[2]?.trim() || "Пойти направо" 
+    scene: parts[0]?.trim() || "Вы стоите на перепутье. Туман сгущается.", 
+    optA: parts[1]?.trim() || "Идти вперед", 
+    optB: parts[2]?.trim() || "Ждать знака" 
   };
 };
 
 export const processRPGChoice = async (archetype: string, choice: string): Promise<{ outcome: string; artifact: string }> => {
-  const prompt = `Игрок (${archetype}) выбрал: ${choice}. Опиши результат и награду.`;
-  const text = await callGemini(prompt, SYSTEM_INSTRUCTION_RPG_CHOICE);
+  const prompt = `
+    Игрок (${archetype}) выбрал: "${choice}".
+    Опиши позитивное последствие (1 предложение) и выдай ментальный артефакт (название).
+    Формат ответа строго: ПОСЛЕДСТВИЕ|||АРТЕФАКТ
+  `;
+  const text = await callOpenRouter([{ role: "user", content: prompt }], 0.9);
   
   const parts = text.split('|||');
   return { 
-    outcome: parts[0]?.trim() || "Вы чувствуете прилив сил.", 
+    outcome: parts[0]?.trim() || "Вы почувствовали прилив сил.", 
     artifact: parts[1]?.trim() || "Осколок Света" 
   };
-};
-
-// --- ОБЫЧНЫЙ ЧАТ И СОВЕТЫ ---
-
-export const sendMessageToGemini = async (message: string, history: any[] = []): Promise<string> => {
-  // Для простоты в этом примере отправляем только последнее сообщение + контекст
-  // В полноценной версии можно собирать всю историю в contents
-  const systemInstruction = "Ты — эмпатичный ИИ-ментор. Отвечай кратко, мудро и тепло.";
-  return await callGemini(message, systemInstruction);
-};
-
-export const analyzeDecision = async (data: DecisionData): Promise<string> => {
-  const prompt = `Проанализируй решение: ${data.topic}. Плюсы: ${data.pros.join(', ')}. Минусы: ${data.cons.join(', ')}. Дай совет.`;
-  return await callGemini(prompt);
-};
-
-export const refineDecision = async (currentData: DecisionData, userInput: string): Promise<{ text: string; data: DecisionData }> => {
-  // Упрощенная версия для стабильности
-  const prompt = `Пользователь уточнил: "${userInput}". Текущие плюсы: ${currentData.pros}. Текущие минусы: ${currentData.cons}. Как это меняет картину?`;
-  const text = await callGemini(prompt);
-  
-  // В "безопасной" версии мы просто возвращаем текст и старые данные, 
-  // чтобы не усложнять парсинг JSON, который часто ломается.
-  return { text: text, data: currentData };
 };
