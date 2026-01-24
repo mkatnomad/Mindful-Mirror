@@ -5,7 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Hash, Flame, Shield, Target } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Hash, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 
 // === НАСТРОЙКА АДМИНА ===
 const ADMIN_ID = 379881747; 
@@ -134,6 +134,9 @@ const App: React.FC = () => {
   const [gameStatus, setGameStatus] = useState<'IDLE' | 'LOADING' | 'QUEST' | 'RESULT'>('IDLE');
   const [questData, setQuestData] = useState<{ scene: string; optA: string; optB: string } | null>(null);
   const [questOutcome, setQuestOutcome] = useState<{ outcome: string; artifact: string } | null>(null);
+  
+  // Состояние развернутой карточки архетипа в профиле
+  const [arcExpanded, setArcExpanded] = useState(false);
 
   const getTelegramUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
@@ -382,7 +385,7 @@ const App: React.FC = () => {
       <div className="px-6 mb-12 relative z-20">
         <div className="grid grid-cols-3 gap-5">
           {[
-            { id: 'DECISION', label: 'Решение', icon: Zap, color: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500' },
+            { id: 'DECISION', label: 'Решение', icon: Zap, color: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-50 : text-indigo-500' },
             { id: 'EMOTIONS', label: 'Состояние', icon: Heart, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-500' },
             { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-500' }
           ].map(m => (
@@ -470,91 +473,107 @@ const App: React.FC = () => {
         
         {/* Аватар и Имя */}
         <div className="flex items-center space-x-6 mb-10">
-           <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-xl ${userProfile.rpgMode ? 'border-red-800' : 'border-white'}`}>
+           <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-sm ${userProfile.rpgMode ? 'border-red-800' : 'border-white'}`}>
               {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={40} className="m-6 text-slate-200" />}
            </div>
            <div>
               <h3 className={`text-2xl font-black leading-tight ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{userProfile.name || 'Странник'}</h3>
               <div className="flex items-center space-x-2 mt-2">
-                 {isSubscribed && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-amber-100 border-amber-800 text-amber-900' : 'bg-indigo-50 border-indigo-200 text-indigo-600'}`}><Star size={10} fill="currentColor" /><span>Premium</span></div>}
-                 <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-red-800 border-red-950 text-white' : 'bg-emerald-50 border-emerald-100 text-emerald-600'}`}>{currentRank.title}</div>
+                 {isSubscribed && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-amber-100 border-amber-800 text-amber-900' : 'bg-blue-50 border-blue-200 text-blue-600'}`}><Star size={10} fill="currentColor" /><span>Premium</span></div>}
+                 {arc && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-red-800 border-red-950 text-white' : 'bg-indigo-50 border-indigo-100 text-indigo-600'}`}>{arc.name}</div>}
               </div>
            </div>
         </div>
 
-        {/* Детальная карточка Архетипа (как в Основе) */}
+        {/* ПЕРЕРАБОТАННАЯ КАРТОЧКА АРХЕТИПА (СВОРАЧИВАЕМАЯ) */}
         {arc && (
-          <div className={`p-8 rounded-[40px] mb-10 border shadow-2xl relative overflow-hidden transition-all duration-700 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
-             <div className="absolute top-0 right-0 p-8 opacity-10"><Wand2 size={80} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /></div>
+          <div 
+            onClick={() => setArcExpanded(!arcExpanded)}
+            className={`p-6 rounded-[32px] mb-6 border shadow-sm relative overflow-hidden transition-all duration-300 cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}
+          >
+             <div className="absolute top-0 right-0 p-6 opacity-10 pointer-events-none"><Wand2 size={48} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /></div>
              
-             <div className="flex items-center space-x-3 mb-6">
-                <p className={`text-[10px] font-black uppercase tracking-[0.3em] ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>Суть души</p>
-                <div className={`h-[1px] flex-1 ${userProfile.rpgMode ? 'bg-red-800/20' : 'bg-indigo-100'}`}></div>
-             </div>
-
-             <h2 className={`text-4xl font-black italic uppercase tracking-tighter mb-2 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{arc.name}</h2>
-             <p className={`text-xs font-bold uppercase tracking-widest mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{arc.role}</p>
-
-             <div className={`p-5 rounded-3xl mb-8 italic text-sm leading-relaxed border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10 text-red-900' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
-                <Quote size={16} className="mb-2 opacity-30" />
-                "{arc.quote}"
-             </div>
-
-             <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className={`p-4 rounded-2xl border ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-emerald-50/30 border-emerald-50'}`}>
-                   <div className="flex items-center space-x-2 mb-2"><Flame size={14} className="text-emerald-500" /><span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Сила</span></div>
-                   <p className="text-[11px] font-bold text-slate-700 leading-tight">{arc.strength}</p>
+             <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                    <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>Суть души</p>
                 </div>
-                <div className={`p-4 rounded-2xl border ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-rose-50/30 border-rose-50'}`}>
-                   <div className="flex items-center space-x-2 mb-2"><Shield size={14} className="text-rose-400" /><span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Тень</span></div>
-                   <p className="text-[11px] font-bold text-slate-700 leading-tight">{arc.weakness}</p>
-                </div>
+                {arcExpanded ? <ChevronUp size={16} className="text-slate-300" /> : <ChevronDown size={16} className="text-slate-300" />}
              </div>
 
-             {userProfile.secondaryArchetypes && userProfile.secondaryArchetypes.length > 0 && (
-               <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-4">Резонанс духа</p>
-                  <div className="space-y-3">
-                    {userProfile.secondaryArchetypes.map((sa, i) => (
-                      <div key={i}>
-                        <div className="flex justify-between text-[10px] font-bold mb-1 uppercase tracking-wider text-slate-500">
-                          <span>{sa.name}</span>
-                          <span>{sa.percent}%</span>
-                        </div>
-                        <div className={`h-1 w-full rounded-full overflow-hidden ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}>
-                          <div className={`h-full rounded-full transition-all duration-1000 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-400'}`} style={{ width: `${sa.percent}%` }}></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+             <h2 className={`text-2xl font-black italic uppercase tracking-tighter mb-1 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{arc.name}</h2>
+             <p className={`text-[10px] font-bold uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{arc.role}</p>
+
+             <div className="text-[13px] leading-relaxed text-slate-600">
+                {arc.description}
+             </div>
+             
+             {!arcExpanded && (
+               <div className="mt-4 flex items-center space-x-2 text-[10px] font-bold text-indigo-400 uppercase tracking-widest animate-pulse">
+                  <Sparkles size={12} />
+                  <span>Нажмите, чтобы развернуть</span>
                </div>
              )}
+
+             {/* РАСКРЫВАЮЩАЯСЯ ЧАСТЬ */}
+             <div className={`overflow-hidden transition-all duration-500 ${arcExpanded ? 'max-h-[1000px] mt-6 opacity-100' : 'max-h-0 opacity-0'}`}>
+                 <div className={`p-4 rounded-2xl mb-6 italic text-xs leading-relaxed border ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10 text-red-900' : 'bg-slate-50 border-slate-100 text-slate-500'}`}>
+                    <Quote size={12} className="mb-2 opacity-30" />
+                    "{arc.quote}"
+                 </div>
+
+                 <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className={`p-3 rounded-xl border ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-emerald-50/30 border-emerald-50'}`}>
+                       <div className="flex items-center space-x-1.5 mb-1.5"><Flame size={12} className="text-emerald-500" /><span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Свет</span></div>
+                       <p className="text-[10px] font-bold text-slate-700 leading-tight">{arc.strength}</p>
+                    </div>
+                    <div className={`p-3 rounded-xl border ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-rose-50/30 border-rose-50'}`}>
+                       <div className="flex items-center space-x-1.5 mb-1.5"><Shield size={12} className="text-rose-400" /><span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Тень</span></div>
+                       <p className="text-[10px] font-bold text-slate-700 leading-tight">{arc.weakness}</p>
+                    </div>
+                 </div>
+
+                 <div className="space-y-4 mb-6">
+                    <div>
+                      <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mb-1">Высший смысл</p>
+                      <p className="text-[11px] text-slate-600 leading-relaxed italic">{arc.meaning}</p>
+                    </div>
+                 </div>
+
+                 <button 
+                    onClick={(e) => { e.stopPropagation(); setTestQuestionIdx(0); setTestAnswers([]); setCurrentView('ARCHETYPE_TEST'); }}
+                    className={`w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest flex items-center justify-center space-x-2 border-2 active:scale-95 transition-all ${userProfile.rpgMode ? 'bg-white border-red-800 text-red-800' : 'bg-slate-900 border-slate-900 text-white shadow-md'}`}
+                  >
+                    <RotateCcw size={12} />
+                    <span>Перепройти тест</span>
+                  </button>
+             </div>
           </div>
         )}
 
+        {/* ПАНЕЛЬ ПОДПИСКИ (СИНЯЯ, МЕНЕЕ ЛЕТАЮЩАЯ) */}
         {!isSubscribed && (
-          <div className={`p-8 rounded-[40px] mb-8 shadow-2xl border transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-slate-900 text-white border-slate-800'}`} onClick={handlePay}>
-            <div className="flex items-center space-x-3 mb-3">
-              <Star size={20} fill="currentColor" className="text-amber-400" />
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-400">Статус: Странник</p>
+          <div className={`p-6 rounded-[32px] mb-6 shadow-sm border transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-blue-600 text-white border-blue-700'}`} onClick={handlePay}>
+            <div className="flex items-center space-x-3 mb-2">
+              <Star size={18} fill="currentColor" className="text-amber-400" />
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-100">Статус: Странник</p>
             </div>
-            <h4 className="text-2xl font-black mb-2 leading-tight uppercase tracking-tighter italic">Открой все функции</h4>
-            <p className="text-xs opacity-60 mb-8 leading-relaxed">Бесконечные квесты, глубокий анализ решений и сохранение всех откровений вашей души.</p>
-            <button className={`w-full py-4 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-amber-400 text-slate-900 shadow-xl active:scale-95'}`}>
-              {isPaying ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} fill="currentColor" />}
-              <span>{isPaying ? 'Призываем Stars...' : 'Активировать за 1 Star'}</span>
+            <h4 className="text-xl font-black mb-1 leading-tight uppercase tracking-tighter italic">Открой все функции</h4>
+            <p className="text-[11px] opacity-80 mb-6 leading-relaxed text-blue-50">Квесты, анализ решений и сохранение летописей вашей души.</p>
+            <button className={`w-full py-3.5 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-blue-600 shadow-md active:scale-95'}`}>
+              {isPaying ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} fill="currentColor" />}
+              <span>{isPaying ? 'Вызов звёзд...' : 'Активировать за 1 Star'}</span>
             </button>
           </div>
         )}
 
         <div className="space-y-4">
-           <button onClick={() => setUserProfile(p => ({...p, rpgMode: !p.rpgMode}))} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Settings2 size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>RPG Режим</span></div><div className={`w-12 h-6 rounded-full transition-all relative ${userProfile.rpgMode ? 'bg-red-800' : 'bg-slate-200'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${userProfile.rpgMode ? 'left-7' : 'left-1'}`}></div></div></button>
-           <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий архетипов</span></div><ChevronRight size={18} /></button>
+           <button onClick={() => setUserProfile(p => ({...p, rpgMode: !p.rpgMode}))} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Settings2 size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>RPG Режим</span></div><div className={`w-12 h-6 rounded-full transition-all relative ${userProfile.rpgMode ? 'bg-red-800' : 'bg-slate-200'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${userProfile.rpgMode ? 'left-7' : 'left-1'}`}></div></div></button>
+           <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий</span></div><ChevronRight size={18} /></button>
         </div>
 
         {isOwner && (
           <div className="mt-8 pt-8 border-t border-slate-100">
-             <button onClick={() => setCurrentView('ADMIN')} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card border-amber-500' : 'bg-amber-50 border-amber-100 text-amber-900'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-amber-600 text-white shadow-lg' : 'bg-amber-200 text-amber-700'}`}><ShieldAlert size={20} /></div><span className="font-bold">Админ-панель</span></div><ChevronRight size={18} /></button>
+             <button onClick={() => setCurrentView('ADMIN')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card border-amber-500' : 'bg-amber-50 border-amber-100 text-amber-900'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-amber-600 text-white shadow-lg' : 'bg-amber-200 text-amber-700'}`}><ShieldAlert size={20} /></div><span className="font-bold">Админ-панель</span></div><ChevronRight size={18} /></button>
           </div>
         )}
       </div>
@@ -622,7 +641,7 @@ const App: React.FC = () => {
           <button 
               onClick={handleResetSub} 
               disabled={isResetting}
-              className="w-full p-6 rounded-[28px] border-2 border-red-100 text-red-500 bg-red-50/30 flex items-center justify-between active:bg-red-50 transition-all"
+              className="w-full p-6 rounded-[32px] border-2 border-red-100 text-red-500 bg-red-50/30 flex items-center justify-between active:bg-red-50 transition-all"
           >
               <div className="flex items-center space-x-4"><RefreshCcw size={20} className={isResetting ? 'animate-spin' : ''} /><span className="font-bold">Сбросить свой Premium</span></div>
           </button>
@@ -657,49 +676,56 @@ const App: React.FC = () => {
     const arc = userProfile.archetype;
     if (!arc) return null;
     return (
-      <div className={`h-full p-8 overflow-y-auto animate-fade-in pb-32 flex flex-col items-center transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-slate-900 text-white'}`}>
-        <div className={`w-full max-w-md p-10 rounded-[50px] border shadow-2xl text-center relative overflow-hidden mt-10 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white/5 border-white/10 backdrop-blur-3xl'}`}>
-           <div className="absolute -top-10 -left-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"></div>
-           <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
+      <div className={`h-screen w-full overflow-y-auto animate-fade-in transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-slate-50'}`}>
+        <div className="min-h-full flex flex-col items-center p-6 pb-20 justify-center">
+            <div className={`w-full max-w-md p-8 rounded-[40px] border shadow-xl text-center relative overflow-hidden transition-all duration-700 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}>
+               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Wand2 size={80} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /></div>
 
-           <div className="flex items-center justify-center space-x-3 mb-10 opacity-60">
-              <div className="h-[1px] w-8 bg-current"></div>
-              <p className="text-[10px] font-black uppercase tracking-[0.4em]">Свиток Судьбы</p>
-              <div className="h-[1px] w-8 bg-current"></div>
-           </div>
+               <div className="flex items-center justify-center space-x-3 mb-6 opacity-60">
+                  <div className="h-[1px] w-8 bg-slate-300"></div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Свиток Судьбы</p>
+                  <div className="h-[1px] w-8 bg-slate-300"></div>
+               </div>
 
-           <h2 className={`text-5xl font-black italic uppercase tracking-tighter mb-4 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-white'}`}>{arc.name}</h2>
-           <p className={`text-sm font-bold uppercase tracking-[0.2em] mb-12 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>{arc.role}</p>
+               <h2 className={`text-4xl font-black italic uppercase tracking-tighter mb-2 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{arc.name}</h2>
+               <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{arc.role}</p>
 
-           <div className="space-y-8 text-left">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-3">Ваша природа</p>
-                <p className={`text-sm leading-relaxed ${userProfile.rpgMode ? 'text-red-900' : 'text-slate-300'}`}>{arc.description}</p>
-              </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-3">Высший смысл</p>
-                <p className={`text-sm leading-relaxed ${userProfile.rpgMode ? 'text-red-900' : 'text-slate-300'}`}>{arc.meaning}</p>
-              </div>
-           </div>
+               <div className={`p-5 rounded-3xl mb-6 italic text-[13px] leading-relaxed border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10 text-red-900' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
+                  <Quote size={18} className="mb-2 opacity-30 mx-auto" />
+                  "{arc.quote}"
+               </div>
 
-           {userProfile.secondaryArchetypes && (
-             <div className="mt-12 pt-8 border-t border-current border-opacity-5">
-                <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-6 text-center">Резонанс духа</p>
-                <div className="space-y-4">
-                   {userProfile.secondaryArchetypes.map((sa, i) => (
-                     <div key={i} className="flex items-center space-x-4">
-                        <span className="text-[10px] font-bold uppercase min-w-[80px] text-left opacity-70">{sa.name}</span>
-                        <div className="flex-1 h-1.5 bg-black/5 rounded-full overflow-hidden">
-                           <div className="h-full bg-current opacity-60 rounded-full" style={{ width: `${sa.percent}%` }}></div>
-                        </div>
-                        <span className="text-[10px] font-black min-w-[30px]">{sa.percent}%</span>
-                     </div>
-                   ))}
-                </div>
-             </div>
-           )}
+               <div className="space-y-4 text-left mb-6">
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Ваша природа</p>
+                    <p className={`text-[13px] leading-relaxed font-medium ${userProfile.rpgMode ? 'text-red-900' : 'text-slate-600'}`}>{arc.description}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Высший смысл</p>
+                    <p className={`text-[13px] leading-relaxed font-medium ${userProfile.rpgMode ? 'text-red-900' : 'text-slate-600'}`}>{arc.meaning}</p>
+                  </div>
+               </div>
 
-           <button onClick={() => setCurrentView('HOME')} className={`w-full mt-14 py-5 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-slate-900'}`}>Принять путь</button>
+               <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className={`p-4 rounded-2xl border text-left ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-emerald-50/30 border-emerald-50'}`}>
+                     <div className="flex items-center space-x-2 mb-1.5"><Flame size={14} className="text-emerald-500" /><span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Свет</span></div>
+                     <p className="text-[11px] font-bold text-slate-700 leading-tight">{arc.strength}</p>
+                  </div>
+                  <div className={`p-4 rounded-2xl border text-left ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-rose-50/30 border-rose-50'}`}>
+                     <div className="flex items-center space-x-2 mb-1.5"><Shield size={14} className="text-rose-400" /><span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Тень</span></div>
+                     <p className="text-[11px] font-bold text-slate-700 leading-tight">{arc.weakness}</p>
+                  </div>
+               </div>
+
+               <div className="mt-8">
+                  <button 
+                    onClick={() => setCurrentView('HOME')} 
+                    className={`w-full py-4 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-md active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}
+                  >
+                    Принять путь
+                  </button>
+               </div>
+            </div>
         </div>
       </div>
     );
