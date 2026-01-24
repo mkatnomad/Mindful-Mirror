@@ -1,5 +1,5 @@
 
-export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'ARCHETYPE_TEST' | 'ARCHETYPE_RESULT' | 'ARCHETYPE_GLOSSARY';
+export type ViewState = 'ONBOARDING' | 'HOME' | 'CHAT' | 'HISTORY' | 'PROFILE' | 'SETTINGS' | 'ABOUT' | 'READ_HISTORY' | 'RANKS_INFO' | 'ADMIN' | 'ARCHETYPE_TEST' | 'ARCHETYPE_RESULT' | 'ARCHETYPE_GLOSSARY' | 'SUBSCRIPTION';
 
 export type JournalMode = 'DECISION' | 'EMOTIONS' | 'REFLECTION';
 
@@ -52,6 +52,9 @@ export interface UserProfile {
   totalSessions: number;
   totalMinutes: number;
   rpgMode: boolean;
+  // Subscription fields
+  firstRunDate: number | null;
+  isSubscribed: boolean;
 }
 
 export interface SiteConfig {
