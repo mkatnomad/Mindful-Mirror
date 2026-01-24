@@ -700,7 +700,7 @@ const App: React.FC = () => {
 
   const renderLimitReached = () => (
     <div className={`h-full overflow-y-auto flex flex-col items-center p-8 text-center animate-fade-in ${userProfile.rpgMode ? 'bg-parchment' : 'bg-white'}`}>
-       <div className="w-20 h-20 rounded-[32px] bg-blue-600 text-white flex items-center justify-center mb-8 shadow-xl animate-float mt-10">
+       <div className="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center mb-8 shadow-xl animate-float mt-10 shrink-0">
           <Lock size={28} />
        </div>
        <h2 className={`text-4xl font-black mb-6 uppercase tracking-tighter italic leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Граница достигнута</h2>
