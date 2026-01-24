@@ -252,7 +252,7 @@ const App: React.FC = () => {
         </header>
 
         <div className="text-center mb-10">
-          <div className={`inline-block px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'bg-red-800 text-white border border-red-950' : 'bg-indigo-50 text-indigo-600'}`}>
+          <div className={`inline-block px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'bg-red-800 text-white border border-red-950' : 'bg-indigo-600 text-white'}`}>
             Путь: {arc.role}
           </div>
           <h2 className={`text-5xl font-black italic uppercase tracking-tighter mb-4 ${userProfile.rpgMode ? 'text-red-900 font-display-fantasy' : 'text-slate-900'}`}>
@@ -333,9 +333,17 @@ const App: React.FC = () => {
 
       <div className="px-6 mb-12 relative z-20">
         <div className="grid grid-cols-3 gap-5">
-          {[{ id: 'DECISION', label: 'Решение', icon: Zap, color: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500' }, { id: 'EMOTIONS', label: 'Состояние', icon: Heart, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-500' }, { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-500' }].map(m => (
+          {[
+            { id: 'DECISION', label: 'Решение', icon: Zap, color: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500' },
+            { id: 'EMOTIONS', label: 'Состояние', icon: Heart, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-500' },
+            { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-500' }
+          ].map(m => (
             <button key={m.id} onClick={() => { setSelectedMode(m.id as any); setViewingHistorySession(null); setCurrentView('CHAT'); }} className="flex flex-col items-center space-y-3">
-              <div className={`w-full aspect-square rounded-[28px] shadow-sm border flex items-center justify-center active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><m.icon size={30} className={m.color} /></div>
+              <div className={`w-full aspect-square rounded-[28px] border flex items-center justify-center active:scale-95 transition-all duration-300 ${
+                userProfile.rpgMode 
+                  ? 'rpg-card' 
+                  : 'bg-white border-slate-100 shadow-[0_10px_30px_-5px_rgba(0,0,0,0.06)] shadow-indigo-100/10'
+              }`}><m.icon size={30} className={m.color} /></div>
               <span className={`text-[11px] font-bold uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-400'}`}>{m.label}</span>
             </button>
           ))}
@@ -343,7 +351,10 @@ const App: React.FC = () => {
       </div>
 
       <div className="px-6 mb-6">
-         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white/70 backdrop-blur-md border-white'}`}>
+         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all relative group ${userProfile.rpgMode ? 'rpg-card' : 'bg-white/70 backdrop-blur-md border-white'}`}>
+            <div className="absolute top-8 right-8 transition-transform group-active:translate-x-1">
+              <ChevronRight size={24} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} />
+            </div>
             <div className="flex items-center space-x-5 mb-10">
                <div className="w-16 h-16 rounded-3xl bg-[#F0FDFA] flex items-center justify-center"><TreeIcon stage={RANKS.indexOf(RANKS.find(r => r.title === currentRank.title) || RANKS[0])} size={52} /></div>
                <div><p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'}`}>Древо сознания</p><h4 className={`text-2xl font-bold ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4></div>
@@ -574,6 +585,13 @@ const App: React.FC = () => {
         {currentView === 'RANKS_INFO' && (
            <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
              <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800 hover:bg-red-800/10' : 'text-slate-400'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Ранги Древа</h1></header>
+             
+             <div className="mb-10 px-1">
+               <p className={`text-base leading-relaxed ${userProfile.rpgMode ? 'text-red-950/90 font-medium' : 'text-slate-600 font-medium'}`}>
+                 Древо сознания — это живое отражение вашего пути самопознания. Получайте опыт (XP) за квесты, принятые решения, записи в дневнике и глубокие размышления, чтобы превратить скромное зерно в величественное Древо Мудрости. Каждый ранг открывает новую грань вашей осознанности.
+               </p>
+             </div>
+
              <div className="space-y-4">
                 {RANKS.map((r, i) => (
                   <div key={i} className={`p-6 rounded-[28px] border transition-all flex items-center space-x-6 ${userProfile.xp >= r.threshold ? (userProfile.rpgMode ? 'rpg-card' : 'bg-emerald-50/50 border-emerald-100 shadow-sm') : 'opacity-30 grayscale'}`}>
