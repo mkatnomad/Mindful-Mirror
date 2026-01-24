@@ -8,7 +8,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const body = req.body;
 
-  // 1. Обработка pre_checkout_query (Telegram спрашивает, все ли ок перед списанием)
   if (body.pre_checkout_query) {
     await fetch(`https://api.telegram.org/bot${token}/answerPreCheckoutQuery`, {
       method: 'POST',
@@ -21,25 +20,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).send('OK');
   }
 
-  // 2. Обработка успешного платежа
   const message = body.message;
   if (message?.successful_payment) {
     const userId = message.from.id;
     
-    // Сохраняем в Upstash Redis на 30 дней (2592000 секунд)
     if (kvUrl && kvToken) {
+      // Ставим флаг подписки
       await fetch(`${kvUrl}/set/user_sub_${userId}/true/EX/2592000`, {
+        headers: { Authorization: `Bearer ${kvToken}` }
+      });
+      // Добавляем в список премиум-пользователей
+      await fetch(`${kvUrl}/sadd/premium_users/${userId}`, {
         headers: { Authorization: `Bearer ${kvToken}` }
       });
     }
 
-    // Опционально: отправляем пользователю сообщение в боте
     await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: userId,
-        text: "✨ Оплата прошла успешно! Ваш Premium статус активирован на 30 дней."
+        text: "✨ Оплата прошла успешно! Ваш Premium статус активирован."
       })
     });
   }

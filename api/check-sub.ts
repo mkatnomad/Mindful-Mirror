@@ -12,13 +12,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const response = await fetch(`${kvUrl}/get/user_sub_${userId}`, {
+    // 1. Проверяем подписку
+    const subResp = await fetch(`${kvUrl}/get/user_sub_${userId}`, {
       headers: { Authorization: `Bearer ${kvToken}` }
     });
-    const data = await response.json();
-    
-    // Upstash возвращает { result: "true" } или { result: null }
-    return res.status(200).json({ isSubscribed: data.result === "true" });
+    const subData = await subResp.json();
+    const isSubscribed = subData.result === "true";
+
+    // 2. Регистрируем пользователя в общем списке (для статистики)
+    await fetch(`${kvUrl}/sadd/all_users/${userId}`, {
+      headers: { Authorization: `Bearer ${kvToken}` }
+    });
+
+    return res.status(200).json({ isSubscribed });
   } catch (e) {
     return res.status(500).json({ isSubscribed: false });
   }

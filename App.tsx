@@ -5,7 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3 } from 'lucide-react';
 
 declare global {
   interface Window {
@@ -111,6 +111,8 @@ const TRIAL_DURATION_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 const App: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+  const [appStats, setAppStats] = useState<{ total: number, premium: number }>({ total: 0, premium: 0 });
   const [userProfile, setUserProfile] = useState<UserProfile>({ 
     name: '', avatarUrl: null, isSetup: true, isRegistered: false, archetype: null, xp: 0, 
     lastQuestDate: null, artifacts: [], totalSessions: 0, totalMinutes: 0, rpgMode: false,
@@ -129,7 +131,6 @@ const App: React.FC = () => {
   const [questData, setQuestData] = useState<{ scene: string; optA: string; optB: string } | null>(null);
   const [questOutcome, setQuestOutcome] = useState<{ outcome: string; artifact: string } | null>(null);
 
-  // Синхронизация статуса подписки с сервером
   const syncSubscription = useCallback(async (userId: number) => {
     try {
       const resp = await fetch(`/api/check-sub?userId=${userId}`);
@@ -140,6 +141,18 @@ const App: React.FC = () => {
       }
     } catch (e) {
       console.error("Sub check error", e);
+    }
+  }, []);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const resp = await fetch('/api/get-stats');
+      if (resp.ok) {
+        const data = await resp.json();
+        setAppStats(data);
+      }
+    } catch (e) {
+      console.error("Stats error", e);
     }
   }, []);
 
@@ -171,10 +184,10 @@ const App: React.FC = () => {
               name: prev.name || user.first_name, 
               avatarUrl: prev.avatarUrl || user.photo_url || null 
             }));
-            // Проверяем подписку при старте
             await syncSubscription(user.id);
           }
         }
+        await fetchStats();
       } catch (err) {
         console.error("Initialization error:", err);
       } finally {
@@ -182,7 +195,7 @@ const App: React.FC = () => {
       }
     };
     initData();
-  }, [syncSubscription]);
+  }, [syncSubscription, fetchStats]);
 
   useEffect(() => {
     if (!isInitializing) cloudStorage.setItem('mm_profile', userProfile);
@@ -208,46 +221,56 @@ const App: React.FC = () => {
 
   const handlePay = async () => {
     if (isPaying) return;
-    
     const tg = window.Telegram?.WebApp;
     const userId = tg?.initDataUnsafe?.user?.id;
-
-    if (!userId) {
-      alert("Ошибка: Не удалось определить ID пользователя Telegram");
-      return;
-    }
+    if (!userId) { alert("Ошибка: ID пользователя не найден"); return; }
 
     setIsPaying(true);
     try {
-      // 1. Создаем инвойс на нашем бэкенде
       const response = await fetch('/api/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
       });
-
       const data = await response.json();
-      
-      if (!data.ok || !data.result) {
-        throw new Error(data.description || "Ошибка создания счета");
-      }
+      if (!data.ok || !data.result) throw new Error(data.description || "Ошибка");
 
-      // 2. Открываем нативное окно оплаты
       tg.openInvoice(data.result, (status: string) => {
         if (status === 'paid') {
           setUserProfile(prev => ({ ...prev, isSubscribed: true }));
           setCurrentView('HOME');
           if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        } else if (status === 'cancelled') {
-           // Оплата отменена
-        } else {
-           alert("Проблема с оплатой: " + status);
+          fetchStats();
         }
       });
     } catch (e: any) {
       alert("Ошибка: " + e.message);
     } finally {
       setIsPaying(false);
+    }
+  };
+
+  const handleResetSub = async () => {
+    const tg = window.Telegram?.WebApp;
+    const userId = tg?.initDataUnsafe?.user?.id;
+    if (!userId) return;
+
+    if (!confirm("Вы уверены, что хотите сбросить статус подписки в базе данных? Это удалит запись в Redis.")) return;
+
+    setIsResetting(true);
+    try {
+      const resp = await fetch(`/api/reset-sub?userId=${userId}`);
+      if (resp.ok) {
+        setUserProfile(prev => ({ ...prev, isSubscribed: false }));
+        alert("Статус успешно сброшен. Теперь вы можете протестировать покупку заново.");
+        fetchStats();
+      } else {
+        alert("Ошибка при сбросе.");
+      }
+    } catch (e) {
+      alert("Ошибка соединения.");
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -502,7 +525,7 @@ const App: React.FC = () => {
               <CreditCard size={20} />
               <p className="text-[10px] font-black uppercase tracking-widest">Активация Premium</p>
             </div>
-            <h4 className="text-xl font-black mb-2 leading-tight">Откройте все ИИ-функции</h4>
+            <h4 className="text-xl font-black mb-2 leading-tight">Откройте все функции</h4>
             <p className="text-xs opacity-80 mb-6">Получите бесконечные квесты, анализ решений и глубокую рефлексию без ограничений.</p>
             <button className={`w-full py-3 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-indigo-600 shadow-lg active:scale-95'}`}>
               {isPaying ? <Loader2 size={16} className="animate-spin" /> : <Star size={16} fill="currentColor" />}
@@ -510,6 +533,28 @@ const App: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* Секция статистики */}
+        <div className={`p-8 rounded-[32px] mb-8 border transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white/40 backdrop-blur-md border-slate-100 shadow-sm'}`}>
+            <div className="flex items-center space-x-3 mb-6">
+                <BarChart3 size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'} />
+                <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Статистика системы</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-white/50 rounded-2xl border border-white/50">
+                    <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Всего душ</p>
+                    <p className={`text-xl font-black ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{appStats.total}</p>
+                </div>
+                <div className="p-4 bg-white/50 rounded-2xl border border-white/50">
+                    <p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Избранные</p>
+                    <p className={`text-xl font-black ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{appStats.premium}</p>
+                </div>
+            </div>
+            <button onClick={fetchStats} className="w-full mt-4 flex items-center justify-center space-x-2 py-2 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-300 hover:text-slate-500 transition-colors">
+                <RefreshCcw size={12} />
+                <span>Обновить данные</span>
+            </button>
+        </div>
 
         {userProfile.archetype && (
           <div className={`p-8 rounded-[32px] mb-8 shadow-sm border relative overflow-hidden group transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
@@ -540,6 +585,19 @@ const App: React.FC = () => {
         <div className="space-y-4">
            <button onClick={() => setUserProfile(p => ({...p, rpgMode: !p.rpgMode}))} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Star size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>RPG Режим</span></div><div className={`w-12 h-6 rounded-full transition-all relative ${userProfile.rpgMode ? 'bg-red-800' : 'bg-slate-200'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${userProfile.rpgMode ? 'left-7' : 'left-1'}`}></div></div></button>
            <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[28px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий архетипов</span></div><ChevronRight size={18} /></button>
+        </div>
+
+        {/* Секретная функция для сброса подписки */}
+        <div className="mt-12 pt-8 border-t border-slate-100 opacity-50">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-300 mb-4 text-center">Инструменты разработчика</p>
+            <button 
+                onClick={handleResetSub} 
+                disabled={isResetting}
+                className="w-full py-4 rounded-2xl border-2 border-red-100 text-red-400 text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-3 active:bg-red-50"
+            >
+                {isResetting ? <Loader2 size={16} className="animate-spin" /> : <RefreshCcw size={16} />}
+                <span>Сбросить статус подписки</span>
+            </button>
         </div>
       </div>
     );
