@@ -135,7 +135,6 @@ const App: React.FC = () => {
   const [questData, setQuestData] = useState<{ scene: string; optA: string; optB: string } | null>(null);
   const [questOutcome, setQuestOutcome] = useState<{ outcome: string; artifact: string } | null>(null);
   
-  // Состояние развернутой карточки архетипа в профиле
   const [arcExpanded, setArcExpanded] = useState(false);
 
   const getTelegramUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
@@ -385,7 +384,7 @@ const App: React.FC = () => {
       <div className="px-6 mb-12 relative z-20">
         <div className="grid grid-cols-3 gap-5">
           {[
-            { id: 'DECISION', label: 'Решение', icon: Zap, color: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-50 : text-indigo-500' },
+            { id: 'DECISION', label: 'Решение', icon: Zap, color: userProfile.rpgMode ? 'text-red-800' : 'text-amber-400' },
             { id: 'EMOTIONS', label: 'Состояние', icon: Heart, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-500' },
             { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-500' }
           ].map(m => (
@@ -485,7 +484,7 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* ПЕРЕРАБОТАННАЯ КАРТОЧКА АРХЕТИПА (СВОРАЧИВАЕМАЯ) */}
+        {/* СВОРАЧИВАЕМАЯ КАРТОЧКА АРХЕТИПА */}
         {arc && (
           <div 
             onClick={() => setArcExpanded(!arcExpanded)}
@@ -510,7 +509,7 @@ const App: React.FC = () => {
              {!arcExpanded && (
                <div className="mt-4 flex items-center space-x-2 text-[10px] font-bold text-indigo-400 uppercase tracking-widest animate-pulse">
                   <Sparkles size={12} />
-                  <span>Нажмите, чтобы развернуть</span>
+                  <span>Нажмите для подробной информации</span>
                </div>
              )}
 
@@ -550,7 +549,7 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* ПАНЕЛЬ ПОДПИСКИ (СИНЯЯ, МЕНЕЕ ЛЕТАЮЩАЯ) */}
+        {/* ПАНЕЛЬ ПОДПИСКИ (СИНЯЯ, ПРИЖАТАЯ) */}
         {!isSubscribed && (
           <div className={`p-6 rounded-[32px] mb-6 shadow-sm border transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-blue-600 text-white border-blue-700'}`} onClick={handlePay}>
             <div className="flex items-center space-x-3 mb-2">
@@ -678,7 +677,7 @@ const App: React.FC = () => {
     return (
       <div className={`h-screen w-full overflow-y-auto animate-fade-in transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-slate-50'}`}>
         <div className="min-h-full flex flex-col items-center p-6 pb-20 justify-center">
-            <div className={`w-full max-w-md p-8 rounded-[40px] border shadow-xl text-center relative overflow-hidden transition-all duration-700 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}>
+            <div className={`w-full max-w-md p-8 rounded-[40px] border shadow-xl text-center relative overflow-hidden mt-6 mb-8 transition-all duration-700 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}>
                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Wand2 size={80} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /></div>
 
                <div className="flex items-center justify-center space-x-3 mb-6 opacity-60">
@@ -688,7 +687,7 @@ const App: React.FC = () => {
                </div>
 
                <h2 className={`text-4xl font-black italic uppercase tracking-tighter mb-2 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{arc.name}</h2>
-               <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{arc.role}</p>
+               <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-50'}`}>{arc.role}</p>
 
                <div className={`p-5 rounded-3xl mb-6 italic text-[13px] leading-relaxed border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10 text-red-900' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
                   <Quote size={18} className="mb-2 opacity-30 mx-auto" />
