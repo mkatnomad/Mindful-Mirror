@@ -55,6 +55,7 @@ export interface UserProfile {
   // Subscription fields
   firstRunDate: number | null;
   isSubscribed: boolean;
+  subscriptionExpiry: number | null; // New: expiration timestamp
 }
 
 export interface SiteConfig {
