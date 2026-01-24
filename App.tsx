@@ -73,7 +73,7 @@ const TreeIcon = ({ stage, size = 40 }: { stage: number, size?: number }) => {
 const ARCHETYPES: Archetype[] = [
   { id: '1', name: 'Шут', role: 'Мастер игры', motto: 'Живи моментом!', strength: 'Юмор и игривость', weakness: 'Легкомыслие', quote: 'Смех — это кратчайшее расстояние между двумя людьми.', description: 'Вы умеете находить радость в любой ситуации и превращать скуку в праздник.', meaning: 'Учит не принимать жизнь слишком серьезно и видеть абсурдность проблем.' },
   { id: '2', name: 'Славный малый', role: 'Союзник', motto: 'Мы все равны.', strength: 'Эмпатия и реализм', weakness: 'Потеря индивидуальности', quote: 'Быть собой — величайшее достижение в мире, который пытается сделать вас кем-то другим.', description: 'Вы цените честность, приземленность и глубокую связь с обычными людьми.', meaning: 'Символизирует потребность в принадлежности и принятии себя таким, какой ты есть.' },
-  { id: '3', name: 'Заботливый', role: 'Опекун', motto: 'Люби ближнего своего.', strength: 'Альтруизм и щедрость', weakness: 'Мученичество', quote: 'Забота о других — это самая высокая форма заботы о собственной душе.', description: 'Ваше призвание — помогать, защищать и создавать безопасное пространство для роста.', meaning: 'Напоминает о важности безусловной поддержки и сострадания.' },
+  { id: '3', name: 'Заботливый', role: 'Опекун', motto: 'Люби ближнего своего.', strength: 'Альтруизм и щедрость', weakness: 'Мученичество', quote: 'Забота о других — это самая высокая форма заботы о собственной душе.', description: 'Ваше призвание — помогать, защищать и создавать безопасное пространство для роста.', meaning: 'Символизирует потребность в безусловной поддержке и сострадании.' },
   { id: '4', name: 'Правитель', role: 'Лидер', motto: 'Власть — это ответственность.', strength: 'Лидерство и системность', weakness: 'Авторитаризм', quote: 'Управляй собой, прежде чем пытаться управлять миром.', description: 'Вы стремитесь создать порядок из хаоса и нести ответственность за структуру.', meaning: 'Учит ответственности за результат и умению выстраивать гармоничные системы.' },
   { id: '5', name: 'Творец', role: 'Архитектор', motto: 'Если это можно представить, это можно сделать.', strength: 'Креативность и воображение', weakness: 'Перфекционизм', quote: 'Творчество требует мужества отпустить уверенность в известном.', description: 'Ваша цель — создать нечто вечное и уникальное, выразив свою внутреннюю истину.', meaning: 'Импульс к самовыражению и материализации идей.' },
   { id: '6', name: 'Невинный', role: 'Мечтатель', motto: 'Счастье доступно каждому.', strength: 'Оптимизм и вера', weakness: 'Наивность', quote: 'Чистое сердце видит правду там, где разум видит лишь сложности.', description: 'Вы верите в доброту мира и стремитесь к простоте и гармонии.', meaning: 'Стремление к возвращению к истокам и первозданной радости.' },
@@ -442,11 +442,11 @@ const App: React.FC = () => {
          <div className={`space-y-4 text-left transition-all duration-500 overflow-hidden ${expanded ? 'max-h-[1000px] opacity-100 mb-6' : 'max-h-0 opacity-0 mb-0'}`}>
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Ваша природа</p>
-              <p className={`text-[13px] leading-relaxed font-medium ${userProfile.rpgMode ? 'text-red-900' : 'text-slate-600'}`}>{archetype.description}</p>
+              <p className={`text-[13px] leading-relaxed font-medium ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-600'}`}>{archetype.description}</p>
             </div>
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Высший смысл</p>
-              <p className={`text-[13px] leading-relaxed font-medium ${userProfile.rpgMode ? 'text-red-900' : 'text-slate-600'}`}>{archetype.meaning}</p>
+              <p className={`text-[13px] leading-relaxed font-medium ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-600'}`}>{archetype.meaning}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3 mt-4">
@@ -507,7 +507,7 @@ const App: React.FC = () => {
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
-    return <AdminInterface config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleResetSub} />;
+    return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleResetSub} />;
   };
 
   const renderRanksInfo = () => (
@@ -519,22 +519,22 @@ const App: React.FC = () => {
         <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Ранги Сознания</h1>
       </header>
       
-      <p className={`text-sm mb-8 leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>
+      <p className={`text-base mb-8 leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>
         Древо Мудрости отражает глубину вашего самопознания. Каждая завершенная сессия и минута осознанности питают ваши корни, позволяя духу расти и раскрываться в новых рангах.
       </p>
 
       <div className="space-y-6">
         {RANKS.map((rank, i) => (
           <div key={i} className={`p-6 rounded-[28px] border flex items-center space-x-5 ${userProfile.xp >= rank.threshold ? (userProfile.rpgMode ? 'rpg-card' : 'bg-indigo-50 border-indigo-100') : 'opacity-40 bg-slate-50 border-slate-100'}`}>
-            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-              <TreeIcon stage={i} size={32} />
+            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm">
+              <TreeIcon stage={i} size={36} />
             </div>
             <div className="flex-1">
-              <h3 className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{rank.title}</h3>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{rank.threshold} XP</p>
-              <p className="text-xs mt-1 text-slate-500 leading-tight">{rank.desc}</p>
+              <h3 className={`font-bold text-lg ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{rank.title}</h3>
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{rank.threshold} XP</p>
+              <p className="text-sm mt-1 text-slate-500 leading-tight">{rank.desc}</p>
             </div>
-            {userProfile.xp >= rank.threshold && <Check size={16} className="text-emerald-500" />}
+            {userProfile.xp >= rank.threshold && <Check size={20} className="text-emerald-500" />}
           </div>
         ))}
       </div>
@@ -703,42 +703,42 @@ const App: React.FC = () => {
        <div className="w-20 h-20 rounded-[32px] bg-blue-600 text-white flex items-center justify-center mb-8 shadow-xl animate-float mt-10">
           <Lock size={28} />
        </div>
-       <h2 className={`text-3xl font-black mb-4 uppercase tracking-tighter italic leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Граница достигнута</h2>
+       <h2 className={`text-4xl font-black mb-6 uppercase tracking-tighter italic leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Граница достигнута</h2>
        
-       <div className={`p-6 rounded-[32px] border mb-10 w-full ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-slate-50 border-slate-100 shadow-sm'}`}>
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">Бесплатный доступ</p>
-          <div className="flex flex-col space-y-2 text-xs font-bold text-slate-600">
+       <div className={`p-8 rounded-[32px] border mb-10 w-full ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-slate-50 border-slate-100 shadow-sm'}`}>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Бесплатный доступ</p>
+          <div className="flex flex-col space-y-3 text-[15px] font-bold text-slate-600">
              <div className="flex items-center justify-between"><span>• Решения:</span><span className="text-indigo-600">2 / день</span></div>
              <div className="flex items-center justify-between"><span>• Состояния:</span><span className="text-rose-500">1 / день</span></div>
              <div className="flex items-center justify-between"><span>• Квесты:</span><span className="text-amber-500">1 всего</span></div>
           </div>
-          <div className="h-[1px] bg-slate-200 my-4"></div>
-          <p className="text-[13px] leading-relaxed text-slate-500">Пользуйтесь приложением бесплатно с лимитами или активируйте <span className="text-blue-600 font-bold">Premium на 30 дней</span> для полного погружения.</p>
+          <div className="h-[1px] bg-slate-200 my-5"></div>
+          <p className="text-[15px] leading-relaxed text-slate-500">Пользуйтесь приложением бесплатно с лимитами или активируйте <span className="text-blue-600 font-bold">Premium на 30 дней</span> для полного погружения.</p>
        </div>
        
        <div className="w-full space-y-4 mb-10">
-          <div className="flex items-center space-x-4 p-5 rounded-3xl bg-blue-50/50 border border-blue-100">
-             <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md"><Zap size={24} /></div>
-             <div className="text-left flex-1"><p className="text-xs font-black uppercase text-blue-600">Безлимитные Решения</p><p className="text-[11px] text-slate-500 leading-tight">Снимает оковы сомнений. Идеально для тех, кто хочет принимать верные решения молниеносно.</p></div>
+          <div className="flex items-center space-x-4 p-6 rounded-3xl bg-blue-50/50 border border-blue-100">
+             <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shrink-0"><Zap size={28} /></div>
+             <div className="text-left flex-1"><p className="text-sm font-black uppercase text-blue-600">Безлимитные Решения</p><p className="text-[13px] text-slate-500 leading-tight">Снимает оковы сомнений. Идеально для тех, кто хочет принимать верные решения молниеносно.</p></div>
           </div>
-          <div className="flex items-center space-x-4 p-5 rounded-3xl bg-rose-50/50 border border-rose-100">
-             <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md"><Heart size={24} /></div>
-             <div className="text-left flex-1"><p className="text-xs font-black uppercase text-rose-600">Безлимитные Состояния</p><p className="text-[11px] text-slate-500 leading-tight">Ваша эмоциональная гигиена. Помогает сохранять покой даже в самые штормовые дни.</p></div>
+          <div className="flex items-center space-x-4 p-6 rounded-3xl bg-rose-50/50 border border-rose-100">
+             <div className="w-14 h-14 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shrink-0"><Heart size={28} /></div>
+             <div className="text-left flex-1"><p className="text-sm font-black uppercase text-rose-600">Безлимитные Состояния</p><p className="text-[13px] text-slate-500 leading-tight">Ваша эмоциональная гигиена. Помогает сохранять покой даже в самые штормовые дни.</p></div>
           </div>
-          <div className="flex items-center space-x-4 p-5 rounded-3xl bg-amber-50/50 border border-amber-100">
-             <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md"><Sword size={24} /></div>
-             <div className="text-left flex-1"><p className="text-xs font-black uppercase text-amber-600">Ежедневные Квесты</p><p className="text-[11px] text-slate-500 leading-tight">Ваш путь героя. Регулярные испытания для глубокого самопознания через игру.</p></div>
+          <div className="flex items-center space-x-4 p-6 rounded-3xl bg-amber-50/50 border border-amber-100">
+             <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0"><Sword size={28} /></div>
+             <div className="text-left flex-1"><p className="text-sm font-black uppercase text-amber-600">Ежедневные Квесты</p><p className="text-[13px] text-slate-500 leading-tight">Ваш путь героя. Регулярные испытания для глубокого самопознания через игру.</p></div>
           </div>
        </div>
 
        <div className="w-full space-y-4 mb-20">
           <button onClick={handlePay} disabled={isPaying} className={`w-full py-5 rounded-[28px] font-bold text-lg bg-blue-600 text-white shadow-xl flex items-center justify-center space-x-3 transition-all ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95'}`}>
-             {isPaying ? <Loader2 size={20} className="animate-spin" /> : <Star size={20} fill="currentColor" className="text-amber-400" />}
+             {isPaying ? <Loader2 size={24} className="animate-spin" /> : <Star size={24} fill="currentColor" className="text-amber-400" />}
              <span>{isPaying ? 'Вызов звёзд...' : 'Активировать за 1 Star'}</span>
           </button>
           <div className="flex flex-col items-center space-y-1">
-             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Доступ на 30 дней</p>
-             <button onClick={() => setCurrentView('HOME')} className="text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors pt-2 underline underline-offset-4">Вернуться назад</button>
+             <p className="text-xs font-black uppercase tracking-widest text-slate-400">Доступ на 30 дней</p>
+             <button onClick={() => setCurrentView('HOME')} className="text-slate-400 font-bold text-base hover:text-slate-600 transition-colors pt-2 underline underline-offset-4">Вернуться назад</button>
           </div>
        </div>
     </div>

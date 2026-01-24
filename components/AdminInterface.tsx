@@ -1,19 +1,20 @@
-
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon, Gift, RefreshCcw } from 'lucide-react';
+// Added Star to the import list from lucide-react
+import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star } from 'lucide-react';
 import { SiteConfig } from '../types';
 
 interface AdminInterfaceProps {
   config: SiteConfig;
+  stats: { total: number, premium: number, sessions: number, minutes: number, archetypes: Record<string, number> };
   onSave: (newConfig: SiteConfig) => void;
   onBack: () => void;
   onGift: (userId: string) => void;
   onReset: () => void;
 }
 
-export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, onBack, onGift, onReset }) => {
+export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, onSave, onBack, onGift, onReset }) => {
   const [editedConfig, setEditedConfig] = useState<SiteConfig>({ ...config });
-  const [activeTab, setActiveTab] = useState<'GENERAL' | 'DESIGN' | 'ABOUT' | 'QUOTES' | 'SECURITY' | 'GIFT'>('GENERAL');
+  const [activeTab, setActiveTab] = useState<'STATS' | 'GENERAL' | 'DESIGN' | 'ABOUT' | 'QUOTES' | 'SECURITY' | 'GIFT'>('STATS');
   const [giftId, setGiftId] = useState('');
 
   const handleSave = () => {
@@ -86,6 +87,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
 
       <div className="flex p-4 space-x-2 bg-white border-b border-slate-100 overflow-x-auto no-scrollbar">
         {[
+          { id: 'STATS', label: 'Статистика' },
           { id: 'GENERAL', label: 'Общее' },
           { id: 'DESIGN', label: 'Брендинг' },
           { id: 'ABOUT', label: 'Контент' },
@@ -104,6 +106,48 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, onSave, 
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-32">
+        {activeTab === 'STATS' && (
+          <div className="space-y-6 animate-fade-in">
+             <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                   <Users className="text-indigo-500 mb-3" size={24} />
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Всего</p>
+                   <p className="text-3xl font-black text-slate-800">{stats.total}</p>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                   <Star className="text-amber-500 mb-3" size={24} fill="currentColor" />
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Premium</p>
+                   <p className="text-3xl font-black text-slate-800">{stats.premium}</p>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                   <BarChart3 className="text-emerald-500 mb-3" size={24} />
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Сессии</p>
+                   <p className="text-3xl font-black text-slate-800">{stats.sessions}</p>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                   <Clock className="text-rose-500 mb-3" size={24} />
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Минут</p>
+                   <p className="text-3xl font-black text-slate-800">{stats.minutes}</p>
+                </div>
+             </div>
+
+             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center space-x-2">
+                   <Flame size={14} className="text-orange-500" />
+                   <span>Популярные архетипы</span>
+                </h3>
+                <div className="space-y-3">
+                   {Object.entries(stats.archetypes).sort((a,b) => b[1] - a[1]).map(([name, count]) => (
+                      <div key={name} className="flex items-center justify-between">
+                         <span className="text-sm font-bold text-slate-700">{name}</span>
+                         <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{count}</span>
+                      </div>
+                   ))}
+                </div>
+             </div>
+          </div>
+        )}
+
         {activeTab === 'GENERAL' && (
           <div className="space-y-6">
             <div>
