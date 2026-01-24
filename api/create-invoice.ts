@@ -30,7 +30,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         payload: `user_${userId}`, 
         provider_token: "", 
         currency: "XTR", 
-        prices: [{ label: "Premium", amount: 499 }] // 1 звезда для теста
+        prices: [{ label: "Premium", amount: 1 }] // 1 звезда для теста
       })
     });
 
