@@ -372,7 +372,7 @@ const App: React.FC = () => {
 
   const isQuestAvailable = () => {
     if (!userProfile.isSubscribed) {
-        return userProfile.totalQuestsDone < 1;
+        return userProfile.totalQuestsDone < 3;
     }
     if (!userProfile.lastQuestDate) return true;
     const lastDate = new Date(userProfile.lastQuestDate).toDateString();
@@ -745,7 +745,7 @@ const App: React.FC = () => {
           <div className="flex flex-col space-y-4 text-[15px] font-bold">
              <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Решения:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600'}>2 / день</span></div>
              <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Состояния:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-rose-500'}>1 / день</span></div>
-             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>1 всего</span></div>
+             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>3 всего</span></div>
           </div>
           <div className={`h-[1px] my-6 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-200/50'}`}></div>
           <p className={`text-sm leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>
