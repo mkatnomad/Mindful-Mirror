@@ -1,6 +1,7 @@
 
+// Add missing React import to fix namespace error
 import React, { useRef, useState } from 'react';
-import { Share2, Check, VS } from 'lucide-react';
+import { Share2, Check } from 'lucide-react';
 import { DecisionData } from '../types';
 
 interface InsightCardProps {
