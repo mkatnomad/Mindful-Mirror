@@ -28,6 +28,9 @@ export interface DecisionData {
   topic: string;
   pros: string[];
   cons: string[];
+  decisionType: 'SINGLE' | 'COMPARE';
+  optionA?: string;
+  optionB?: string;
 }
 
 export interface ChatSession {

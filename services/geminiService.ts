@@ -70,7 +70,21 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
 
 export const analyzeDecision = async (data: DecisionData): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const prompt = `Проанализируй решение: ${data.topic}. Плюсы: ${data.pros.join(', ')}. Минусы: ${data.cons.join(', ')}. Дай совет в 3-4 предложениях.`;
+  let prompt = '';
+  
+  if (data.decisionType === 'COMPARE') {
+    prompt = `Проанализируй выбор между двумя вариантами. 
+    Вариант А: ${data.optionA}. Его аргументы: ${data.pros.join(', ')}.
+    Вариант Б: ${data.optionB}. Его аргументы: ${data.cons.join(', ')}.
+    Сравни их и дай глубокий совет, какой путь кажется более гармоничным для пользователя. 
+    Ответ в 3-4 предложениях на русском языке.`;
+  } else {
+    prompt = `Проанализируй решение: ${data.topic}. 
+    Плюсы: ${data.pros.join(', ')}. 
+    Минусы: ${data.cons.join(', ')}. 
+    Дай взвешенный совет в 3-4 предложениях на русском языке.`;
+  }
+
   const result = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
   return result.text || "...";
 };
@@ -91,8 +105,11 @@ export const refineDecision = async (currentData: DecisionData, userInput: strin
               topic: { type: Type.STRING },
               pros: { type: Type.ARRAY, items: { type: Type.STRING } },
               cons: { type: Type.ARRAY, items: { type: Type.STRING } },
+              decisionType: { type: Type.STRING },
+              optionA: { type: Type.STRING },
+              optionB: { type: Type.STRING },
             },
-            required: ['topic', 'pros', 'cons']
+            required: ['topic', 'pros', 'cons', 'decisionType']
           },
           analysis: { type: Type.STRING }
         },
