@@ -773,7 +773,7 @@ const App: React.FC = () => {
        <div className="w-full space-y-4 mb-10">
           {[
             { id: '1', label: 'Безлимитные Решения', desc: 'Снимает оковы сомнений. Идеально для тех, кто ищет ясности.', icon: Zap, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-600', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
-            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-50', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
+            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
             { id: '3', label: 'Ежедневные Квесты', desc: 'Ваш путь героя. Регулярные испытания мудрости.', icon: Sword, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-amber-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-amber-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' }
           ].map(benefit => (
             <div key={benefit.id} className={`flex items-center space-x-4 p-5 rounded-[32px] border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'glass-card border-white/30'}`}>
