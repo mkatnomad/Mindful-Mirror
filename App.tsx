@@ -5,6 +5,7 @@ import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
+import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Sparkle as SparkleIcon, ZapOff, Gift } from 'lucide-react';
 
@@ -120,7 +121,7 @@ const App: React.FC = () => {
   const [appStats, setAppStats] = useState<any>({ total: 0, premium: 0, sessions: 0, minutes: 0, archetypes: {} });
   
   const [userProfile, setUserProfile] = useState<UserProfile>({ 
-    name: '', avatarUrl: null, isSetup: true, isRegistered: false, archetype: null, xp: 0, 
+    name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingDone: false, archetype: null, xp: 0, 
     lastQuestDate: null, artifacts: [], totalSessions: 0, totalMinutes: 0, rpgMode: false,
     firstRunDate: null, isSubscribed: false, subscriptionExpiry: null,
     lastUsageDate: null, dailyDecisionCount: 0, dailyEmotionsCount: 0, totalQuestsDone: 0
@@ -199,9 +200,13 @@ const App: React.FC = () => {
 
         if (profile) {
             setUserProfile(prev => ({ ...prev, ...profile }));
+            if (!profile.onboardingDone) {
+              setCurrentView('ONBOARDING');
+            }
         } else {
             const now = Date.now();
             setUserProfile(prev => ({ ...prev, firstRunDate: now }));
+            setCurrentView('ONBOARDING');
         }
 
         if (hist) setHistory(hist);
@@ -244,6 +249,11 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isInitializing) cloudStorage.setItem('mm_journal_entries', journalEntries);
   }, [journalEntries, isInitializing]);
+
+  const handleOnboardingComplete = () => {
+    setUserProfile(prev => ({ ...prev, onboardingDone: true }));
+    setCurrentView('HOME');
+  };
 
   const checkModeLimit = (mode: JournalMode): boolean => {
     if (userProfile.isSubscribed) {
@@ -717,6 +727,7 @@ const App: React.FC = () => {
         )}
 
         <div className="space-y-4">
+           <button onClick={() => setCurrentView('ONBOARDING')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Compass size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Путеводитель</span></div><ChevronRight size={18} /></button>
            <button onClick={() => setUserProfile(p => ({...p, rpgMode: !p.rpgMode}))} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Settings2 size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>RPG Режим</span></div><div className={`w-12 h-6 rounded-full transition-all relative ${userProfile.rpgMode ? 'bg-red-800' : 'bg-slate-200'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${userProfile.rpgMode ? 'left-7' : 'left-1'}`}></div></div></button>
            <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий</span></div><ChevronRight size={18} /></button>
         </div>
@@ -800,6 +811,7 @@ const App: React.FC = () => {
   return (
     <div className={`h-screen w-full overflow-hidden flex flex-col font-sans relative transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8FAFC]'}`}>
       <main className="flex-1 relative overflow-hidden z-10">
+        {currentView === 'ONBOARDING' && <Onboarding rpgMode={userProfile.rpgMode} onComplete={handleOnboardingComplete} />}
         {currentView === 'HOME' && renderHome()}
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { 
             setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); 

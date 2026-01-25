@@ -58,6 +58,7 @@ export interface UserProfile {
   avatarUrl: string | null;
   isSetup: boolean;
   isRegistered: boolean;
+  onboardingDone?: boolean;
   archetype?: Archetype | null;
   secondaryArchetypes?: { name: string; percent: number }[];
   xp: number;
