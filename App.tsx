@@ -821,31 +821,31 @@ const App: React.FC = () => {
         {currentView === 'HOME' && renderHome()}
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { 
             setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); 
-            const minutes = Math.max(1, Math.ceil(d / 60)); 
-            setUserProfile(p => ({...p, xp: p.xp + minutes, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + minutes})); 
-            reportEvent('session', { minutes, mode: 'REFLECTION' }); 
+            const xpGain = Math.max(1, Math.ceil(d / 60)); 
+            setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); 
+            // Send duration in seconds to reportEvent for accurate stats
+            reportEvent('session', { seconds: d, mode: 'REFLECTION' }); 
             if (i) reportEvent('journal_entry', { entryType: e.type });
         }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={handleUpdateOrder} onBack={(totalSec) => {
-            const minutes = Math.max(1, Math.ceil(totalSec / 60));
-            // Only report if spent more than 10 seconds to avoid spam
+            const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0;
             if (totalSec > 10) {
-              reportEvent('session', { minutes, mode: 'REFLECTION' });
-              setUserProfile(p => ({...p, xp: p.xp + minutes, totalMinutes: p.totalMinutes + minutes}));
+              reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' });
+              setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain}));
             }
             setCurrentView('HOME');
         }} />}
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur) => { 
             setHistory(prev => [{id: Date.now().toString(), mode: selectedMode, date: Date.now(), duration: dur, preview: msgs.find(m => m.role === 'user')?.content || '', messages: msgs}, ...prev]); 
-            const minutes = Math.max(1, Math.ceil(dur / 60)); 
+            const xpGain = Math.max(1, Math.ceil(dur / 60)); 
             setUserProfile(p => ({
                 ...p, 
-                xp: p.xp + minutes, 
+                xp: p.xp + xpGain, 
                 totalSessions: p.totalSessions + 1, 
-                totalMinutes: p.totalMinutes + minutes,
+                totalMinutes: p.totalMinutes + xpGain,
                 dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount,
                 dailyEmotionsCount: selectedMode === 'EMOTIONS' ? p.dailyEmotionsCount + 1 : p.dailyEmotionsCount
             })); 
-            reportEvent('session', { minutes, mode: selectedMode }); 
+            reportEvent('session', { seconds: Math.round(dur), mode: selectedMode }); 
         }} />}
         {currentView === 'ARCHETYPE_TEST' && (
            <div className={`h-full p-8 flex flex-col animate-fade-in transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-white'}`}>

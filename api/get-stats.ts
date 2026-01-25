@@ -15,14 +15,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return r.json();
     };
 
-    const [all, prem, sess, mins, archs, segSess, segMins, jTypes, tStarts, tFinished] = await Promise.all([
+    const [all, prem, sess, secs, archs, segSess, segSecs, jTypes, tStarts, tFinished] = await Promise.all([
       fetchKV('scard/all_users'),
       fetchKV('scard/premium_users'),
       fetchKV('get/global_sessions'),
-      fetchKV('get/global_minutes'),
+      fetchKV('get/global_seconds_total'),
       fetchKV('hgetall/archetype_counts'),
       fetchKV('hgetall/stats:sessions'),
-      fetchKV('hgetall/stats:minutes'),
+      fetchKV('hgetall/stats:seconds_total'),
       fetchKV('hgetall/stats:journal_types'),
       fetchKV('get/stats:test_starts'),
       fetchKV('get/stats:test_finished')
@@ -47,10 +47,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       total: all.result || 0, 
       premium: prem.result || 0,
       sessions: parseInt(sess.result) || 0,
-      minutes: parseInt(mins.result) || 0,
+      totalSeconds: parseInt(secs.result) || 0,
       archetypes: parseHash(archs),
       segmentedSessions: parseHash(segSess),
-      segmentedMinutes: parseHash(segMins),
+      segmentedSeconds: parseHash(segSecs),
       journalTypes: parseHash(jTypes),
       testStarts: parseInt(tStarts.result) || 0,
       testFinished: parseInt(tFinished.result) || 0

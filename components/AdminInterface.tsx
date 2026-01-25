@@ -67,7 +67,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
     setEditedConfig({ ...editedConfig, [field]: null });
   };
 
-  const renderSegmentedStat = (label: string, data: Record<string, number>, colorMap: Record<string, string>) => {
+  const renderSegmentedStat = (label: string, data: Record<string, number>, colorMap: Record<string, string>, isTime: boolean = false) => {
     const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
     return (
       <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
@@ -88,7 +88,9 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
                  <div className={`w-2 h-2 rounded-full ${colorMap[key] || 'bg-slate-300'}`} />
                  <span className="text-slate-500">{key === 'DECISION' ? 'Решения' : key === 'EMOTIONS' ? 'Состояния' : key === 'REFLECTION' ? 'Дневник' : key}</span>
                </div>
-               <span className="text-slate-800">{val} ({Math.round((val / total) * 100)}%)</span>
+               <span className="text-slate-800">
+                 {isTime ? `${Math.round(val / 60)} мин` : val} ({Math.round((val / total) * 100)}%)
+               </span>
              </div>
            ))}
         </div>
@@ -182,11 +184,11 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
                'REFLECTION': 'bg-emerald-500'
              })}
 
-             {renderSegmentedStat("Время в разделах (мин)", stats.segmentedMinutes || {}, {
+             {renderSegmentedStat("Время в разделах (честные мин)", stats.segmentedSeconds || {}, {
                'DECISION': 'bg-amber-400',
                'EMOTIONS': 'bg-rose-500',
                'REFLECTION': 'bg-emerald-500'
-             })}
+             }, true)}
 
              <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                 <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center space-x-2">

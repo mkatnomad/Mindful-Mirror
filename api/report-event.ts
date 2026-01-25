@@ -15,16 +15,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pipeline: any[] = [];
 
     if (type === 'session') {
-      const minutes = parseInt(value.minutes) || 0;
+      // Use seconds if provided, otherwise fallback to minutes * 60
+      const seconds = value.seconds !== undefined ? parseInt(value.seconds) : (parseInt(value.minutes) * 60 || 0);
       const mode = value.mode || 'UNKNOWN';
       
-      // Общая статистика (для совместимости)
       pipeline.push(['incr', 'global_sessions']);
-      pipeline.push(['incrby', 'global_minutes', minutes]);
+      // We store raw seconds in the KV now for precision
+      pipeline.push(['incrby', 'global_seconds_total', seconds]);
       
-      // Сегментированная статистика
+      // Segmented statistics in seconds
       pipeline.push(['hincrby', 'stats:sessions', mode, 1]);
-      pipeline.push(['hincrby', 'stats:minutes', mode, minutes]);
+      pipeline.push(['hincrby', 'stats:seconds_total', mode, seconds]);
       
     } else if (type === 'journal_entry') {
       const entryType = value.entryType || 'UNKNOWN';
@@ -36,7 +37,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else if (type === 'archetype' || type === 'test_finished') {
       const archName = value.name;
       pipeline.push(['hincrby', 'archetype_counts', archName, 1]);
-      // Если это завершение теста, также инкрементируем общий счетчик завершений
       pipeline.push(['incr', 'stats:test_finished']);
     }
 
