@@ -76,8 +76,27 @@ export const processRPGChoice = async (archetype: Archetype, choice: string): Pr
 export const sendMessageToGemini = async (history: Message[], newMessage: string, mode: 'EMOTIONS' | 'REFLECTION'): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const modelId = 'gemini-3-flash-preview';
-  const systemInstruction = mode === 'EMOTIONS' ? "Ты эмпатичный психолог-собеседник. Поддерживай пользователя." : "Ты помощник в глубокой рефлексии. Задавай наводящие вопросы.";
-  const chat = ai.chats.create({ model: modelId, config: { systemInstruction } });
+  
+  const systemInstruction = mode === 'EMOTIONS' 
+    ? "Ты эмпатичный психолог-собеседник. Твоя задача — поддерживать пользователя, помнить контекст беседы (имена, события) и помогать прожить эмоции. Не давай сухих советов, будь человечным." 
+    : "Ты мудрый наставник для рефлексии. Помогай пользователю подводить итоги, задавай глубокие наводящие вопросы, опираясь на то, что пользователь рассказывал ранее в этой беседе.";
+
+  // Преобразуем историю сообщений в формат Gemini
+  // Ограничиваем историю последними 15 сообщениями для экономии и фокуса
+  const geminiHistory = history
+    .filter(m => m.role !== 'system' && m.content && m.content.trim() !== '')
+    .slice(-15)
+    .map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    }));
+
+  const chat = ai.chats.create({ 
+    model: modelId, 
+    config: { systemInstruction },
+    history: geminiHistory
+  });
+
   const result = await chat.sendMessage({ message: newMessage });
   return result.text || "...";
 };
