@@ -731,46 +731,65 @@ const App: React.FC = () => {
   };
 
   const renderLimitReached = () => (
-    <div className={`h-full overflow-y-auto flex flex-col items-center p-8 text-center animate-fade-in ${userProfile.rpgMode ? 'bg-parchment' : 'bg-white'}`}>
-       <div className="w-20 h-20 rounded-full bg-blue-600 text-white flex items-center justify-center mb-8 shadow-xl animate-float mt-10 shrink-0">
-          <Lock size={28} />
+    <div className={`h-full overflow-y-auto flex flex-col items-center p-8 text-center animate-fade-in transition-all duration-700 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8FAFC]'}`}>
+       <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-8 shadow-2xl animate-float mt-10 shrink-0 transition-all ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white shadow-indigo-200'}`}>
+          <Lock size={32} strokeWidth={2.5} />
        </div>
-       <h2 className={`text-4xl font-black mb-6 uppercase tracking-tighter italic leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Граница достигнута</h2>
        
-       <div className={`p-8 rounded-[32px] border mb-10 w-full ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-slate-50 border-slate-100 shadow-sm'}`}>
-          <p className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4">Бесплатный доступ</p>
-          <div className="flex flex-col space-y-3 text-[15px] font-bold text-slate-600">
-             <div className="flex items-center justify-between"><span>• Решения:</span><span className="text-indigo-600">2 / день</span></div>
-             <div className="flex items-center justify-between"><span>• Состояния:</span><span className="text-rose-500">1 / день</span></div>
-             <div className="flex items-center justify-between"><span>• Квесты:</span><span className="text-amber-500">1 всего</span></div>
+       <h2 className={`text-4xl font-bold mb-6 uppercase tracking-tighter leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+          Граница достигнута
+       </h2>
+       
+       <div className={`p-8 rounded-[40px] border mb-10 w-full transition-all ${userProfile.rpgMode ? 'rpg-card border-red-800/20 shadow-none' : 'glass-card border-white/40 shadow-none'}`}>
+          <p className={`text-[10px] font-black uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>Текущий статус: Странник</p>
+          <div className="flex flex-col space-y-4 text-[15px] font-bold">
+             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Решения:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600'}>2 / день</span></div>
+             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Состояния:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-rose-500'}>1 / день</span></div>
+             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>1 всего</span></div>
           </div>
-          <div className="h-[1px] bg-slate-200 my-5"></div>
-          <p className="text-[15px] leading-relaxed text-slate-500">Пользуйтесь приложением бесплатно с лимитами или активируйте <span className="text-blue-600 font-bold">Premium на 30 дней</span> для полного погружения.</p>
+          <div className={`h-[1px] my-6 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-200/50'}`}></div>
+          <p className={`text-sm leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>
+            Продолжайте путь бесплатно с лимитами или активируйте <span className={`${userProfile.rpgMode ? 'text-red-800 font-bold' : 'text-indigo-600 font-extrabold'}`}>Premium на 30 дней</span> для полного раскрытия потенциала.
+          </p>
        </div>
        
        <div className="w-full space-y-4 mb-10">
-          <div className="flex items-center space-x-4 p-6 rounded-3xl bg-blue-50/50 border border-blue-100">
-             <div className="w-14 h-14 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-md shrink-0"><Zap size={28} /></div>
-             <div className="text-left flex-1"><p className="text-sm font-black uppercase text-blue-600">Безлимитные Решения</p><p className="text-[13px] text-slate-500 leading-tight">Снимает оковы сомнений. Идеально для тех, кто хочет принимать верные решения молниеносно.</p></div>
-          </div>
-          <div className="flex items-center space-x-4 p-6 rounded-3xl bg-rose-50/50 border border-rose-100">
-             <div className="w-14 h-14 rounded-2xl bg-rose-500 text-white flex items-center justify-center shadow-md shrink-0"><Heart size={28} /></div>
-             <div className="text-left flex-1"><p className="text-sm font-black uppercase text-rose-600">Безлимитные Состояния</p><p className="text-[13px] text-slate-500 leading-tight">Ваша эмоциональная гигиена. Помогает сохранять покой даже в самые штормовые дни.</p></div>
-          </div>
-          <div className="flex items-center space-x-4 p-6 rounded-3xl bg-amber-50/50 border border-amber-100">
-             <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shrink-0"><Sword size={28} /></div>
-             <div className="text-left flex-1"><p className="text-sm font-black uppercase text-amber-600">Ежедневные Квесты</p><p className="text-[13px] text-slate-500 leading-tight">Ваш путь героя. Регулярные испытания для глубокого самопознания через игру.</p></div>
-          </div>
+          {[
+            { id: '1', label: 'Безлимитные Решения', desc: 'Снимает оковы сомнений. Идеально для тех, кто ищет ясности.', icon: Zap, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-600', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
+            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
+            { id: '3', label: 'Ежедневные Квесты', desc: 'Ваш путь героя. Регулярные испытания мудрости.', icon: Sword, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-amber-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-amber-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' }
+          ].map(benefit => (
+            <div key={benefit.id} className={`flex items-center space-x-4 p-5 rounded-[32px] border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'glass-card border-white/30'}`}>
+               <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg shrink-0 ${benefit.color}`}><benefit.icon size={22} /></div>
+               <div className="text-left flex-1">
+                 <p className={`text-[11px] font-black uppercase tracking-wider mb-0.5 ${benefit.textColor}`}>{benefit.label}</p>
+                 <p className={`text-[12px] leading-snug opacity-70 ${userProfile.rpgMode ? 'text-red-950 font-medium' : 'text-slate-600'}`}>{benefit.desc}</p>
+               </div>
+            </div>
+          ))}
        </div>
 
-       <div className="w-full space-y-4 mb-20">
-          <button onClick={handlePay} disabled={isPaying} className={`w-full py-5 rounded-[28px] font-bold text-lg bg-blue-600 text-white shadow-xl flex items-center justify-center space-x-3 transition-all ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95'}`}>
-             {isPaying ? <Loader2 size={24} className="animate-spin" /> : <Star size={24} fill="currentColor" className="text-amber-400" />}
-             <span>{isPaying ? 'Вызов звёзд...' : 'Активировать за 1 Star'}</span>
+       <div className="w-full space-y-6 mb-24">
+          <button 
+            onClick={handlePay} 
+            disabled={isPaying} 
+            className={`w-full py-5 rounded-[32px] font-bold text-lg flex items-center justify-center space-x-3 transition-all transform duration-300 ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95 hover:scale-[1.02] shadow-2xl'} ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white shadow-slate-900/30'}`}
+          >
+             {isPaying ? <Loader2 size={24} className="animate-spin" /> : <Star size={24} fill="currentColor" className={userProfile.rpgMode ? 'text-white' : 'text-amber-400'} />}
+             <span className="tracking-tight">{isPaying ? 'Вызов звёзд...' : 'Активировать Premium'}</span>
           </button>
-          <div className="flex flex-col items-center space-y-1">
-             <p className="text-xs font-black uppercase tracking-widest text-slate-400">Доступ на 30 дней</p>
-             <button onClick={() => setCurrentView('HOME')} className="text-slate-400 font-bold text-base hover:text-slate-600 transition-colors pt-2 underline underline-offset-4">Вернуться назад</button>
+          
+          <div className="flex flex-col items-center space-y-2">
+             <div className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                <ShieldCheck size={14} />
+                <span>Безопасная оплата через Telegram Stars</span>
+             </div>
+             <button 
+               onClick={() => setCurrentView('HOME')} 
+               className={`text-base font-bold transition-colors pt-3 pb-2 border-b-2 ${userProfile.rpgMode ? 'text-red-800 border-red-800/20 hover:border-red-800' : 'text-indigo-400 border-indigo-50 hover:text-indigo-600 hover:border-indigo-100'}`}
+             >
+               Вернуться назад
+             </button>
           </div>
        </div>
     </div>
