@@ -382,7 +382,18 @@ const App: React.FC = () => {
 
   const handleStartQuest = async () => {
     if (!isQuestAvailable()) {
-        setCurrentView('SUBSCRIPTION');
+        if (!userProfile.isSubscribed) {
+          setCurrentView('SUBSCRIPTION');
+        } else {
+          // Если Premium пользователь кликает по уже пройденному квесту
+          const tg = window.Telegram?.WebApp;
+          const msg = "Вы уже прошли сегодняшний квест. Возвращайтесь завтра за новым испытанием!";
+          if (tg && tg.showAlert) {
+            tg.showAlert(msg);
+          } else {
+            alert(msg);
+          }
+        }
         return;
     }
     if (!userProfile.archetype) return;
@@ -560,7 +571,14 @@ const App: React.FC = () => {
           ].map(m => (
             <button key={m.id} onClick={() => { 
                 if (!checkModeLimit(m.id as JournalMode)) {
-                    setCurrentView('SUBSCRIPTION');
+                    if (userProfile.isSubscribed) {
+                      const tg = window.Telegram?.WebApp;
+                      const msg = "Дневной лимит сессий достигнут. Приходите завтра!";
+                      if (tg && tg.showAlert) tg.showAlert(msg);
+                      else alert(msg);
+                    } else {
+                      setCurrentView('SUBSCRIPTION');
+                    }
                     return;
                 }
                 setSelectedMode(m.id as any); 
