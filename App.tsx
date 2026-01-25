@@ -773,7 +773,7 @@ const App: React.FC = () => {
        <div className="w-full space-y-4 mb-10">
           {[
             { id: '1', label: 'Безлимитные Решения', desc: 'Снимает оковы сомнений. Идеально для тех, кто ищет ясности.', icon: Zap, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-600', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
-            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
+            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-50', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
             { id: '3', label: 'Ежедневные Квесты', desc: 'Ваш путь героя. Регулярные испытания мудрости.', icon: Sword, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-amber-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-amber-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' }
           ].map(benefit => (
             <div key={benefit.id} className={`flex items-center space-x-4 p-5 rounded-[32px] border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'glass-card border-white/30'}`}>
@@ -821,17 +821,25 @@ const App: React.FC = () => {
         {currentView === 'HOME' && renderHome()}
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { 
             setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); 
-            const minutes = Math.floor(d / 60); 
-            setUserProfile(p => ({...p, xp: p.xp + 1, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + minutes})); 
+            const minutes = Math.max(1, Math.ceil(d / 60)); 
+            setUserProfile(p => ({...p, xp: p.xp + minutes, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + minutes})); 
             reportEvent('session', { minutes, mode: 'REFLECTION' }); 
             if (i) reportEvent('journal_entry', { entryType: e.type });
-        }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={handleUpdateOrder} onBack={() => setCurrentView('HOME')} />}
+        }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={handleUpdateOrder} onBack={(totalSec) => {
+            const minutes = Math.max(1, Math.ceil(totalSec / 60));
+            // Only report if spent more than 10 seconds to avoid spam
+            if (totalSec > 10) {
+              reportEvent('session', { minutes, mode: 'REFLECTION' });
+              setUserProfile(p => ({...p, xp: p.xp + minutes, totalMinutes: p.totalMinutes + minutes}));
+            }
+            setCurrentView('HOME');
+        }} />}
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur) => { 
             setHistory(prev => [{id: Date.now().toString(), mode: selectedMode, date: Date.now(), duration: dur, preview: msgs.find(m => m.role === 'user')?.content || '', messages: msgs}, ...prev]); 
-            const minutes = Math.max(1, Math.floor(dur / 60)); 
+            const minutes = Math.max(1, Math.ceil(dur / 60)); 
             setUserProfile(p => ({
                 ...p, 
-                xp: p.xp + 1 + minutes, 
+                xp: p.xp + minutes, 
                 totalSessions: p.totalSessions + 1, 
                 totalMinutes: p.totalMinutes + minutes,
                 dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount,

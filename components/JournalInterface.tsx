@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
 import { JournalEntry, JournalEntryType } from '../types';
@@ -9,7 +9,7 @@ interface JournalInterfaceProps {
   onSaveEntry: (entry: JournalEntry, isNew: boolean, durationSeconds: number) => void;
   onDeleteEntry: (id: string) => void;
   onUpdateOrder: (entries: JournalEntry[]) => void;
-  onBack: () => void;
+  onBack: (totalDuration: number) => void;
   rpgMode?: boolean;
 }
 
@@ -232,7 +232,37 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<JournalEntryType | 'ALL'>('ALL');
   
-  const startTimeRef = useRef<number>(0);
+  // Advanced timer state
+  const [activeSeconds, setActiveSeconds] = useState(0);
+  const editorStartTimeRef = useRef<number>(0);
+  const lastTickRef = useRef<number>(Date.now());
+
+  // Track total active time in the section
+  useEffect(() => {
+    const tick = () => {
+      if (!document.hidden) {
+        const now = Date.now();
+        const delta = Math.round((now - lastTickRef.current) / 1000);
+        if (delta > 0 && delta < 10) { // Avoid huge jumps if computer was asleep
+          setActiveSeconds(prev => prev + delta);
+        }
+        lastTickRef.current = now;
+      } else {
+        lastTickRef.current = Date.now();
+      }
+    };
+
+    const interval = setInterval(tick, 1000);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) lastTickRef.current = Date.now();
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   const filteredEntries = useMemo(() => {
     return entries.filter(entry => {
@@ -246,14 +276,14 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
     setEditingId(null);
     setSelectedType('INSIGHT');
     setContent('');
-    startTimeRef.current = Date.now();
+    editorStartTimeRef.current = Date.now();
     setIsEditorOpen(true);
   };
 
   const handleSave = () => {
     if (!content.trim()) return;
     const isNew = editingId === null;
-    const duration = Math.round((Date.now() - startTimeRef.current) / 1000);
+    const duration = Math.round((Date.now() - editorStartTimeRef.current) / 1000);
     const entry: JournalEntry = {
       id: editingId || Date.now().toString(),
       date: isNew ? Date.now() : (entries.find(e => e.id === editingId)?.date || Date.now()),
@@ -342,7 +372,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
       }`}>
         <div className="flex items-center justify-between">
             <div className="flex items-center">
-                <button onClick={onBack} className={`p-2 -ml-2 rounded-full transition-colors ${
+                <button onClick={() => onBack(activeSeconds)} className={`p-2 -ml-2 rounded-full transition-colors ${
                   rpgMode ? 'text-red-800 hover:bg-red-800/10' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                 }`}>
                   <ArrowLeft size={20} />
@@ -402,7 +432,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                     setEditingId(e.id);
                     setSelectedType(e.type);
                     setContent(e.content);
-                    startTimeRef.current = Date.now();
+                    editorStartTimeRef.current = Date.now();
                     setIsEditorOpen(true);
                  }}
                  onDelete={onDeleteEntry}
