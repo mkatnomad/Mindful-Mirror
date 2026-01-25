@@ -99,7 +99,7 @@ const RANKS = [
 const QUESTIONS = [
   { q: 'Что для вас важнее всего в жизни?', options: ['Порядок и успех', 'Свобода и приключения', 'Любовь и близость', 'Знания и мудрость'] },
   { q: 'Как вы обычно реагируете на трудности?', options: ['Беру ответственность', 'Ищу новый путь', 'Помогаю другим', 'Анализирую причины'] },
-  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с семьей', 'Чтение и размышления'] },
+  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с family', 'Чтение и размышления'] },
   { q: 'Чего вы боитесь больше всего?', options: ['Хаоса и слабости', 'Ограничений и скуки', 'Одиночества и предательства', 'Невежества и обмана'] },
   { q: 'Ваша главная цель...', options: ['Оставить след в истории', 'Найти свое истинное Я', 'Сделать мир добрее', 'Понять суть вещей'] },
   { q: 'Как вы ведете себя в компании?', options: ['Беру роль лидера', 'Делюсь открытиями', 'Забочусь о комфорте', 'Наблюдаю за всеми'] },
@@ -550,7 +550,7 @@ const App: React.FC = () => {
 
   const renderHome = () => (
     <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8FAFC]'}`}>
-      <div className="px-6 pt-6 mb-6 flex justify-between items-center">
+      <div className="px-6 pt-6 mb-8 flex justify-between items-center">
         <div className="flex items-center space-x-3">
           <div className={`w-11 h-11 rounded-full overflow-hidden bg-white shadow-sm border-2 ${userProfile.rpgMode ? 'border-red-800' : 'border-white'} cursor-pointer`} onClick={() => setCurrentView('PROFILE')}>
             {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={22} className="m-2.5 text-slate-300" />}
@@ -585,25 +585,43 @@ const App: React.FC = () => {
                 setViewingHistorySession(null); 
                 setCurrentView('CHAT'); 
             }} className="flex flex-col items-center space-y-3">
-              <div className={`w-full aspect-square rounded-[28px] border flex items-center justify-center active:scale-95 transition-all duration-300 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100 shadow-sm'}`}><m.icon size={30} className={m.color} /></div>
-              <span className={`text-[11px] font-bold uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-400'}`}>{m.label}</span>
+              <div className={`w-full aspect-square rounded-[32px] border flex items-center justify-center active:scale-95 transition-all duration-300 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100 shadow-md shadow-indigo-100/50'}`}>
+                <m.icon size={34} className={m.color} />
+              </div>
+              <span className={`text-xs font-black uppercase tracking-[0.15em] ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-600'}`}>{m.label}</span>
             </button>
           ))}
         </div>
       </div>
 
       <div className="px-6 mb-6">
-         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
-            <div className="absolute top-8 right-8"><ChevronRight size={24} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
-            <div className="flex items-center space-x-5 mb-10">
-               <div className="w-16 h-16 rounded-3xl bg-[#F0FDFA] flex items-center justify-center"><TreeIcon stage={RANKS.indexOf(currentRank)} size={52} /></div>
-               <div><p className={`text-[10px] font-bold uppercase tracking-widest mb-1 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'}`}>Древо сознания</p><h4 className={`text-2xl font-bold ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4></div>
+         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-5 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
+            <div className="absolute top-5 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
+            <div className="flex items-center space-x-4 mb-5">
+               <div className="w-11 h-11 rounded-2xl bg-[#F0FDFA] flex items-center justify-center shrink-0">
+                 <TreeIcon stage={RANKS.indexOf(currentRank)} size={36} />
+               </div>
+               <div>
+                 <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Прогресс роста</p>
+                 <h4 className={`text-base font-bold tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
+               </div>
             </div>
-            <div className={`h-1.5 w-full rounded-full overflow-hidden mb-6 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}><div className={`h-full transition-all duration-1000 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (userProfile.xp / (RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000)) * 100)}%` }}></div></div>
+            <div className={`h-1 w-full rounded-full overflow-hidden mb-4 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}>
+              <div className={`h-full transition-all duration-1000 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (userProfile.xp / (RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000)) * 100)}%` }}></div>
+            </div>
             <div className="grid grid-cols-3 gap-2 text-center">
-               <div><p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Опыт</p><p className={`font-black text-xl ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.xp}</p></div>
-               <div className={`border-x ${userProfile.rpgMode ? 'border-red-800/20' : 'border-slate-100'}`}><p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Сессии</p><p className={`font-black text-xl ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.totalSessions}</p></div>
-               <div><p className="text-[9px] uppercase font-bold text-slate-400 mb-1">Минуты</p><p className={`font-black text-xl ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.totalMinutes}</p></div>
+               <div>
+                 <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">XP</p>
+                 <p className={`font-bold text-sm ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.xp}</p>
+               </div>
+               <div className={`border-x ${userProfile.rpgMode ? 'border-red-800/10' : 'border-slate-100'}`}>
+                 <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Сессии</p>
+                 <p className={`font-bold text-sm ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.totalSessions}</p>
+               </div>
+               <div>
+                 <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Мин.</p>
+                 <p className={`font-bold text-sm ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.totalMinutes}</p>
+               </div>
             </div>
          </button>
       </div>
