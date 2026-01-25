@@ -6,13 +6,11 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Hash, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Sparkle as SparkleIcon, ZapOff, Gift } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Sparkle as SparkleIcon, ZapOff, Gift } from 'lucide-react';
 
-// === КОНСТАНТЫ ЛИМИТОВ ===
 const FREE_DECISIONS_PER_DAY = 2;
 const FREE_EMOTIONS_PER_DAY = 1;
 const PREMIUM_MAX_PER_DAY = 25; 
-// ========================
 
 const ADMIN_ID = 379881747; 
 
@@ -119,7 +117,7 @@ const App: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [appStats, setAppStats] = useState<{ total: number, premium: number, sessions: number, minutes: number, archetypes: Record<string, number> }>({ total: 0, premium: 0, sessions: 0, minutes: 0, archetypes: {} });
+  const [appStats, setAppStats] = useState<any>({ total: 0, premium: 0, sessions: 0, minutes: 0, archetypes: {} });
   
   const [userProfile, setUserProfile] = useState<UserProfile>({ 
     name: '', avatarUrl: null, isSetup: true, isRegistered: false, archetype: null, xp: 0, 
@@ -143,7 +141,6 @@ const App: React.FC = () => {
 
   const getTelegramUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
-  // Логика проверки и сброса лимитов
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     if (userProfile.lastUsageDate !== today) {
@@ -366,7 +363,7 @@ const App: React.FC = () => {
         }));
 
         setUserProfile(prev => ({ ...prev, archetype: mainArc, secondaryArchetypes: secondary }));
-        reportEvent('archetype', { name: mainArc.name });
+        reportEvent('test_finished', { name: mainArc.name });
         setCurrentView('ARCHETYPE_RESULT');
         setLocalSelectedIdx(null);
       }
@@ -415,7 +412,6 @@ const App: React.FC = () => {
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
   };
 
-  // Компонент расширенной карточки архетипа для унификации
   const ArchetypeCard = ({ archetype, expanded, onToggle, showReset, isProfile = false }: { archetype: Archetype, expanded: boolean, onToggle: () => void, showReset?: boolean, isProfile?: boolean }) => {
     return (
       <div 
@@ -596,7 +592,7 @@ const App: React.FC = () => {
 
       <div className="px-6 mb-10">
         {!userProfile.archetype ? (
-          <div className={`rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`} onClick={() => { setTestQuestionIdx(0); setTestAnswers([]); setCurrentView('ARCHETYPE_TEST'); }}>
+          <div className={`rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`} onClick={() => { setTestQuestionIdx(0); setTestAnswers([]); reportEvent('test_started', {}); setCurrentView('ARCHETYPE_TEST'); }}>
             <div className="flex items-center space-x-2 mb-3"><Sparkles size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /><p className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} text-[10px] font-bold uppercase tracking-widest`}>Первый шаг</p></div>
             <h2 className={`text-[26px] font-black mb-2 leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Узнать архетип и пройти квест</h2>
             <p className={`text-xs ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>Раскройте свою истинную суть и начните свое легендарное путешествие.</p>
@@ -750,7 +746,13 @@ const App: React.FC = () => {
     <div className={`h-screen w-full overflow-hidden flex flex-col font-sans relative transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8FAFC]'}`}>
       <main className="flex-1 relative overflow-hidden z-10">
         {currentView === 'HOME' && renderHome()}
-        {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); const minutes = Math.floor(d / 60); setUserProfile(p => ({...p, xp: p.xp + 1, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + minutes})); reportEvent('session', { minutes }); }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={handleUpdateOrder} onBack={() => setCurrentView('HOME')} />}
+        {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { 
+            setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); 
+            const minutes = Math.floor(d / 60); 
+            setUserProfile(p => ({...p, xp: p.xp + 1, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + minutes})); 
+            reportEvent('session', { minutes, mode: 'REFLECTION' }); 
+            if (i) reportEvent('journal_entry', { entryType: e.type });
+        }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={handleUpdateOrder} onBack={() => setCurrentView('HOME')} />}
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur) => { 
             setHistory(prev => [{id: Date.now().toString(), mode: selectedMode, date: Date.now(), duration: dur, preview: msgs.find(m => m.role === 'user')?.content || '', messages: msgs}, ...prev]); 
             const minutes = Math.max(1, Math.floor(dur / 60)); 
@@ -762,7 +764,7 @@ const App: React.FC = () => {
                 dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount,
                 dailyEmotionsCount: selectedMode === 'EMOTIONS' ? p.dailyEmotionsCount + 1 : p.dailyEmotionsCount
             })); 
-            reportEvent('session', { minutes }); 
+            reportEvent('session', { minutes, mode: selectedMode }); 
         }} />}
         {currentView === 'ARCHETYPE_TEST' && (
            <div className={`h-full p-8 flex flex-col animate-fade-in transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-white'}`}>

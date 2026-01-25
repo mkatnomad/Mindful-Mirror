@@ -1,11 +1,11 @@
+
 import React, { useState } from 'react';
-// Added Star to the import list from lucide-react
-import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star, PieChart, TrendingUp, Sparkles, BookOpen } from 'lucide-react';
 import { SiteConfig } from '../types';
 
 interface AdminInterfaceProps {
   config: SiteConfig;
-  stats: { total: number, premium: number, sessions: number, minutes: number, archetypes: Record<string, number> };
+  stats: any;
   onSave: (newConfig: SiteConfig) => void;
   onBack: () => void;
   onGift: (userId: string) => void;
@@ -67,6 +67,35 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
     setEditedConfig({ ...editedConfig, [field]: null });
   };
 
+  const renderSegmentedStat = (label: string, data: Record<string, number>, colorMap: Record<string, string>) => {
+    const total = Object.values(data).reduce((a, b) => a + b, 0) || 1;
+    return (
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+        <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">{label}</h4>
+        <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex">
+          {Object.entries(data).map(([key, val]) => (
+            <div 
+              key={key} 
+              style={{ width: `${(val / total) * 100}%` }} 
+              className={`${colorMap[key] || 'bg-slate-300'} h-full transition-all`}
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-2">
+           {Object.entries(data).map(([key, val]) => (
+             <div key={key} className="flex items-center justify-between text-[11px] font-bold">
+               <div className="flex items-center space-x-2">
+                 <div className={`w-2 h-2 rounded-full ${colorMap[key] || 'bg-slate-300'}`} />
+                 <span className="text-slate-500">{key === 'DECISION' ? 'Решения' : key === 'EMOTIONS' ? 'Состояния' : key === 'REFLECTION' ? 'Дневник' : key}</span>
+               </div>
+               <span className="text-slate-800">{val} ({Math.round((val / total) * 100)}%)</span>
+             </div>
+           ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#F8FAFC] animate-fade-in relative z-[200]">
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100 sticky top-0 z-10">
@@ -87,7 +116,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
 
       <div className="flex p-4 space-x-2 bg-white border-b border-slate-100 overflow-x-auto no-scrollbar">
         {[
-          { id: 'STATS', label: 'Статистика' },
+          { id: 'STATS', label: 'Аналитика' },
           { id: 'GENERAL', label: 'Общее' },
           { id: 'DESIGN', label: 'Брендинг' },
           { id: 'ABOUT', label: 'Контент' },
@@ -119,15 +148,65 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Premium</p>
                    <p className="text-3xl font-black text-slate-800">{stats.premium}</p>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                   <BarChart3 className="text-emerald-500 mb-3" size={24} />
-                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Сессии</p>
-                   <p className="text-3xl font-black text-slate-800">{stats.sessions}</p>
+             </div>
+
+             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center space-x-2">
+                   <TrendingUp size={14} className="text-indigo-500" />
+                   <span>Воронка теста архетипов</span>
+                </h3>
+                <div className="space-y-4">
+                   <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                      <span>Начали тест</span>
+                      <span>{stats.testStarts || 0}</span>
+                   </div>
+                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className="bg-indigo-400 h-full w-full" />
+                   </div>
+                   <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                      <span>Завершили</span>
+                      <span>{stats.testFinished || 0} ({stats.testStarts ? Math.round((stats.testFinished / stats.testStarts) * 100) : 0}%)</span>
+                   </div>
+                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div 
+                        className="bg-emerald-500 h-full transition-all" 
+                        style={{ width: `${stats.testStarts ? (stats.testFinished / stats.testStarts) * 100 : 0}%` }} 
+                      />
+                   </div>
                 </div>
-                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                   <Clock className="text-rose-500 mb-3" size={24} />
-                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Минут</p>
-                   <p className="text-3xl font-black text-slate-800">{stats.minutes}</p>
+             </div>
+
+             {renderSegmentedStat("Распределение сессий", stats.segmentedSessions || {}, {
+               'DECISION': 'bg-amber-400',
+               'EMOTIONS': 'bg-rose-500',
+               'REFLECTION': 'bg-emerald-500'
+             })}
+
+             {renderSegmentedStat("Время в разделах (мин)", stats.segmentedMinutes || {}, {
+               'DECISION': 'bg-amber-400',
+               'EMOTIONS': 'bg-rose-500',
+               'REFLECTION': 'bg-emerald-500'
+             })}
+
+             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-4 flex items-center space-x-2">
+                   <BookOpen size={14} className="text-emerald-500" />
+                   <span>Типы записей Дневника</span>
+                </h3>
+                <div className="grid grid-cols-3 gap-2">
+                   {['INSIGHT', 'GRATITUDE', 'INTENTION'].map(type => {
+                     const count = (stats.journalTypes || {})[type] || 0;
+                     const total = Object.values(stats.journalTypes || {}).reduce((a: any, b: any) => a + b, 0) || 1;
+                     return (
+                       <div key={type} className="text-center p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-tighter mb-1">
+                            {type === 'INSIGHT' ? 'Инсайт' : type === 'GRATITUDE' ? 'Благод.' : 'Намер.'}
+                          </p>
+                          <p className="text-lg font-black text-slate-800">{count}</p>
+                          <p className="text-[9px] text-slate-400 font-bold">{Math.round((count / (total as number)) * 100)}%</p>
+                       </div>
+                     );
+                   })}
                 </div>
              </div>
 
@@ -137,10 +216,10 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
                    <span>Популярные архетипы</span>
                 </h3>
                 <div className="space-y-3">
-                   {Object.entries(stats.archetypes).sort((a,b) => b[1] - a[1]).map(([name, count]) => (
+                   {Object.entries(stats.archetypes || {}).sort((a: any,b: any) => b[1] - a[1]).map(([name, count]) => (
                       <div key={name} className="flex items-center justify-between">
                          <span className="text-sm font-bold text-slate-700">{name}</span>
-                         <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{count}</span>
+                         <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">{count as number}</span>
                       </div>
                    ))}
                 </div>
@@ -177,20 +256,13 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
         {activeTab === 'DESIGN' && (
           <div className="space-y-8">
             <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Визуальные элементы</h3>
-            
-            {/* Logo Upload */}
             <div className="space-y-4">
               <label className="block text-sm font-bold text-slate-700">Логотип ("О приложении")</label>
               <div className="relative group w-full aspect-video bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-indigo-200">
                 {editedConfig.customLogoUrl ? (
                   <>
                     <img src={editedConfig.customLogoUrl} className="max-w-[120px] max-h-[120px] object-contain" alt="Current Logo" />
-                    <button 
-                      onClick={() => removeImage('customLogoUrl')}
-                      className="absolute top-4 right-4 p-2 bg-white text-rose-500 rounded-full shadow-lg hover:bg-rose-50"
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <button onClick={() => removeImage('customLogoUrl')} className="absolute top-4 right-4 p-2 bg-white text-rose-500 rounded-full shadow-lg hover:bg-rose-50"><Trash2 size={18} /></button>
                   </>
                 ) : (
                   <div className="text-center p-8">
@@ -200,32 +272,6 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
                 )}
                 <label className="absolute inset-0 cursor-pointer">
                   <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => handleImageUpload(e, 'customLogoUrl')} />
-                </label>
-              </div>
-            </div>
-
-            {/* Watermark Upload */}
-            <div className="space-y-4">
-              <label className="block text-sm font-bold text-slate-700">Водяной знак (Шапка)</label>
-              <div className="relative group w-full aspect-video bg-slate-50 rounded-[32px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center overflow-hidden transition-colors hover:border-indigo-200">
-                {editedConfig.customWatermarkUrl ? (
-                  <>
-                    <img src={editedConfig.customWatermarkUrl} className="max-w-[200px] max-h-[100px] object-contain opacity-40 grayscale" alt="Current Watermark" />
-                    <button 
-                      onClick={() => removeImage('customWatermarkUrl')}
-                      className="absolute top-4 right-4 p-2 bg-white text-rose-500 rounded-full shadow-lg hover:bg-rose-50"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </>
-                ) : (
-                  <div className="text-center p-8">
-                    <ImageIcon size={48} className="mx-auto text-slate-300 mb-4" />
-                    <p className="text-sm text-slate-400 font-medium">Рекомендуется PNG с белым контуром</p>
-                  </div>
-                )}
-                <label className="absolute inset-0 cursor-pointer">
-                  <input type="file" accept="image/png,image/jpeg" className="hidden" onChange={(e) => handleImageUpload(e, 'customWatermarkUrl')} />
                 </label>
               </div>
             </div>
@@ -263,41 +309,6 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
           </div>
         )}
 
-        {activeTab === 'QUOTES' && (
-          <div className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Цитаты</h3>
-              <button onClick={addQuote} className="text-indigo-600 text-xs font-bold flex items-center space-x-1">
-                <Plus size={14} />
-                <span>Добавить</span>
-              </button>
-            </div>
-            {editedConfig.quotes.map((q, i) => (
-              <div key={i} className="p-4 bg-white border border-slate-200 rounded-2xl space-y-3 relative">
-                <textarea 
-                  placeholder="Текст цитаты"
-                  value={q.text}
-                  onChange={(e) => updateQuote(i, 'text', e.target.value)}
-                  className="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-1 focus:ring-indigo-500 text-sm italic"
-                />
-                <input 
-                  type="text" 
-                  placeholder="Автор"
-                  value={q.author}
-                  onChange={(e) => updateQuote(i, 'author', e.target.value)}
-                  className="w-full p-3 bg-slate-50 border-none rounded-xl focus:ring-1 focus:ring-indigo-500 text-xs font-bold"
-                />
-                <button 
-                  onClick={() => removeQuote(i)}
-                  className="absolute -top-2 -right-2 bg-white border border-slate-200 text-rose-500 p-1.5 rounded-full shadow-sm"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-
         {activeTab === 'SECURITY' && (
           <div className="space-y-6">
             <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Безопасность</h3>
@@ -315,10 +326,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
               </div>
             </div>
             <div className="pt-4 border-t border-slate-100">
-               <button 
-                onClick={onReset}
-                className="w-full py-4 rounded-2xl bg-rose-50 text-rose-600 text-sm font-bold flex items-center justify-center space-x-2 border border-rose-100"
-               >
+               <button onClick={onReset} className="w-full py-4 rounded-2xl bg-rose-50 text-rose-600 text-sm font-bold flex items-center justify-center space-x-2 border border-rose-100">
                  <RefreshCcw size={16} />
                  <span>Сбросить текущий статус (тест)</span>
                </button>
@@ -329,7 +337,6 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
         {activeTab === 'GIFT' && (
           <div className="space-y-6 animate-fade-in">
             <h3 className="font-bold text-slate-800 text-sm border-l-4 border-indigo-500 pl-3 uppercase tracking-wider">Вручить дар</h3>
-            <p className="text-xs text-slate-500 leading-relaxed">Здесь вы можете вручную активировать Premium статус для любого пользователя на 30 дней.</p>
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2">Telegram User ID</label>
               <input 
@@ -337,7 +344,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
                 value={giftId}
                 onChange={(e) => setGiftId(e.target.value)}
                 className="w-full p-4 bg-white border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 font-mono"
-                placeholder="Напр: 379881747"
+                placeholder="379881747"
               />
             </div>
             <button 

@@ -15,33 +15,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return r.json();
     };
 
-    const [all, prem, sess, mins, archs] = await Promise.all([
+    const [all, prem, sess, mins, archs, segSess, segMins, jTypes, tStarts, tFinished] = await Promise.all([
       fetchKV('scard/all_users'),
       fetchKV('scard/premium_users'),
       fetchKV('get/global_sessions'),
       fetchKV('get/global_minutes'),
-      fetchKV('hgetall/archetype_counts')
+      fetchKV('hgetall/archetype_counts'),
+      fetchKV('hgetall/stats:sessions'),
+      fetchKV('hgetall/stats:minutes'),
+      fetchKV('hgetall/stats:journal_types'),
+      fetchKV('get/stats:test_starts'),
+      fetchKV('get/stats:test_finished')
     ]);
 
-    // Обработка формата hgetall (он может возвращать массив или объект)
-    const archetypesRaw = archs.result || [];
-    const archetypes: Record<string, number> = {};
-    if (Array.isArray(archetypesRaw)) {
-      for (let i = 0; i < archetypesRaw.length; i += 2) {
-        archetypes[archetypesRaw[i]] = parseInt(archetypesRaw[i+1]) || 0;
+    const parseHash = (raw: any) => {
+      const data = raw.result || [];
+      const result: Record<string, number> = {};
+      if (Array.isArray(data)) {
+        for (let i = 0; i < data.length; i += 2) {
+          result[data[i]] = parseInt(data[i+1]) || 0;
+        }
+      } else {
+        Object.entries(data).forEach(([k, v]) => {
+          result[k] = parseInt(v as string) || 0;
+        });
       }
-    } else {
-      Object.entries(archetypesRaw).forEach(([k, v]) => {
-        archetypes[k] = parseInt(v as string) || 0;
-      });
-    }
+      return result;
+    };
 
     return res.status(200).json({ 
       total: all.result || 0, 
       premium: prem.result || 0,
       sessions: parseInt(sess.result) || 0,
       minutes: parseInt(mins.result) || 0,
-      archetypes
+      archetypes: parseHash(archs),
+      segmentedSessions: parseHash(segSess),
+      segmentedMinutes: parseHash(segMins),
+      journalTypes: parseHash(jTypes),
+      testStarts: parseInt(tStarts.result) || 0,
+      testFinished: parseInt(tFinished.result) || 0
     });
   } catch (e) {
     return res.status(500).json({ total: 0, premium: 0, sessions: 0, minutes: 0, archetypes: {} });
