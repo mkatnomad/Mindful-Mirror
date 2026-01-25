@@ -10,7 +10,8 @@ import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Sparkle as SparkleIcon, ZapOff, Gift } from 'lucide-react';
 
 const FREE_DECISIONS_PER_DAY = 2;
-const FREE_EMOTIONS_PER_DAY = 1;
+const FREE_EMOTIONS_PER_DAY = 2;
+const WELCOME_BONUS_LIMIT = 5;
 const PREMIUM_MAX_PER_DAY = 25; 
 
 const ADMIN_ID = 379881747; 
@@ -58,7 +59,7 @@ const TreeIcon = ({ stage, size = 40 }: { stage: number, size?: number }) => {
     <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F0FDFA"/><circle cx="50" cy="50" r="30" fill="#FEF3C7"/><path d="M50 45C50 45 55 42 55 48C55 54 50 60 50 60C50 60 45 54 45 48C45 42 50 45 50 45Z" fill="#D97706"/></svg>,
     <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#ECFDF5"/><path d="M50 75V55" stroke="#059669" strokeWidth="5" strokeLinecap="round"/><path d="M50 55C50 55 65 52 65 42C65 32 50 45 50 45" fill="#10B981"/></svg>,
     <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F0FDF4"/><path d="M50 75V40" stroke="#059669" strokeWidth="5" strokeLinecap="round"/><path d="M50 55C50 55 68 50 68 40C68 30 50 48 50 48" fill="#34D399"/><path d="M50 45C50 45 32 40 32 30" fill="#10B981"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F0F9FF"/><path d="M50 85V50" stroke="#92400E" strokeWidth="6" strokeLinecap="round"/><circle cx="50" cy="35" r="22" fill="#10B981"/></svg>,
+    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="35" r="22" fill="#10B981"/></svg>,
     <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F5F3FF"/><path d="M50 90V55" stroke="#78350F" strokeWidth="7" strokeLinecap="round"/><circle cx="50" cy="40" r="25" fill="#059669"/><circle cx="35" cy="50" r="16" fill="#10B981"/></svg>,
     <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#FDF2F8"/><path d="M50 90V60" stroke="#78350F" strokeWidth="9" strokeLinecap="round"/><circle cx="50" cy="38" r="30" fill="#065F46"/><circle cx="30" cy="48" r="20" fill="#059669"/></svg>,
     <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#EFF6FF"/><path d="M50 92V70" stroke="#451A03" strokeWidth="11" strokeLinecap="round"/><path d="M50 70L25 50M50 70L75 50" stroke="#451A03" strokeWidth="6" strokeLinecap="round"/><circle cx="50" cy="32" r="26" fill="#064E3B"/></svg>,
@@ -261,8 +262,14 @@ const App: React.FC = () => {
         if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < PREMIUM_MAX_PER_DAY;
         return true;
     }
-    if (mode === 'DECISION') return userProfile.dailyDecisionCount < FREE_DECISIONS_PER_DAY;
-    if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < FREE_EMOTIONS_PER_DAY;
+    
+    // Welcome Bonus check (first 24h)
+    const isWelcomePeriod = userProfile.firstRunDate && (Date.now() - userProfile.firstRunDate < 24 * 60 * 60 * 1000);
+    const freeLimitDecisions = isWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_DECISIONS_PER_DAY;
+    const freeLimitEmotions = isWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
+
+    if (mode === 'DECISION') return userProfile.dailyDecisionCount < freeLimitDecisions;
+    if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < freeLimitEmotions;
     return true; 
   };
 
@@ -395,7 +402,6 @@ const App: React.FC = () => {
         if (!userProfile.isSubscribed) {
           setCurrentView('SUBSCRIPTION');
         } else {
-          // Если Premium пользователь кликает по уже пройденному квесту
           const tg = window.Telegram?.WebApp;
           const msg = "Вы уже прошли сегодняшний квест. Возвращайтесь завтра за новым испытанием!";
           if (tg && tg.showAlert) {
@@ -754,8 +760,8 @@ const App: React.FC = () => {
        <div className={`p-8 rounded-[40px] border mb-10 w-full transition-all ${userProfile.rpgMode ? 'rpg-card border-red-800/20 shadow-none' : 'glass-card border-white/40 shadow-none'}`}>
           <p className={`text-[10px] font-black uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>Текущий статус: Странник</p>
           <div className="flex flex-col space-y-4 text-[15px] font-bold">
-             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Решения:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600'}>2 / день</span></div>
-             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Состояния:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-rose-500'}>1 / день</span></div>
+             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Решения:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600'}>{FREE_DECISIONS_PER_DAY} / день</span></div>
+             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Состояния:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-rose-500'}>{FREE_EMOTIONS_PER_DAY} / день</span></div>
              <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>3 всего</span></div>
           </div>
           <div className={`h-[1px] my-6 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-200/50'}`}></div>
