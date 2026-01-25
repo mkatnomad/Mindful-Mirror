@@ -38,41 +38,51 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const isInitialized = useRef(false);
 
   // Decision States
-  const [decisionStep, setDecisionStep] = useState<number>(0); 
+  // 1: Topic/Compare Input, 2: Pro/Con Collection, 3: Loading Analysis, 4: Result/Chat
+  const [decisionStep, setDecisionStep] = useState<number>(1); 
   const [activeSide, setActiveSide] = useState<'A' | 'B'>('A');
   const [decisionData, setDecisionData] = useState<DecisionData>({ 
     topic: '', pros: [], cons: [], decisionType: 'SINGLE', optionA: '', optionB: '' 
   });
 
   useEffect(() => {
+    if (isInitialized.current) return;
+
     if (readOnly && initialMessages && initialMessages.length > 0) {
       setMessages(initialMessages);
       const cardMsg = initialMessages.find(m => m.type === 'decision-card');
       if (cardMsg?.decisionData) {
         setDecisionData(cardMsg.decisionData);
-        setDecisionStep(4); // View mode
+        setDecisionStep(4);
       }
+      isInitialized.current = true;
       return;
     }
 
+    let greeting = "";
     if (mode === 'DECISION') {
-      setDecisionStep(0); // Start with selection
+      setDecisionStep(1);
+      greeting = rpgMode 
+        ? "Что стоит на кону? Опишите дилемму или два пути, между которыми колеблетесь (например: «Меч или Магия»)."
+        : "О чем вы размышляете? Опишите ситуацию или варианты для сравнения (например: «Работа или Фриланс»).";
     } else {
-      let greeting = mode === 'EMOTIONS' 
+      greeting = mode === 'EMOTIONS' 
         ? (rpgMode ? "Приветствую. Какая буря бушует в вашей душе? Опишите свои чувства." : "Привет. Какие эмоции вы испытываете сейчас?")
         : (rpgMode ? "Присядьте у очага. Расскажите о своих подвигах за день." : "Давайте немного замедлимся. Как прошел ваш день?");
-
-      setMessages([{
-        id: 'init',
-        role: 'assistant',
-        content: greeting,
-        timestamp: Date.now()
-      }]);
     }
+
+    setMessages([{
+      id: 'init',
+      role: 'assistant',
+      content: greeting,
+      timestamp: Date.now()
+    }]);
     
     startTimeRef.current = Date.now();
+    isInitialized.current = true;
   }, [mode, readOnly, initialMessages, rpgMode]);
 
   useEffect(() => {
@@ -84,12 +94,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [messages, isLoading, decisionStep]);
 
-  // Focus input on step changes
+  // Auto-focus input on mount or step change
   useEffect(() => {
-    if (decisionStep > 0 && decisionStep < 3 && inputRef.current) {
+    if (!readOnly && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [decisionStep, decisionData.optionA]);
+  }, [decisionStep, readOnly]);
 
   const handleBack = () => {
     if (!readOnly && onSessionComplete && (messages.length > 1 || decisionStep > 2)) {
@@ -99,38 +109,41 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onBack();
   };
 
-  const startDecision = (type: 'SINGLE' | 'COMPARE') => {
-    setDecisionData({ 
-      topic: '', pros: [], cons: [], decisionType: type, optionA: '', optionB: '' 
-    });
-    setDecisionStep(1);
-  };
-
   const handleSend = async () => {
-    if (!input.trim() || readOnly) return;
+    const text = input.trim();
+    if (!text || readOnly) return;
 
     if (mode === 'DECISION') {
       if (decisionStep === 1) {
-        const text = input.trim();
-        if (decisionData.decisionType === 'SINGLE') {
-          setDecisionData(prev => ({ ...prev, topic: text }));
-          setDecisionStep(2);
-        } else {
-          if (!decisionData.optionA) {
-            setDecisionData(prev => ({ ...prev, optionA: text }));
-            setInput('');
-            return;
-          } else {
-            setDecisionData(prev => ({ ...prev, optionB: text, topic: `${decisionData.optionA} или ${text}` }));
-            setDecisionStep(2);
-          }
-        }
+        // Simple logic to detect comparison: "A vs B" or "A or B"
+        const compareRegex = /(.+?)\s+(?:или|vs|против|or|или же)\s+(.+)/i;
+        const match = text.match(compareRegex);
+        
+        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
+        setMessages(prev => [...prev, userMsg]);
         setInput('');
+
+        if (match) {
+          setDecisionData(prev => ({ 
+            ...prev, 
+            decisionType: 'COMPARE', 
+            optionA: match[1].trim(), 
+            optionB: match[2].trim(),
+            topic: text
+          }));
+        } else {
+          setDecisionData(prev => ({ 
+            ...prev, 
+            decisionType: 'SINGLE', 
+            topic: text 
+          }));
+        }
+        
+        setDecisionStep(2);
         return;
       }
 
       if (decisionStep === 2) {
-        const text = input.trim();
         if (activeSide === 'A') {
           setDecisionData(prev => ({ ...prev, pros: [...prev.pros, text] }));
         } else {
@@ -140,24 +153,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         return;
       }
 
-      // If already analyzed (step 4), allow refinement chat
       if (decisionStep === 4) {
-        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: Date.now() };
+        const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setIsLoading(true);
         try {
-          const { text, data } = await refineDecision(decisionData, userMsg.content);
+          const { text: analysis, data } = await refineDecision(decisionData, userMsg.content);
           setDecisionData(data);
-          setMessages(prev => [...prev, { id: Date.now().toString(), role: 'assistant', content: text, timestamp: Date.now() }, { id: (Date.now()+1).toString(), role: 'assistant', content: '', type: 'decision-card', decisionData: data, timestamp: Date.now() }]);
+          setMessages(prev => [...prev, 
+            { id: Date.now().toString(), role: 'assistant', content: analysis, timestamp: Date.now() }, 
+            { id: (Date.now()+1).toString(), role: 'assistant', content: '', type: 'decision-card', decisionData: data, timestamp: Date.now() }
+          ]);
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
         return;
       }
     }
 
-    // Default chat logic for EMOTIONS/REFLECTION
-    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: input, timestamp: Date.now() };
+    // Default chat logic
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setIsLoading(true);
@@ -184,7 +199,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const performAnalysis = async () => {
     setIsLoading(true);
-    setDecisionStep(3); // Loading state
+    setDecisionStep(3);
     try {
       const analysisText = await analyzeDecision(decisionData);
       const resultMsg: Message = {
@@ -201,58 +216,32 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         decisionData: decisionData,
         timestamp: Date.now() + 10
       };
-      setMessages([resultMsg, cardMsg]);
-      setDecisionStep(4); // Result shown
+      setMessages(prev => [...prev, resultMsg, cardMsg]);
+      setDecisionStep(4);
     } catch (e) {
       console.error(e);
-      setDecisionStep(2); // Go back if error
+      setDecisionStep(2);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const renderDecisionSelector = () => (
-    <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 animate-fade-in">
-      <div className="text-center">
-        <div className={`w-16 h-16 rounded-full mx-auto mb-6 flex items-center justify-center ${rpgMode ? 'rpg-button' : 'bg-indigo-600 text-white shadow-xl shadow-indigo-100'}`}>
-          <Zap size={32} />
-        </div>
-        <h2 className={`text-3xl font-black mb-2 italic tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-          Алхимия выбора
-        </h2>
-        <p className="text-sm text-slate-400 font-medium max-w-[240px] mx-auto">Выберите способ, которым мы исследуем ваше сомнение</p>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 w-full max-w-xs">
-        <button onClick={() => startDecision('SINGLE')} className={`p-6 rounded-[32px] border-2 text-left flex items-start space-x-4 transition-all active:scale-[0.97] ${rpgMode ? 'rpg-card' : 'bg-white border-slate-100 hover:border-indigo-100 hover:shadow-lg'}`}>
-          <div className={`p-3 rounded-2xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-emerald-50 text-emerald-600'}`}><Scale size={24} /></div>
-          <div><h4 className="font-bold text-slate-800">Взвесить решение</h4><p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-widest">Анализ За и Против</p></div>
-        </button>
-        
-        <button onClick={() => startDecision('COMPARE')} className={`p-6 rounded-[32px] border-2 text-left flex items-start space-x-4 transition-all active:scale-[0.97] ${rpgMode ? 'rpg-card' : 'bg-white border-slate-100 hover:border-indigo-100 hover:shadow-lg'}`}>
-          <div className={`p-3 rounded-2xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-blue-50 text-blue-600'}`}><Columns size={24} /></div>
-          <div><h4 className="font-bold text-slate-800">Выбрать лучшее</h4><p className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-widest">Сравнение А и Б</p></div>
-        </button>
-      </div>
-    </div>
-  );
-
   const renderBubbleCollector = () => (
     <div className="flex flex-col h-full animate-fade-in">
       <div className="p-6 pb-2">
-        <div className="flex items-center space-x-2 mb-4">
+        <div className="flex items-center space-x-2 mb-2">
           <Info size={14} className="text-indigo-400" />
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Шаг 2: Сбор мыслей</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Сбор аргументов</p>
         </div>
-        <h3 className={`text-2xl font-black italic tracking-tighter leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+        <h3 className={`text-2xl font-black italic tracking-tighter leading-tight line-clamp-2 ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
           {decisionData.topic}
         </h3>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-        <div className="grid grid-cols-2 gap-4 h-full">
+        <div className="grid grid-cols-2 gap-4 h-full min-h-[200px]">
           {/* Side A / Pros */}
-          <div className={`flex flex-col rounded-3xl p-4 transition-all cursor-pointer ${activeSide === 'A' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800' : 'bg-emerald-50/50 ring-1 ring-emerald-100') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('A')}>
+          <div className={`flex flex-col rounded-3xl p-4 transition-all cursor-pointer ${activeSide === 'A' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800 shadow-lg' : 'bg-emerald-50/50 ring-1 ring-emerald-100 shadow-md') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('A')}>
             <h4 className={`text-[10px] font-black uppercase tracking-widest mb-4 flex items-center justify-between ${activeSide === 'A' ? 'text-emerald-600' : 'text-slate-400'}`}>
               <span>{decisionData.decisionType === 'COMPARE' ? (decisionData.optionA || 'Вар. А') : 'Плюсы'}</span>
               {activeSide === 'A' && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>}
@@ -264,12 +253,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <button onClick={(e) => { e.stopPropagation(); removeBubble('A', i); }} className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
                 </div>
               ))}
-              {activeSide === 'A' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-emerald-300 text-emerald-400 animate-pulse flex items-center"><Plus size={12} className="mr-1" /> Добавить</div>}
+              {activeSide === 'A' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-emerald-300 text-emerald-400 animate-pulse flex items-center"><Plus size={12} className="mr-1" /> Пишите...</div>}
             </div>
           </div>
 
           {/* Side B / Cons */}
-          <div className={`flex flex-col rounded-3xl p-4 transition-all cursor-pointer ${activeSide === 'B' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800' : 'bg-rose-50/50 ring-1 ring-rose-100') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('B')}>
+          <div className={`flex flex-col rounded-3xl p-4 transition-all cursor-pointer ${activeSide === 'B' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800 shadow-lg' : 'bg-rose-50/50 ring-1 ring-rose-100 shadow-md') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('B')}>
             <h4 className={`text-[10px] font-black uppercase tracking-widest mb-4 flex items-center justify-between ${activeSide === 'B' ? 'text-rose-600' : 'text-slate-400'}`}>
               <span>{decisionData.decisionType === 'COMPARE' ? (decisionData.optionB || 'Вар. Б') : 'Минусы'}</span>
               {activeSide === 'B' && <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>}
@@ -281,7 +270,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <button onClick={(e) => { e.stopPropagation(); removeBubble('B', i); }} className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
                 </div>
               ))}
-              {activeSide === 'B' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-rose-300 text-rose-400 animate-pulse flex items-center"><Plus size={12} className="mr-1" /> Добавить</div>}
+              {activeSide === 'B' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-rose-300 text-rose-400 animate-pulse flex items-center"><Plus size={12} className="mr-1" /> Пишите...</div>}
             </div>
           </div>
         </div>
@@ -302,13 +291,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     <div className={`flex flex-col h-full animate-fade-in relative z-10 transition-all duration-500 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white/50 backdrop-blur-sm'}`}>
       {/* Header */}
       <div className={`px-6 py-4 border-b sticky top-0 z-20 transition-all duration-500 ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-2">
           <button onClick={handleBack} className={`p-2 -ml-2 transition-colors rounded-full ${rpgMode ? 'text-red-800 hover:bg-red-800/10' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}><ArrowLeft size={20} /></button>
           
-          {/* Stepper ONLY in Decision mode */}
-          {mode === 'DECISION' && (
+          {mode === 'DECISION' && !readOnly && (
             <div className="flex space-x-1.5">
-               {[0, 1, 2, 4].map((s) => (
+               {[1, 2, 4].map((s) => (
                  <div key={s} className={`h-1 rounded-full transition-all duration-500 ${decisionStep === s ? 'w-6 bg-indigo-600' : 'w-2 bg-slate-200'}`}></div>
                ))}
             </div>
@@ -322,66 +310,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       {/* Main Flow Area */}
       <div className="flex-1 overflow-hidden relative">
-        {mode === 'DECISION' ? (
-          <>
-            {decisionStep === 0 && renderDecisionSelector()}
-            {decisionStep === 1 && (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 animate-fade-in-up">
-                <div className={`p-6 rounded-[32px] mb-8 flex items-center justify-center ${rpgMode ? 'bg-red-800 text-white shadow-xl shadow-red-900/20' : 'bg-indigo-50 text-indigo-600 shadow-xl shadow-indigo-100'}`}>
-                  {decisionData.decisionType === 'SINGLE' ? <Scale size={48} /> : <Columns size={48} />}
-                </div>
-                <h3 className={`text-2xl font-black mb-4 text-center leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-                  {decisionData.decisionType === 'SINGLE' 
-                    ? "Какую тему мы будем исследовать?" 
-                    : (!decisionData.optionA ? "Введите первый вариант для сравнения" : `С чем мы сравним «${decisionData.optionA}»?`)}
-                </h3>
-                <p className="text-center text-slate-400 text-sm font-medium animate-pulse">Введите ваш текст в поле внизу</p>
-              </div>
-            )}
-            {decisionStep === 2 && renderBubbleCollector()}
-            {decisionStep === 3 && (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6 animate-fade-in">
-                 <div className="relative">
-                   <div className="w-24 h-24 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin"></div>
-                   <div className="absolute inset-0 flex items-center justify-center text-indigo-600"><Wand2 size={32} className="animate-pulse" /></div>
-                 </div>
-                 <div className="text-center">
-                   <h4 className="font-bold text-slate-800 text-lg">Плетем нити анализа...</h4>
-                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Осталось несколько мгновений</p>
-                 </div>
-              </div>
-            )}
-            {decisionStep === 4 && (
-              <div ref={scrollRef} className="h-full overflow-y-auto p-5 pb-24 space-y-6 scroll-smooth">
-                {messages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[90%] ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
-                      {msg.type === 'decision-card' && msg.decisionData ? <InsightCard data={msg.decisionData} /> : (
-                        <div className={`px-5 py-4 rounded-[24px] text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap ${msg.role === 'user' ? (rpgMode ? 'rpg-button rounded-br-sm' : 'bg-slate-900 text-white rounded-br-sm') : (rpgMode ? 'bg-white border-2 border-red-800/20 rounded-bl-sm text-red-950' : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-slate-200 shadow-sm')}`}>{formatMessage(msg.content)}</div>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {isLoading && <Loader2 className="mx-auto text-indigo-400 animate-spin mt-4" />}
-              </div>
-            )}
-          </>
-        ) : (
+        {mode === 'DECISION' && decisionStep === 2 ? renderBubbleCollector() : (
           <div ref={scrollRef} className="h-full overflow-y-auto p-5 pb-24 space-y-6 scroll-smooth">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`max-w-[85%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                  <div className={`px-5 py-4 rounded-[24px] text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap ${msg.role === 'user' ? (rpgMode ? 'rpg-button rounded-br-sm' : 'bg-slate-900 text-white rounded-br-sm') : (rpgMode ? 'bg-white border-2 border-red-800/20 text-red-950 rounded-bl-sm' : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-slate-200 shadow-sm')}`}>{formatMessage(msg.content)}</div>
+                  {msg.type === 'decision-card' && msg.decisionData ? (
+                    <InsightCard data={msg.decisionData} />
+                  ) : (
+                    <div className={`px-5 py-4 rounded-[24px] text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap ${msg.role === 'user' ? (rpgMode ? 'rpg-button rounded-br-sm' : 'bg-slate-900 text-white rounded-br-sm') : (rpgMode ? 'bg-white border-2 border-red-800/20 text-red-950 rounded-bl-sm' : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-slate-200 shadow-sm')}`}>{formatMessage(msg.content)}</div>
+                  )}
                 </div>
               </div>
             ))}
-            {isLoading && <Loader2 className="mx-auto text-indigo-400 animate-spin mt-4" />}
+            
+            {decisionStep === 3 && (
+              <div className="flex flex-col items-center justify-center p-8 space-y-4 animate-fade-in">
+                <Loader2 size={32} className="text-indigo-500 animate-spin" />
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Анализирую нити судьбы...</p>
+              </div>
+            )}
+
+            {isLoading && decisionStep === 4 && <Loader2 className="mx-auto text-indigo-400 animate-spin mt-4" />}
           </div>
         )}
       </div>
 
       {/* Input Area */}
-      {!readOnly && (decisionStep === 1 || decisionStep === 2 || decisionStep === 4 || mode !== 'DECISION') && (
+      {!readOnly && (decisionStep !== 3) && (
         <div className={`p-4 safe-area-bottom z-20 bg-gradient-to-t ${rpgMode ? 'from-[#fdf6e3]' : 'from-white'} via-white/95 to-transparent`}>
           <div className={`relative flex items-center rounded-[28px] border shadow-sm transition-all overflow-hidden ${rpgMode ? 'bg-white border-red-800/30' : 'bg-white border-slate-100 focus-within:border-indigo-200 focus-within:shadow-md'}`}>
             <input
@@ -391,8 +347,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
               placeholder={
-                decisionStep === 1 ? (decisionData.decisionType === 'SINGLE' ? "Тема решения..." : (decisionData.optionA ? "Второй вариант..." : "Первый вариант...")) : 
-                decisionStep === 2 ? `Аргумент ${decisionData.decisionType === 'COMPARE' ? (activeSide === 'A' ? 'для А' : 'для Б') : (activeSide === 'A' ? 'плюс' : 'минус')}...` : 
+                mode === 'DECISION' && decisionStep === 1 ? "Твое сомнение..." :
+                mode === 'DECISION' && decisionStep === 2 ? `Аргумент ${activeSide === 'A' ? '«ЗА»' : '«ПРОТИВ»'}...` :
                 "Ваша мысль..."
               }
               className="flex-1 bg-transparent text-[15px] px-6 py-4 focus:outline-none"
@@ -408,7 +364,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           {decisionStep === 2 && (
             <p className="text-[10px] text-center mt-3 text-slate-400 font-bold uppercase tracking-widest animate-pulse">
-               Нажмите на карточку другого цвета, чтобы сменить сторону
+               Нажми на другую колонку, чтобы сменить сторону
             </p>
           )}
         </div>
