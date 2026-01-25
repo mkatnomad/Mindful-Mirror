@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Share2, Check, TrendingUp, ShieldAlert, Zap, Search, Info, Award } from 'lucide-react';
+import { Share2, Check, TrendingUp, ShieldAlert, Zap, Search, Info, Award, Sparkles } from 'lucide-react';
 import { DecisionData } from '../types';
 
 interface InsightCardProps {
@@ -15,10 +15,10 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
   const analysis = data.analysis;
 
   const handleShare = async () => {
-    let textToShare = `Mindful Mirror Analysis: ${data.topic || (isCompare ? `${data.optionA} vs ${data.optionB}` : 'Решение')}\n\n`;
+    let textToShare = `Mindful Mirror • ${data.topic || (isCompare ? `${data.optionA} vs ${data.optionB}` : 'Анализ решения')}\n\n`;
     
     if (analysis) {
-      textToShare += `⚖️ Вердикт: ${analysis.verdict}\n`;
+      textToShare += `✨ Озарение: ${analysis.verdict}\n`;
       textToShare += `🔥 Риск: ${analysis.riskLevel}/10\n`;
       textToShare += `🔍 Скрытый фактор: ${analysis.hiddenFactor}\n`;
       textToShare += `🚀 Первый шаг: ${analysis.actionStep}\n\n`;
@@ -60,7 +60,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
         {/* Decorative background element */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-50/50 rounded-full blur-3xl"></div>
         
-        {/* Header Header */}
+        {/* Header */}
         <div className="p-8 pb-4 relative z-10">
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
@@ -72,14 +72,21 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
         </div>
 
         <div className="px-8 pb-8 space-y-6 relative z-10">
-          {/* Analysis Result (Verdict) */}
+          {/* Analysis Result (Verdict / Insight) */}
           {analysis && (
-            <div className="bg-slate-900 rounded-[32px] p-6 text-white shadow-xl shadow-slate-200">
-               <div className="flex items-center space-x-3 mb-3">
-                  <Award size={18} className="text-amber-400" />
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Вердикт ИИ</span>
+            <div className="bg-gradient-to-br from-indigo-50 to-white rounded-[32px] p-6 border border-indigo-100/50 shadow-sm shadow-indigo-100/20 relative overflow-hidden group">
+               <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Sparkles size={40} className="text-indigo-600" />
                </div>
-               <p className="text-[15px] font-bold leading-relaxed">{analysis.verdict}</p>
+               <div className="flex items-center space-x-3 mb-3">
+                  <div className="p-1.5 bg-indigo-100 rounded-lg text-indigo-600">
+                    <Sparkles size={16} strokeWidth={2.5} />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Озарение</span>
+               </div>
+               <p className="text-[15px] font-extrabold text-slate-800 leading-relaxed italic">
+                 «{analysis.verdict}»
+               </p>
             </div>
           )}
 
@@ -114,7 +121,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
                        <ShieldAlert size={16} className="text-slate-400" />
                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Уровень риска</span>
                     </div>
-                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full text-white ${getRiskColor(analysis.riskLevel)}`}>
+                    <span className={`text-[10px] font-black px-2 py-0.5 rounded-full text-white shadow-sm ${getRiskColor(analysis.riskLevel)}`}>
                        {getRiskText(analysis.riskLevel)}
                     </span>
                  </div>
@@ -133,7 +140,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
 
           {/* Insight Blocks */}
           {analysis && (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="flex items-start space-x-4 p-5 rounded-[28px] border border-indigo-50 bg-indigo-50/30">
                  <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                     <Search size={20} />
