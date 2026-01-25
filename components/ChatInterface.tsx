@@ -306,10 +306,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {mode === 'DECISION' && decisionStep === 2 ? renderBubbleCollector() : (
           <div ref={scrollRef} className="h-full overflow-y-auto p-5 pb-24 space-y-6 scroll-smooth">
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} ${msg.type === 'decision-card' ? 'w-full px-0' : ''}`}>
+              <div key={msg.id} className={`flex ${msg.type === 'decision-card' ? 'w-full -mx-5' : msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div className={`${msg.type === 'decision-card' ? 'w-full' : 'max-w-[85%]'} flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   {msg.type === 'decision-card' && msg.decisionData ? (
-                    <div className="w-full -mx-5 px-5 lg:px-0">
+                    <div className="w-full">
                       <InsightCard data={msg.decisionData} />
                     </div>
                   ) : (
@@ -319,13 +319,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
             ))}
             
+            {/* Typing Indicator for Emotions Mode */}
+            {isLoading && mode === 'EMOTIONS' && (
+              <div className="flex justify-start animate-fade-in">
+                <div className={`px-5 py-4 rounded-[24px] rounded-bl-sm border shadow-sm ${rpgMode ? 'bg-white border-red-800/20' : 'bg-white border-slate-100 shadow-slate-100 shadow-sm'}`}>
+                  <div className="flex items-center space-x-1.5 h-4">
+                    <div className={`w-1.5 h-1.5 rounded-full animate-bounce ${rpgMode ? 'bg-red-800' : 'bg-indigo-300'}`} style={{ animationDelay: '0ms' }}></div>
+                    <div className={`w-1.5 h-1.5 rounded-full animate-bounce ${rpgMode ? 'bg-red-800' : 'bg-indigo-300'}`} style={{ animationDelay: '150ms' }}></div>
+                    <div className={`w-1.5 h-1.5 rounded-full animate-bounce ${rpgMode ? 'bg-red-800' : 'bg-indigo-300'}`} style={{ animationDelay: '300ms' }}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {decisionStep === 3 && (
               <div className="flex flex-col items-center justify-center p-8 space-y-4 animate-fade-in">
                 <Loader2 size={32} className="text-indigo-500 animate-spin" />
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Анализирую нити судьбы...</p>
               </div>
             )}
-            {isLoading && decisionStep === 4 && <Loader2 className="mx-auto text-indigo-400 animate-spin mt-4" />}
+            {isLoading && decisionStep === 4 && (
+              <div className="flex justify-center mt-4">
+                <Loader2 className="text-indigo-400 animate-spin" />
+              </div>
+            )}
           </div>
         )}
       </div>
