@@ -20,6 +20,20 @@ const SYSTEM_INSTRUCTION_RPG_CHOICE = `
 Язык: Русский.
 `;
 
+const DECISION_ANALYSIS_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    verdict: { type: Type.STRING, description: "Краткий итоговый совет или вывод" },
+    balanceA: { type: Type.NUMBER, description: "Процент веса первого варианта (0-100)" },
+    balanceB: { type: Type.NUMBER, description: "Процент веса второго варианта или альтернативы (0-100)" },
+    hiddenFactor: { type: Type.STRING, description: "Скрытый психологический фактор или инсайт" },
+    riskLevel: { type: Type.NUMBER, description: "Уровень риска от 1 до 10" },
+    riskDescription: { type: Type.STRING, description: "Почему такой уровень риска" },
+    actionStep: { type: Type.STRING, description: "Первый конкретный шаг для пользователя" }
+  },
+  required: ['verdict', 'balanceA', 'balanceB', 'hiddenFactor', 'riskLevel', 'riskDescription', 'actionStep']
+};
+
 export const generateRPGQuest = async (archetype: Archetype): Promise<{ scene: string; optA: string; optB: string }> => {
   try {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -68,7 +82,7 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
   return result.text || "...";
 };
 
-export const analyzeDecision = async (data: DecisionData): Promise<string> => {
+export const analyzeDecision = async (data: DecisionData): Promise<DecisionData> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   let prompt = '';
   
@@ -76,24 +90,37 @@ export const analyzeDecision = async (data: DecisionData): Promise<string> => {
     prompt = `Проанализируй выбор между двумя вариантами. 
     Вариант А: ${data.optionA}. Его аргументы: ${data.pros.join(', ')}.
     Вариант Б: ${data.optionB}. Его аргументы: ${data.cons.join(', ')}.
-    Сравни их и дай глубокий совет, какой путь кажется более гармоничным для пользователя. 
-    Ответ в 3-4 предложениях на русском языке.`;
+    Сравни их и дай глубокий структурированный совет.`;
   } else {
     prompt = `Проанализируй решение: ${data.topic}. 
     Плюсы: ${data.pros.join(', ')}. 
     Минусы: ${data.cons.join(', ')}. 
-    Дай взвешенный совет в 3-4 предложениях на русском языке.`;
+    Дай взвешенный структурированный совет.`;
   }
 
-  const result = await ai.models.generateContent({ model: 'gemini-3-flash-preview', contents: prompt });
-  return result.text || "...";
+  const result = await ai.models.generateContent({ 
+    model: 'gemini-3-flash-preview', 
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: DECISION_ANALYSIS_SCHEMA
+    }
+  });
+
+  try {
+    const analysis = JSON.parse(result.text || "{}");
+    return { ...data, analysis };
+  } catch (e) {
+    console.error("Analysis Parse Error", e);
+    return data;
+  }
 };
 
 export const refineDecision = async (currentData: DecisionData, userInput: string): Promise<{ text: string; data: DecisionData }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const result = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
-    contents: `Обнови список аргументов. Ввод пользователя: ${userInput}. Данные: ${JSON.stringify(currentData)}`,
+    contents: `Обнови список аргументов и проведи анализ. Ввод пользователя: ${userInput}. Данные: ${JSON.stringify(currentData)}`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -108,15 +135,16 @@ export const refineDecision = async (currentData: DecisionData, userInput: strin
               decisionType: { type: Type.STRING },
               optionA: { type: Type.STRING },
               optionB: { type: Type.STRING },
+              analysis: DECISION_ANALYSIS_SCHEMA
             },
             required: ['topic', 'pros', 'cons', 'decisionType']
           },
-          analysis: { type: Type.STRING }
+          chatResponse: { type: Type.STRING, description: "Короткая текстовая реакция для чата" }
         },
-        required: ['updatedData', 'analysis']
+        required: ['updatedData', 'chatResponse']
       }
     }
   });
   const response = JSON.parse(result.text || "{}");
-  return { text: response.analysis, data: response.updatedData };
+  return { text: response.chatResponse, data: response.updatedData };
 };

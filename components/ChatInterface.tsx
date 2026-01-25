@@ -115,7 +115,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     if (mode === 'DECISION') {
       if (decisionStep === 1) {
-        // Simple logic to detect comparison: "A vs B" or "A or B"
         const compareRegex = /(.+?)\s+(?:или|vs|против|or|или же)\s+(.+)/i;
         const match = text.match(compareRegex);
         
@@ -159,11 +158,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setInput('');
         setIsLoading(true);
         try {
-          const { text: analysis, data } = await refineDecision(decisionData, userMsg.content);
-          setDecisionData(data);
+          const { text: analysisMsg, data: updatedData } = await refineDecision(decisionData, userMsg.content);
+          setDecisionData(updatedData);
           setMessages(prev => [...prev, 
-            { id: Date.now().toString(), role: 'assistant', content: analysis, timestamp: Date.now() }, 
-            { id: (Date.now()+1).toString(), role: 'assistant', content: '', type: 'decision-card', decisionData: data, timestamp: Date.now() }
+            { id: Date.now().toString(), role: 'assistant', content: analysisMsg, timestamp: Date.now() }, 
+            { id: (Date.now()+1).toString(), role: 'assistant', content: '', type: 'decision-card', decisionData: updatedData, timestamp: Date.now() }
           ]);
         } catch (e) { console.error(e); }
         finally { setIsLoading(false); }
@@ -201,11 +200,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsLoading(true);
     setDecisionStep(3);
     try {
-      const analysisText = await analyzeDecision(decisionData);
+      const updatedData = await analyzeDecision(decisionData);
+      setDecisionData(updatedData);
+      
       const resultMsg: Message = {
         id: Date.now().toString(),
         role: 'assistant',
-        content: analysisText,
+        content: updatedData.analysis?.verdict || "Анализ завершен. Ознакомьтесь с отчетом ниже.",
         timestamp: Date.now()
       };
       const cardMsg: Message = {
@@ -213,7 +214,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         role: 'assistant',
         content: '',
         type: 'decision-card',
-        decisionData: decisionData,
+        decisionData: updatedData,
         timestamp: Date.now() + 10
       };
       setMessages(prev => [...prev, resultMsg, cardMsg]);

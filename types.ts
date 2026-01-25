@@ -24,6 +24,16 @@ export interface Message {
   timestamp: number;
 }
 
+export interface DecisionAnalysis {
+  verdict: string;
+  balanceA: number; // 0-100% (например, вероятность успеха или вес варианта)
+  balanceB: number; // 0-100%
+  hiddenFactor: string;
+  riskLevel: number; // 1-10
+  riskDescription: string;
+  actionStep: string;
+}
+
 export interface DecisionData {
   topic: string;
   pros: string[];
@@ -31,6 +41,7 @@ export interface DecisionData {
   decisionType: 'SINGLE' | 'COMPARE';
   optionA?: string;
   optionB?: string;
+  analysis?: DecisionAnalysis;
 }
 
 export interface ChatSession {
