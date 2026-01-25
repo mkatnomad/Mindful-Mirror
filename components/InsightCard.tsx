@@ -15,16 +15,20 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
   const analysis = data.analysis;
 
   const handleShare = async () => {
-    let textToShare = `Mindful Mirror • ${data.topic || (isCompare ? `${data.optionA} vs ${data.optionB}` : 'Анализ решения')}\n\n`;
+    let textToShare = `✨ ОТЧЕТ: ${data.topic || (isCompare ? `${data.optionA} или ${data.optionB}` : 'Анализ решения')}\n`;
+    textToShare += `━━━━━━━━━━━━━━━━━━━━\n\n`;
     
     if (analysis) {
-      textToShare += `✨ Озарение: ${analysis.verdict}\n`;
-      textToShare += `🔥 Риск: ${analysis.riskLevel}/10\n`;
-      textToShare += `🔍 Скрытый фактор: ${analysis.hiddenFactor}\n`;
-      textToShare += `🚀 Первый шаг: ${analysis.actionStep}\n\n`;
+      textToShare += `💡 ОЗАРЕНИЕ:\n«${analysis.verdict}»\n\n`;
+      textToShare += `⚖️ БАЛАНС: ${analysis.balanceA}% / ${analysis.balanceB}%\n`;
+      textToShare += `🔥 УРОВЕНЬ РИСКА: ${analysis.riskLevel}/10\n`;
+      textToShare += `⚠️ ${analysis.riskDescription}\n\n`;
+      textToShare += `🔍 СКРЫТЫЙ ФАКТОР:\n${analysis.hiddenFactor}\n\n`;
+      textToShare += `🚀 ПЕРВЫЙ ШАГ:\n${analysis.actionStep}\n\n`;
     }
 
-    textToShare += `Mindful Mirror • Твой путь к осознанности`;
+    textToShare += `━━━━━━━━━━━━━━━━━━━━\n`;
+    textToShare += `🔮 Mindful Mirror • Твой путь к осознанности`;
 
     if (navigator.share) {
       try {
@@ -52,29 +56,29 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
   };
 
   return (
-    <div className="w-full my-6 animate-fade-in-up">
+    <div className="w-full my-4 animate-fade-in-up">
       <div 
         ref={cardRef}
-        className="relative overflow-hidden rounded-[40px] bg-white border border-slate-100 shadow-[0_30px_60px_-15px_rgba(15,23,42,0.12)]"
+        className="relative overflow-hidden rounded-[32px] sm:rounded-[40px] bg-white border border-slate-100 shadow-[0_20px_50px_-15px_rgba(15,23,42,0.1)]"
       >
         {/* Decorative background element */}
         <div className="absolute -top-24 -right-24 w-64 h-64 bg-indigo-50/50 rounded-full blur-3xl"></div>
         
         {/* Header */}
-        <div className="p-8 pb-4 relative z-10">
+        <div className="p-6 sm:p-8 pb-4 relative z-10">
           <div className="flex items-center space-x-2 mb-2">
             <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
             <p className="text-[10px] text-indigo-400 uppercase tracking-[0.2em] font-black">Персональный Анализ</p>
           </div>
-          <h3 className="text-2xl font-black text-slate-900 leading-tight tracking-tighter italic">
+          <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight tracking-tighter italic">
             {data.topic || (isCompare ? `${data.optionA} или ${data.optionB}` : 'Ваше решение')}
           </h3>
         </div>
 
-        <div className="px-8 pb-8 space-y-6 relative z-10">
+        <div className="px-6 sm:p-8 pt-0 pb-8 space-y-6 relative z-10">
           {/* Analysis Result (Verdict / Insight) */}
           {analysis && (
-            <div className="bg-gradient-to-br from-indigo-50 to-white rounded-[32px] p-6 border border-indigo-100/50 shadow-sm shadow-indigo-100/20 relative overflow-hidden group">
+            <div className="bg-gradient-to-br from-indigo-50 to-white rounded-[28px] p-5 sm:p-6 border border-indigo-100/50 shadow-sm relative overflow-hidden group">
                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Sparkles size={40} className="text-indigo-600" />
                </div>
@@ -84,7 +88,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Озарение</span>
                </div>
-               <p className="text-[15px] font-extrabold text-slate-800 leading-relaxed italic">
+               <p className="text-[14px] sm:text-[15px] font-extrabold text-slate-800 leading-relaxed italic">
                  «{analysis.verdict}»
                </p>
             </div>
@@ -107,15 +111,15 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
                ></div>
             </div>
             <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-tighter px-1">
-               <span>{isCompare ? (data.optionA || 'А') : 'Логика'}</span>
-               <span>{isCompare ? (data.optionB || 'Б') : 'Эмоции'}</span>
+               <span className="truncate max-w-[45%]">{isCompare ? (data.optionA || 'А') : 'Логика'}</span>
+               <span className="truncate max-w-[45%] text-right">{isCompare ? (data.optionB || 'Б') : 'Эмоции'}</span>
             </div>
           </div>
 
           {/* Risk Meter */}
           {analysis && (
             <div className="grid grid-cols-1 gap-4">
-              <div className="p-5 rounded-[28px] bg-slate-50 border border-slate-100">
+              <div className="p-5 rounded-[24px] bg-slate-50 border border-slate-100">
                  <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
                        <ShieldAlert size={16} className="text-slate-400" />
@@ -141,7 +145,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
           {/* Insight Blocks */}
           {analysis && (
             <div className="grid grid-cols-1 gap-4">
-              <div className="flex items-start space-x-4 p-5 rounded-[28px] border border-indigo-50 bg-indigo-50/30">
+              <div className="flex items-start space-x-4 p-5 rounded-[24px] border border-indigo-50 bg-indigo-50/30">
                  <div className="w-10 h-10 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
                     <Search size={20} />
                  </div>
@@ -151,7 +155,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
                  </div>
               </div>
 
-              <div className="flex items-start space-x-4 p-5 rounded-[28px] border border-emerald-50 bg-emerald-50/30">
+              <div className="flex items-start space-x-4 p-5 rounded-[24px] border border-emerald-50 bg-emerald-50/30">
                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                     <Zap size={20} />
                  </div>
@@ -167,7 +171,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data }) => {
           <div className="pt-6 border-t border-slate-50 flex flex-col items-center">
             <button 
               onClick={handleShare}
-              className={`w-full py-4 rounded-[24px] font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center space-x-3 transition-all mb-4 ${isCopied ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600 active:scale-95'}`}
+              className={`w-full py-4 rounded-[20px] font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center space-x-3 transition-all mb-4 ${isCopied ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-600 active:scale-95'}`}
             >
               {isCopied ? <Check size={16} strokeWidth={3} /> : <Share2 size={16} strokeWidth={2.5} />}
               <span>{isCopied ? 'Результат скопирован' : 'Поделиться отчетом'}</span>

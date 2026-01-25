@@ -41,7 +41,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const isInitialized = useRef(false);
 
   // Decision States
-  // 1: Topic/Compare Input, 2: Pro/Con Collection, 3: Loading Analysis, 4: Result/Chat
   const [decisionStep, setDecisionStep] = useState<number>(1); 
   const [activeSide, setActiveSide] = useState<'A' | 'B'>('A');
   const [decisionData, setDecisionData] = useState<DecisionData>({ 
@@ -66,11 +65,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (mode === 'DECISION') {
       setDecisionStep(1);
       greeting = rpgMode 
-        ? "Что стоит на кону? Опишите дилемму или два пути, между которыми колеблетесь (например: «Меч или Магия»)."
+        ? "Что стоит на кону? Опишите дилемму или два пути, между которыми колеблетесь."
         : "О чем вы размышляете? Опишите ситуацию или варианты для сравнения (например: «Работа или Фриланс»).";
     } else {
       greeting = mode === 'EMOTIONS' 
-        ? (rpgMode ? "Приветствую. Какая буря бушует в вашей душе? Опишите свои чувства." : "Привет. Какие эмоции вы испытываете сейчас?")
+        ? (rpgMode ? "Приветствую. Какая буря бушует в вашей душе?" : "Привет. Какие эмоции вы испытываете сейчас?")
         : (rpgMode ? "Присядьте у очага. Расскажите о своих подвигах за день." : "Давайте немного замедлимся. Как прошел ваш день?");
     }
 
@@ -94,7 +93,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [messages, isLoading, decisionStep]);
 
-  // Auto-focus input on mount or step change
   useEffect(() => {
     if (!readOnly && inputRef.current) {
       inputRef.current.focus();
@@ -170,7 +168,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
     }
 
-    // Default chat logic
     const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text, timestamp: Date.now() };
     setMessages(prev => [...prev, userMsg]);
     setInput('');
@@ -228,8 +225,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const renderBubbleCollector = () => (
-    <div className="flex flex-col h-full animate-fade-in">
-      <div className="p-6 pb-2">
+    <div className="flex flex-col h-full animate-fade-in overflow-hidden">
+      <div className="p-6 pb-2 shrink-0">
         <div className="flex items-center space-x-2 mb-2">
           <Info size={14} className="text-indigo-400" />
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Сбор аргументов</p>
@@ -240,9 +237,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-6">
-        <div className="grid grid-cols-2 gap-4 h-full min-h-[200px]">
-          {/* Side A / Pros */}
-          <div className={`flex flex-col rounded-3xl p-4 transition-all cursor-pointer ${activeSide === 'A' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800 shadow-lg' : 'bg-emerald-50/50 ring-1 ring-emerald-100 shadow-md') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('A')}>
+        <div className="grid grid-cols-2 gap-4">
+          <div className={`flex flex-col rounded-3xl p-4 transition-all min-h-[160px] ${activeSide === 'A' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800 shadow-lg' : 'bg-emerald-50/50 ring-1 ring-emerald-100 shadow-md') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('A')}>
             <h4 className={`text-[10px] font-black uppercase tracking-widest mb-4 flex items-center justify-between ${activeSide === 'A' ? 'text-emerald-600' : 'text-slate-400'}`}>
               <span>{decisionData.decisionType === 'COMPARE' ? (decisionData.optionA || 'Вар. А') : 'Плюсы'}</span>
               {activeSide === 'A' && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>}
@@ -251,15 +247,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {decisionData.pros.map((p, i) => (
                 <div key={i} className={`group relative px-3 py-2 rounded-xl text-xs font-bold animate-fade-in-up border shadow-sm ${rpgMode ? 'bg-white border-red-800 text-red-950' : 'bg-white border-emerald-100 text-emerald-800'}`}>
                   {p}
-                  <button onClick={(e) => { e.stopPropagation(); removeBubble('A', i); }} className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                  <button onClick={(e) => { e.stopPropagation(); removeBubble('A', i); }} className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center"><X size={10} /></button>
                 </div>
               ))}
-              {activeSide === 'A' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-emerald-300 text-emerald-400 animate-pulse flex items-center"><Plus size={12} className="mr-1" /> Пишите...</div>}
+              {activeSide === 'A' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-emerald-300 text-emerald-400 animate-pulse">Пишите...</div>}
             </div>
           </div>
 
-          {/* Side B / Cons */}
-          <div className={`flex flex-col rounded-3xl p-4 transition-all cursor-pointer ${activeSide === 'B' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800 shadow-lg' : 'bg-rose-50/50 ring-1 ring-rose-100 shadow-md') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('B')}>
+          <div className={`flex flex-col rounded-3xl p-4 transition-all min-h-[160px] ${activeSide === 'B' ? (rpgMode ? 'bg-red-50 ring-1 ring-red-800 shadow-lg' : 'bg-rose-50/50 ring-1 ring-rose-100 shadow-md') : 'bg-slate-50 opacity-60'}`} onClick={() => setActiveSide('B')}>
             <h4 className={`text-[10px] font-black uppercase tracking-widest mb-4 flex items-center justify-between ${activeSide === 'B' ? 'text-rose-600' : 'text-slate-400'}`}>
               <span>{decisionData.decisionType === 'COMPARE' ? (decisionData.optionB || 'Вар. Б') : 'Минусы'}</span>
               {activeSide === 'B' && <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></div>}
@@ -268,33 +263,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {decisionData.cons.map((c, i) => (
                 <div key={i} className={`group relative px-3 py-2 rounded-xl text-xs font-bold animate-fade-in-up border shadow-sm ${rpgMode ? 'bg-white border-red-800 text-red-950' : 'bg-white border-rose-100 text-rose-800'}`}>
                   {c}
-                  <button onClick={(e) => { e.stopPropagation(); removeBubble('B', i); }} className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X size={10} /></button>
+                  <button onClick={(e) => { e.stopPropagation(); removeBubble('B', i); }} className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-slate-900 text-white flex items-center justify-center"><X size={10} /></button>
                 </div>
               ))}
-              {activeSide === 'B' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-rose-300 text-rose-400 animate-pulse flex items-center"><Plus size={12} className="mr-1" /> Пишите...</div>}
+              {activeSide === 'B' && <div className="px-3 py-2 rounded-xl text-xs font-bold border border-dashed border-rose-300 text-rose-400 animate-pulse">Пишите...</div>}
             </div>
           </div>
         </div>
-      </div>
 
-      {(decisionData.pros.length > 0 || decisionData.cons.length > 0) && (
-        <div className="p-6 pt-0">
-          <button onClick={performAnalysis} className={`w-full py-5 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center space-x-3 active:scale-95 transition-all animate-fade-in-up ${rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}>
-             <Wand2 size={18} />
-             <span>Провести анализ</span>
-          </button>
-        </div>
-      )}
+        {(decisionData.pros.length > 0 || decisionData.cons.length > 0) && (
+          <div className="pt-4 pb-12">
+            <button onClick={performAnalysis} className={`w-full py-5 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-xl flex items-center justify-center space-x-3 active:scale-95 transition-all ${rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}>
+               <Wand2 size={18} />
+               <span>Провести анализ</span>
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 
   return (
     <div className={`flex flex-col h-full animate-fade-in relative z-10 transition-all duration-500 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white/50 backdrop-blur-sm'}`}>
-      {/* Header */}
       <div className={`px-6 py-4 border-b sticky top-0 z-20 transition-all duration-500 ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
         <div className="flex items-center justify-between mb-2">
           <button onClick={handleBack} className={`p-2 -ml-2 transition-colors rounded-full ${rpgMode ? 'text-red-800 hover:bg-red-800/10' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}><ArrowLeft size={20} /></button>
-          
           {mode === 'DECISION' && !readOnly && (
             <div className="flex space-x-1.5">
                {[1, 2, 4].map((s) => (
@@ -309,15 +302,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </h2>
       </div>
 
-      {/* Main Flow Area */}
       <div className="flex-1 overflow-hidden relative">
         {mode === 'DECISION' && decisionStep === 2 ? renderBubbleCollector() : (
           <div ref={scrollRef} className="h-full overflow-y-auto p-5 pb-24 space-y-6 scroll-smooth">
             {messages.map((msg) => (
-              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[85%] flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+              <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} ${msg.type === 'decision-card' ? 'w-full px-0' : ''}`}>
+                <div className={`${msg.type === 'decision-card' ? 'w-full' : 'max-w-[85%]'} flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   {msg.type === 'decision-card' && msg.decisionData ? (
-                    <InsightCard data={msg.decisionData} />
+                    <div className="w-full -mx-5 px-5 lg:px-0">
+                      <InsightCard data={msg.decisionData} />
+                    </div>
                   ) : (
                     <div className={`px-5 py-4 rounded-[24px] text-[15px] leading-relaxed shadow-sm whitespace-pre-wrap ${msg.role === 'user' ? (rpgMode ? 'rpg-button rounded-br-sm' : 'bg-slate-900 text-white rounded-br-sm') : (rpgMode ? 'bg-white border-2 border-red-800/20 text-red-950 rounded-bl-sm' : 'bg-white text-slate-700 rounded-bl-sm border border-slate-100 shadow-slate-200 shadow-sm')}`}>{formatMessage(msg.content)}</div>
                   )}
@@ -331,15 +325,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Анализирую нити судьбы...</p>
               </div>
             )}
-
             {isLoading && decisionStep === 4 && <Loader2 className="mx-auto text-indigo-400 animate-spin mt-4" />}
           </div>
         )}
       </div>
 
-      {/* Input Area */}
       {!readOnly && (decisionStep !== 3) && (
-        <div className={`p-4 safe-area-bottom z-20 bg-gradient-to-t ${rpgMode ? 'from-[#fdf6e3]' : 'from-white'} via-white/95 to-transparent`}>
+        <div className={`p-4 safe-area-bottom z-30 bg-gradient-to-t ${rpgMode ? 'from-[#fdf6e3]' : 'from-white'} via-white/95 to-transparent`}>
           <div className={`relative flex items-center rounded-[28px] border shadow-sm transition-all overflow-hidden ${rpgMode ? 'bg-white border-red-800/30' : 'bg-white border-slate-100 focus-within:border-indigo-200 focus-within:shadow-md'}`}>
             <input
               ref={inputRef}
@@ -349,7 +341,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
               placeholder={
                 mode === 'DECISION' && decisionStep === 1 ? "Твое сомнение..." :
-                mode === 'DECISION' && decisionStep === 2 ? `Аргумент ${activeSide === 'A' ? '«ЗА»' : '«ПРОТИВ»'}...` :
+                mode === 'DECISION' && decisionStep === 2 ? `Аргумент ${activeSide === 'A' ? (decisionData.decisionType === 'COMPARE' ? '«А»' : '«ЗА»') : (decisionData.decisionType === 'COMPARE' ? '«Б»' : '«ПРОТИВ»')}...` :
                 "Ваша мысль..."
               }
               className="flex-1 bg-transparent text-[15px] px-6 py-4 focus:outline-none"
