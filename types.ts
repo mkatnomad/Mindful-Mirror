@@ -26,7 +26,7 @@ export interface Message {
 
 export interface DecisionAnalysis {
   verdict: string;
-  balanceA: number; // 0-100% (например, вероятность успеха или вес варианта)
+  balanceA: number; // 0-100%
   balanceB: number; // 0-100%
   hiddenFactor: string;
   riskLevel: number; // 1-10
@@ -66,6 +66,7 @@ export interface UserProfile {
   artifacts: string[];
   totalSessions: number;
   totalMinutes: number;
+  totalDecisions?: number; // Добавлено для статистики
   rpgMode: boolean;
   // Subscription fields
   firstRunDate: number | null;

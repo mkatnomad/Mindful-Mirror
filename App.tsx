@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, Archetype, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
@@ -7,7 +6,7 @@ import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Sparkle as SparkleIcon, ZapOff, Gift } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Sparkle as SparkleIcon, ZapOff, Gift, CheckCircle2 } from 'lucide-react';
 
 const FREE_DECISIONS_PER_DAY = 2;
 const FREE_EMOTIONS_PER_DAY = 2;
@@ -123,7 +122,7 @@ const App: React.FC = () => {
   
   const [userProfile, setUserProfile] = useState<UserProfile>({ 
     name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingDone: false, archetype: null, xp: 0, 
-    lastQuestDate: null, artifacts: [], totalSessions: 0, totalMinutes: 0, rpgMode: false,
+    lastQuestDate: null, artifacts: [], totalSessions: 0, totalMinutes: 0, totalDecisions: 0, rpgMode: false,
     firstRunDate: null, isSubscribed: false, subscriptionExpiry: null,
     lastUsageDate: null, dailyDecisionCount: 0, dailyEmotionsCount: 0, totalQuestsDone: 0
   });
@@ -254,6 +253,23 @@ const App: React.FC = () => {
   const handleOnboardingComplete = () => {
     setUserProfile(prev => ({ ...prev, onboardingDone: true }));
     setCurrentView('HOME');
+  };
+
+  const handleModeSelection = (mode: JournalMode) => {
+    if (!checkModeLimit(mode)) {
+      if (userProfile.isSubscribed) {
+        const tg = window.Telegram?.WebApp;
+        const msg = "Дневной лимит сессий достигнут. Приходите завтра!";
+        if (tg && tg.showAlert) tg.showAlert(msg);
+        else alert(msg);
+      } else {
+        setCurrentView('SUBSCRIPTION');
+      }
+      return;
+    }
+    setSelectedMode(mode); 
+    setViewingHistorySession(null); 
+    setCurrentView('CHAT');
   };
 
   const checkModeLimit = (mode: JournalMode): boolean => {
@@ -578,65 +594,86 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      <div className="px-6 mb-12 relative z-20">
-        <div className="grid grid-cols-3 gap-5">
+      <div className="px-6 mb-6 relative z-20">
+        {/* Bento Hero Card for Decisions */}
+        <button 
+          onClick={() => handleModeSelection('DECISION')}
+          className={`w-full mb-6 p-6 sm:p-8 rounded-[32px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${
+            userProfile.rpgMode 
+              ? 'rpg-card border-amber-500/40 shadow-none' 
+              : 'bg-white border-white shadow-xl shadow-slate-200/50'
+          }`}
+        >
+          <div className="flex justify-between items-start mb-4">
+             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
+               userProfile.rpgMode ? 'bg-red-800 text-white shadow-md' : 'bg-amber-50 text-amber-500'
+             }`}>
+               <Zap size={32} fill={userProfile.rpgMode ? "currentColor" : "none"} />
+             </div>
+             <div className="text-right">
+                <span className={`block text-3xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>
+                  {userProfile.totalDecisions || 0}
+                </span>
+                <span className={`text-[9px] font-black uppercase tracking-widest opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
+                  решений
+                </span>
+             </div>
+          </div>
+          <div>
+            <h3 className={`text-xl font-black uppercase tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+              Принять решение
+            </h3>
+            <p className={`text-[10px] font-bold uppercase tracking-widest leading-snug mt-2 opacity-50 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
+              Анализ дилемм и выбор верного пути
+            </p>
+          </div>
+        </button>
+
+        <div className="grid grid-cols-2 gap-4">
           {[
-            { id: 'DECISION', label: 'Решение', icon: Zap, color: userProfile.rpgMode ? 'text-red-800' : 'text-amber-400' },
-            { id: 'EMOTIONS', label: 'Состояние', icon: Heart, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-500' },
-            { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-500' }
+            { id: 'EMOTIONS', label: 'Состояние', icon: Heart, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-400' },
+            { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-400' }
           ].map(m => (
-            <button key={m.id} onClick={() => { 
-                if (!checkModeLimit(m.id as JournalMode)) {
-                    if (userProfile.isSubscribed) {
-                      const tg = window.Telegram?.WebApp;
-                      const msg = "Дневной лимит сессий достигнут. Приходите завтра!";
-                      if (tg && tg.showAlert) tg.showAlert(msg);
-                      else alert(msg);
-                    } else {
-                      setCurrentView('SUBSCRIPTION');
-                    }
-                    return;
-                }
-                setSelectedMode(m.id as any); 
-                setViewingHistorySession(null); 
-                setCurrentView('CHAT'); 
-            }} className="flex flex-col items-center space-y-3">
-              <div className={`w-full aspect-square rounded-[32px] border flex items-center justify-center active:scale-95 transition-all duration-300 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100 shadow-md shadow-indigo-100/50'}`}>
-                <m.icon size={34} className={m.color} />
-              </div>
-              <span className={`text-xs font-black uppercase tracking-[0.15em] ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-600'}`}>{m.label}</span>
+            <button key={m.id} onClick={() => handleModeSelection(m.id as JournalMode)} 
+              className={`w-full py-6 rounded-[28px] border flex flex-col items-center justify-center space-y-2 active:scale-95 transition-all duration-300 ${
+                userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'
+              }`}>
+              <m.icon size={26} className={m.color} />
+              <span className={`text-[9px] font-bold uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-950/60 font-display-fantasy' : 'text-slate-400'}`}>
+                {m.label}
+              </span>
             </button>
           ))}
         </div>
       </div>
 
       <div className="px-6 mb-6">
-         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-5 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
-            <div className="absolute top-5 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
-            <div className="flex items-center space-x-4 mb-5">
-               <div className="w-11 h-11 rounded-2xl bg-[#F0FDFA] flex items-center justify-center shrink-0">
-                 <TreeIcon stage={RANKS.indexOf(currentRank)} size={36} />
+         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white'}`}>
+            <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
+            <div className="flex items-center space-x-4 mb-6">
+               <div className="w-12 h-12 rounded-2xl bg-[#F0FDFA] flex items-center justify-center shrink-0">
+                 <TreeIcon stage={RANKS.indexOf(currentRank)} size={40} />
                </div>
                <div>
                  <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Прогресс роста</p>
-                 <h4 className={`text-base font-bold tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
+                 <h4 className={`text-lg font-black tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
                </div>
             </div>
-            <div className={`h-1 w-full rounded-full overflow-hidden mb-4 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}>
+            <div className={`h-1.5 w-full rounded-full overflow-hidden mb-5 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}>
               <div className={`h-full transition-all duration-1000 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (userProfile.xp / (RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000)) * 100)}%` }}></div>
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
                <div>
                  <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">XP</p>
-                 <p className={`font-bold text-sm ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.xp}</p>
+                 <p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.xp}</p>
                </div>
                <div className={`border-x ${userProfile.rpgMode ? 'border-red-800/10' : 'border-slate-100'}`}>
                  <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Сессии</p>
-                 <p className={`font-bold text-sm ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.totalSessions}</p>
+                 <p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalSessions}</p>
                </div>
                <div>
                  <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Мин.</p>
-                 <p className={`font-bold text-sm ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-800'}`}>{userProfile.totalMinutes}</p>
+                 <p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalMinutes}</p>
                </div>
             </div>
          </button>
@@ -762,19 +799,19 @@ const App: React.FC = () => {
           <div className="flex flex-col space-y-4 text-[15px] font-bold">
              <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Решения:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600'}>{FREE_DECISIONS_PER_DAY} / день</span></div>
              <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Состояния:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-rose-500'}>{FREE_EMOTIONS_PER_DAY} / день</span></div>
-             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>3 всего</span></div>
+             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-950/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>3 всего</span></div>
           </div>
           <div className={`h-[1px] my-6 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-200/50'}`}></div>
-          <p className={`text-sm leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>
-            Продолжайте путь бесплатно с лимитами или активируйте <span className={`${userProfile.rpgMode ? 'text-red-800 font-bold' : 'text-indigo-600 font-extrabold'}`}>Premium на 30 дней</span> для полного раскрытия потенциала.
+          <p className="text-sm leading-relaxed text-slate-500">
+            Продолжайте путь бесплатно с лимитами или активируйте <span className="text-indigo-600 font-extrabold">Premium на 30 дней</span> для полного раскрытия потенциала.
           </p>
        </div>
        
        <div className="w-full space-y-4 mb-10">
           {[
-            { id: '1', label: 'Безлимитные Решения', desc: 'Снимает оковы сомнений. Идеально для тех, кто ищет ясности.', icon: Zap, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-600', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
-            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' },
-            { id: '3', label: 'Ежедневные Квесты', desc: 'Ваш путь героя. Регулярные испытания мудрости.', icon: Sword, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-amber-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-amber-600', bg: userProfile.rpgMode ? 'bg-white/40' : 'bg-white/60' }
+            { id: '1', label: 'Безлимитные Решения', desc: 'Снимает оковы сомнений. Идеально для тех, кто ищет ясности.', icon: Zap, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-600', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600' },
+            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600' },
+            { id: '3', label: 'Ежедневные Квесты', desc: 'Ваш путь героя. Регулярные испытания мудрости.', icon: Sword, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-amber-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-amber-600' }
           ].map(benefit => (
             <div key={benefit.id} className={`flex items-center space-x-4 p-5 rounded-[32px] border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'glass-card border-white/30'}`}>
                <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg shrink-0 ${benefit.color}`}><benefit.icon size={22} /></div>
@@ -823,7 +860,6 @@ const App: React.FC = () => {
             setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); 
             const xpGain = Math.max(1, Math.ceil(d / 60)); 
             setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); 
-            // Send duration in seconds to reportEvent for accurate stats
             reportEvent('session', { seconds: d, mode: 'REFLECTION' }); 
             if (i) reportEvent('journal_entry', { entryType: e.type });
         }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={handleUpdateOrder} onBack={(totalSec) => {
@@ -842,6 +878,7 @@ const App: React.FC = () => {
                 xp: p.xp + xpGain, 
                 totalSessions: p.totalSessions + 1, 
                 totalMinutes: p.totalMinutes + xpGain,
+                totalDecisions: selectedMode === 'DECISION' ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0),
                 dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount,
                 dailyEmotionsCount: selectedMode === 'EMOTIONS' ? p.dailyEmotionsCount + 1 : p.dailyEmotionsCount
             })); 
@@ -862,7 +899,7 @@ const App: React.FC = () => {
         )}
         {currentView === 'PROFILE' && renderProfile()}
         {currentView === 'ADMIN' && renderAdmin()}
-        {currentView === 'RANKS_INFO' && renderRanksInfo()}
+        {currentRank && currentView === 'RANKS_INFO' && renderRanksInfo()}
         {currentView === 'HISTORY' && (
            <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
              <h1 className={`text-3xl font-bold italic uppercase tracking-tighter mb-8 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>История</h1>
