@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Share2, Check, Sparkles, Search, AlertTriangle, Activity, Compass, ShieldAlert } from 'lucide-react';
 import { DecisionData } from '../types';
@@ -36,8 +35,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
       initial="hidden" animate="visible"
       className="w-full space-y-4 px-4 pt-4 pb-12"
     >
-      {/* 1. ВЕРДИКТ */}
-      <motion.div variants={itemVariants} className={`p-10 rounded-[44px] shadow-2xl text-center relative overflow-hidden ${rpgMode ? 'rpg-card bg-slate-950 text-white' : 'bg-slate-900 text-white'}`}>
+      {/* 1. ВЕРДИКТ - УБРАНА ТЕНЬ */}
+      <motion.div variants={itemVariants} className={`p-10 rounded-[44px] border text-center relative overflow-hidden shadow-sm ${rpgMode ? 'rpg-card bg-slate-950 text-white border-red-800/30' : 'bg-slate-900 text-white border-slate-800'}`}>
         <div className="absolute top-0 right-0 p-8 opacity-10"><Sparkles size={100} /></div>
         <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-4">Вердикт</p>
         <h3 className={`text-2xl sm:text-3xl font-black leading-tight italic ${rpgMode ? 'font-display-fantasy' : ''}`}>

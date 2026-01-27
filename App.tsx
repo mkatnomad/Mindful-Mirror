@@ -280,9 +280,9 @@ const App: React.FC = () => {
     }
     
     // Welcome Bonus check (first 24h)
-    const isWelcomePeriod = userProfile.firstRunDate && (Date.now() - userProfile.firstRunDate < 24 * 60 * 60 * 1000);
-    const freeLimitDecisions = isWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_DECISIONS_PER_DAY;
-    const freeLimitEmotions = isWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
+    const iWelcomePeriod = userProfile.firstRunDate && (Date.now() - userProfile.firstRunDate < 24 * 60 * 60 * 1000);
+    const freeLimitDecisions = iWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_DECISIONS_PER_DAY;
+    const freeLimitEmotions = iWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
 
     if (mode === 'DECISION') return userProfile.dailyDecisionCount < freeLimitDecisions;
     if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < freeLimitEmotions;
@@ -870,8 +870,8 @@ const App: React.FC = () => {
             }
             setCurrentView('HOME');
         }} />}
-        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur) => { 
-            setHistory(prev => [{id: Date.now().toString(), mode: selectedMode, date: Date.now(), duration: dur, preview: msgs.find(m => m.role === 'user')?.content || '', messages: msgs}, ...prev]); 
+        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { 
+            setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); 
             const xpGain = Math.max(1, Math.ceil(dur / 60)); 
             setUserProfile(p => ({
                 ...p, 
@@ -882,7 +882,7 @@ const App: React.FC = () => {
                 dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount,
                 dailyEmotionsCount: selectedMode === 'EMOTIONS' ? p.dailyEmotionsCount + 1 : p.dailyEmotionsCount
             })); 
-            reportEvent('session', { seconds: Math.round(dur), mode: selectedMode }); 
+            reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); 
         }} />}
         {currentView === 'ARCHETYPE_TEST' && (
            <div className={`h-full p-8 flex flex-col animate-fade-in transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F1F5F9]'}`}>

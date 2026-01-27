@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, Loader2, Sparkles, Plus, Zap, X, ChevronRight, Target, LayoutGrid, Wand2, MessageSquare, Lightbulb, Compass, Rocket } from 'lucide-react';
+import { Send, ArrowLeft, Loader2, Sparkles, Plus, Zap, X, ChevronRight, Target, LayoutGrid, Wand2, MessageSquare, Lightbulb, Compass, Rocket, CheckCircle2 } from 'lucide-react';
 import { JournalMode, Message, DecisionData } from '../types';
 import { InsightCard } from './InsightCard';
 import { sendMessageToGemini, analyzeDecision } from '../services/geminiService';
@@ -9,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface ChatInterfaceProps {
   mode: JournalMode;
   onBack: () => void;
-  onSessionComplete?: (messages: Message[], durationSeconds: number) => void;
+  onSessionComplete?: (messages: Message[], durationSeconds: number, previewOverride?: string) => void;
   readOnly?: boolean;
   initialMessages?: Message[];
   rpgMode?: boolean;
@@ -65,7 +64,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleBack = () => {
     if (!readOnly && onSessionComplete && (messages.length > 0 || decisionStep > 1)) {
-      onSessionComplete(messages, (Date.now() - startTimeRef.current) / 1000);
+      onSessionComplete(
+        messages, 
+        (Date.now() - startTimeRef.current) / 1000,
+        mode === 'DECISION' ? decisionData.topic : undefined
+      );
     }
     onBack();
   };
@@ -93,12 +96,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
   };
 
+  const removeArgument = (side: 'A' | 'B', index: number) => {
+    if (side === 'A') {
+      setDecisionData(prev => ({ ...prev, pros: prev.pros.filter((_, i) => i !== index) }));
+    } else {
+      setDecisionData(prev => ({ ...prev, cons: prev.cons.filter((_, i) => i !== index) }));
+    }
+  };
+
   const performAnalysis = async () => {
     setIsLoading(true);
     setDecisionStep(3);
     try {
       const updatedData = await analyzeDecision(decisionData);
       setDecisionData(updatedData);
+      const cardMsg: Message = {
+        id: 'decision-res-' + Date.now(),
+        role: 'assistant',
+        content: `Анализ решения: ${updatedData.topic}`,
+        type: 'decision-card',
+        decisionData: updatedData,
+        timestamp: Date.now()
+      };
+      setMessages(prev => [...prev, cardMsg]);
       setDecisionStep(4);
     } catch (e) {
       setDecisionStep(2);
@@ -128,52 +148,63 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const isActive = activeSide === side;
     const items = side === 'A' ? decisionData.pros : decisionData.cons;
     const title = side === 'A' ? (isCompare ? decisionData.optionA : 'За') : (isCompare ? decisionData.optionB : 'Против');
+    
+    // Цвет колонки "Против" для одиночного выбора делаем розовым
+    const sideColorClass = !isCompare && side === 'B' 
+        ? (isActive ? (rpgMode ? 'rpg-card ring-2 ring-red-800/40' : 'bg-rose-50 border-rose-200 shadow-xl shadow-rose-100/30 scale-[1.02]') : (rpgMode ? 'bg-rose-900/10 border-red-800/10 opacity-50' : 'bg-rose-50/30 border-transparent opacity-50'))
+        : (isActive ? (rpgMode ? 'rpg-card ring-2 ring-red-800/20' : 'bg-white border-indigo-100 shadow-xl shadow-indigo-100/30 scale-[1.02]') : (rpgMode ? 'bg-white/40 border-red-800/10 opacity-50' : 'bg-slate-50 border-transparent opacity-50'));
+
+    const titleColorClass = !isCompare && side === 'B' 
+        ? (isActive ? 'text-rose-600' : 'text-rose-300') 
+        : (isActive ? (rpgMode ? 'text-red-800' : 'text-indigo-600') : 'text-slate-400');
 
     return (
       <div 
         onClick={() => setActiveSide(side)}
-        className={`flex flex-col rounded-[32px] p-5 border transition-all duration-500 cursor-pointer ${
-          isActive 
-            ? (rpgMode ? 'rpg-card ring-2 ring-red-800/20' : 'bg-white border-indigo-100 shadow-xl shadow-indigo-100/30 scale-[1.02]') 
-            : (rpgMode ? 'bg-white/40 border-red-800/10 opacity-50' : 'bg-slate-50 border-transparent opacity-50')
-        }`}
+        className={`flex flex-col rounded-[32px] p-5 border transition-all duration-500 cursor-pointer h-full ${sideColorClass}`}
       >
-        <div className="flex justify-between items-center mb-4">
-           <h4 className={`text-[10px] font-black uppercase tracking-widest ${isActive ? (rpgMode ? 'text-red-800' : 'text-indigo-600') : 'text-slate-400'}`}>
+        <div className="flex justify-between items-center mb-4 shrink-0">
+           <h4 className={`text-[10px] font-black uppercase tracking-widest truncate max-w-[80%] ${titleColorClass}`}>
              {title}
            </h4>
-           <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
+           <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${isActive ? (side === 'B' && !isCompare ? 'bg-rose-500 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'}`}>
              {items.length}
            </div>
         </div>
 
-        <div className="flex-1 space-y-2 mb-4">
+        <div className="flex-1 space-y-2 mb-4 overflow-y-auto no-scrollbar">
           <AnimatePresence>
             {items.map((text, i) => (
               <motion.div 
                 key={i} 
                 initial={{ opacity: 0, x: side === 'A' ? -10 : 10 }} 
                 animate={{ opacity: 1, x: 0 }}
-                className={`p-3 rounded-2xl text-[11px] font-bold border ${rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-white border-slate-50 text-slate-700 shadow-sm'}`}
+                className={`group relative p-3 pr-8 rounded-2xl text-[11px] font-bold border transition-all ${rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-white border-slate-50 text-slate-700 shadow-sm'}`}
               >
                 {text}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); removeArgument(side, i); }}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-opacity bg-slate-50 hover:bg-slate-100 ${rpgMode ? 'text-red-800' : 'text-slate-400'}`}
+                >
+                  <X size={12} strokeWidth={3} />
+                </button>
               </motion.div>
             ))}
           </AnimatePresence>
         </div>
 
         {isActive && (
-          <div className="mt-auto animate-fade-in">
+          <div className="mt-auto animate-fade-in shrink-0">
              <div className={`relative flex items-center rounded-2xl border p-1 transition-all ${rpgMode ? 'bg-white border-red-800/40' : 'bg-slate-50 border-indigo-100 focus-within:bg-white'}`}>
                 <input 
                   autoFocus
                   value={inlineInput}
                   onChange={(e) => setInlineInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addArgument()}
-                  placeholder="Пишите прямо здесь..."
-                  className="flex-1 bg-transparent px-3 py-2 text-[12px] font-bold focus:outline-none"
+                  placeholder="Добавить..."
+                  className="flex-1 bg-transparent px-3 py-2 text-[12px] font-bold focus:outline-none w-full"
                 />
-                <button onClick={addArgument} className={`p-2 rounded-xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}>
+                <button onClick={addArgument} className={`p-2 rounded-xl shrink-0 ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}>
                   <Plus size={14} />
                 </button>
              </div>
@@ -216,7 +247,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                    />
                 </div>
 
-                {/* Sub-Bento Grid */}
                 <div className="grid grid-cols-2 gap-4">
                    <div className={`p-6 rounded-[32px] border transition-all ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white border-white shadow-sm'}`}>
                       <div className="flex items-center space-x-2 mb-3">
@@ -238,7 +268,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                    </div>
                 </div>
 
-                {/* Start Button */}
                 <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim()} className={`w-full py-7 rounded-[40px] font-black text-[13px] uppercase tracking-[0.3em] flex items-center justify-center space-x-4 transition-all shadow-2xl active:scale-95 disabled:opacity-20 ${rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}>
                    <span>Разложить на факторы</span><ChevronRight size={18} strokeWidth={3} />
                 </button>
@@ -246,18 +275,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             )}
 
             {decisionStep === 2 && (
-              <div className="p-6 flex-1 flex flex-col space-y-4 animate-fade-in">
-                 <div className={`p-6 rounded-[32px] border ${rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm'}`}>
+              <div className="p-6 flex-1 flex flex-col space-y-4 animate-fade-in h-full overflow-hidden">
+                 <div className={`p-6 rounded-[32px] border shrink-0 ${rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm'}`}>
                     <h3 className={`text-lg font-black leading-tight ${rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{decisionData.topic}</h3>
                  </div>
-                 <div className="flex-1 grid grid-cols-2 gap-4 min-h-[350px]">
+                 <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden py-2">
                     {renderArgumentColumn('A')}
                     {renderArgumentColumn('B')}
                  </div>
                  <button 
                   onClick={performAnalysis} 
                   disabled={decisionData.pros.length === 0 && decisionData.cons.length === 0}
-                  className={`w-full py-6 rounded-[32px] font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center space-x-5 active:scale-95 transition-all ${rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}
+                  className={`shrink-0 w-full py-6 rounded-[32px] font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center space-x-5 active:scale-95 transition-all ${rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}
                  >
                    <Wand2 size={20} /><span>Синтезировать истину</span>
                  </button>
@@ -275,7 +304,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             )}
 
             {decisionStep === 4 && (
-              <div className="animate-fade-in pb-24">
+              <div className="animate-fade-in pb-32">
                 <InsightCard data={decisionData} rpgMode={rpgMode} />
               </div>
             )}
@@ -298,24 +327,40 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )}
       </div>
 
-      {/* Footer Chat Input (Only for Emotions/Reflection or step 4) */}
-      {(mode !== 'DECISION' || decisionStep === 4) && (
-        <div className={`p-4 safe-area-bottom z-30 transition-all ${rpgMode ? 'bg-parchment' : 'bg-white/80 backdrop-blur-md'}`}>
-           <div className={`flex items-center p-1 rounded-[32px] border shadow-2xl ${rpgMode ? 'bg-white border-red-800/40' : 'bg-white border-slate-100 focus-within:border-indigo-300'}`}>
-              <div className="pl-5 text-slate-300"><MessageSquare size={18} /></div>
-              <input 
-                value={input} 
-                onChange={(e) => setInput(e.target.value)} 
-                onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-                placeholder="Ваша мысль..."
-                className="flex-1 bg-transparent px-4 py-4 text-[15px] font-medium focus:outline-none"
-              />
-              <button onClick={handleSendChat} disabled={!input.trim() || isLoading} className={`w-12 h-12 flex items-center justify-center rounded-2xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white'}`}>
-                <Send size={20} />
-              </button>
-           </div>
+      {/* Footer Controls */}
+      {decisionStep === 4 && !readOnly ? (
+        <div className={`p-6 safe-area-bottom z-30 transition-all ${rpgMode ? 'bg-parchment' : 'bg-white/80 backdrop-blur-md'}`}>
+           <button 
+             onClick={handleBack}
+             className={`w-full py-6 rounded-[32px] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center space-x-3 shadow-xl active:scale-95 transition-all ${rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}
+           >
+              <CheckCircle2 size={20} />
+              <span>Завершить и сохранить</span>
+           </button>
         </div>
-      )}
+      ) : (mode !== 'DECISION' || (decisionStep === 4 && readOnly)) ? (
+        <div className={`p-4 safe-area-bottom z-30 transition-all ${rpgMode ? 'bg-parchment' : 'bg-white/80 backdrop-blur-md'}`}>
+           {!readOnly ? (
+             <div className={`flex items-center p-1 rounded-[32px] border shadow-2xl ${rpgMode ? 'bg-white border-red-800/40' : 'bg-white border-slate-100 focus-within:border-indigo-300'}`}>
+                <div className="pl-5 text-slate-300"><MessageSquare size={18} /></div>
+                <input 
+                  value={input} 
+                  onChange={(e) => setInput(e.target.value)} 
+                  onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+                  placeholder="Ваша мысль..."
+                  className="flex-1 bg-transparent px-4 py-4 text-[15px] font-medium focus:outline-none"
+                />
+                <button onClick={handleSendChat} disabled={!input.trim() || isLoading} className={`w-12 h-12 flex items-center justify-center rounded-2xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white'}`}>
+                  <Send size={20} />
+                </button>
+             </div>
+           ) : (
+             <div className="text-center py-2 text-[10px] font-bold uppercase tracking-widest text-slate-400 opacity-60">
+               Архивная запись сессии
+             </div>
+           )}
+        </div>
+      ) : null}
     </div>
   );
 };
