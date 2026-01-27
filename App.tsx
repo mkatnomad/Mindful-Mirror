@@ -53,21 +53,179 @@ const cloudStorage = {
   }
 };
 
-const TreeIcon = ({ stage, size = 40 }: { stage: number, size?: number }) => {
-  const stages = [
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F0FDFA"/><circle cx="50" cy="50" r="30" fill="#FEF3C7"/><path d="M50 45C50 45 55 42 55 48C55 54 50 60 50 60C50 60 45 54 45 48C45 42 50 45 50 45Z" fill="#D97706"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#ECFDF5"/><path d="M50 75V55" stroke="#059669" strokeWidth="5" strokeLinecap="round"/><path d="M50 55C50 55 65 52 65 42C65 32 50 45 50 45" fill="#10B981"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F0FDF4"/><path d="M50 75V40" stroke="#059669" strokeWidth="5" strokeLinecap="round"/><path d="M50 55C50 55 68 50 68 40C68 30 50 48 50 48" fill="#34D399"/><path d="M50 45C50 45 32 40 32 30" fill="#10B981"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="35" r="22" fill="#10B981"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F5F3FF"/><path d="M50 90V55" stroke="#78350F" strokeWidth="7" strokeLinecap="round"/><circle cx="50" cy="40" r="25" fill="#059669"/><circle cx="35" cy="50" r="16" fill="#10B981"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#FDF2F8"/><path d="M50 90V60" stroke="#78350F" strokeWidth="9" strokeLinecap="round"/><circle cx="50" cy="38" r="30" fill="#065F46"/><circle cx="30" cy="48" r="20" fill="#059669"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#EFF6FF"/><path d="M50 92V70" stroke="#451A03" strokeWidth="11" strokeLinecap="round"/><path d="M50 70L25 50M50 70L75 50" stroke="#451A03" strokeWidth="6" strokeLinecap="round"/><circle cx="50" cy="32" r="26" fill="#064E3B"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#FFF5F5"/><path d="M50 90V75" stroke="#451A03" strokeWidth="9" strokeLinecap="round"/><circle cx="50" cy="42" r="32" fill="#065F46"/><circle cx="40" cy="35" r="6" fill="#FB7185"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#FEFCE8"/><path d="M50 90V75" stroke="#451A03" strokeWidth="9" strokeLinecap="round"/><circle cx="50" cy="42" r="32" fill="#063B2B"/><circle cx="45" cy="38" r="7" fill="#F59E0B"/></svg>,
-    <svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="40" fill="#F0FDFA"/><path d="M50 92V65" stroke="#451A03" strokeWidth="13" strokeLinecap="round"/><circle cx="50" cy="42" r="38" fill="#064E3B"/><circle cx="50" cy="42" r="28" fill="#10B981" opacity="0.4"/><circle cx="50" cy="42" r="9" fill="#FDE68A"/></svg>
-  ];
-  return <div style={{ width: size, height: size }}>{stages[stage] || stages[0]}</div>;
+// --- UNIFIED ARTIFACT BASE COMPONENT ---
+
+const ArtifactBase = ({ children, rpgMode, colorStart, colorEnd, size, idPrefix = "art", isOutline = false }: { children?: React.ReactNode, rpgMode: boolean, colorStart: string, colorEnd: string, size: number, idPrefix?: string, isOutline?: boolean }) => {
+  const gradId = `${idPrefix}-${colorStart.replace('#','')}`;
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="drop-shadow-lg overflow-visible">
+      <defs>
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={rpgMode ? "#991B1B" : colorStart} />
+          <stop offset="100%" stopColor={rpgMode ? "#450A0A" : colorEnd} />
+        </linearGradient>
+      </defs>
+      {/* Background Aura - More subtle for outlines */}
+      <circle cx="50" cy="50" r="48" fill={rpgMode ? "#991B1B" : colorStart} fillOpacity={isOutline ? "0.03" : "0.05"} />
+      <circle cx="50" cy="50" r="40" fill={rpgMode ? "#991B1B" : colorStart} fillOpacity={isOutline ? "0.05" : "0.08"} />
+      
+      {/* Central Artifact Body */}
+      <g transform="translate(10, 10) scale(0.8)">
+        {children}
+      </g>
+
+      {/* Unified Glassy Highlight Layer */}
+      <path 
+        d="M25 40C25 40 40 20 75 35" 
+        stroke="white" 
+        strokeWidth="5" 
+        strokeLinecap="round" 
+        opacity={isOutline ? "0.15" : "0.25"} 
+      />
+      <circle cx="75" cy="30" r="4" fill="white" opacity={isOutline ? "0.1" : "0.3"} />
+      
+      {/* RPG Ornate details */}
+      {rpgMode && (
+        <circle cx="50" cy="50" r="46" stroke="#FDE68A" strokeWidth="1" strokeDasharray="2 4" opacity="0.3" />
+      )}
+    </svg>
+  );
 };
+
+// --- REDESIGNED TREE ICONS (ARTIFACT STYLE) ---
+
+const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?: number, rpgMode?: boolean }) => {
+  const treeConfigs = [
+    { start: "#FEF3C7", end: "#D97706", label: "seed" },     // 0: Зерно
+    { start: "#ECFDF5", end: "#10B981", label: "sprout" },   // 1: Росток
+    { start: "#D1FAE5", end: "#059669", label: "shoot" },    // 2: Побег
+    { start: "#A7F3D0", end: "#047857", label: "sapling" },  // 3: Саженец
+    { start: "#6EE7B7", end: "#065F46", label: "young" },    // 4: Молодое дерево
+    { start: "#34D399", end: "#064E3B", label: "strong" },   // 5: Крепкое дерево
+    { start: "#10B981", end: "#164E63", label: "branchy" },  // 6: Ветвистое дерево
+    { start: "#F472B6", end: "#BE185D", label: "blooming" }, // 7: Цветущее дерево
+    { start: "#FBBF24", end: "#B45309", label: "fruiting" }, // 8: Плодоносящее дерево
+    { start: "#818CF8", end: "#4338CA", label: "wisdom" },   // 9: Древо Мудрости
+  ];
+
+  const cfg = treeConfigs[stage] || treeConfigs[0];
+
+  const renderTreeContent = () => {
+    switch(stage) {
+      case 0: // Seed
+        return <circle cx="50" cy="60" r="15" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
+      case 1: // Sprout
+        return <path d="M50 80V50C50 50 50 30 70 30" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="8" strokeLinecap="round" />;
+      case 2: // Shoot
+        return (
+          <g>
+            <path d="M50 80V40" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="8" strokeLinecap="round" />
+            <path d="M50 55C50 55 70 50 75 35" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="6" strokeLinecap="round" />
+          </g>
+        );
+      case 3: // Sapling
+        return <circle cx="50" cy="45" r="25" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
+      case 4: // Young Tree
+        return (
+          <g>
+            <rect x="44" y="50" width="12" height="35" rx="4" fill="#78350F" />
+            <circle cx="50" cy="40" r="28" fill={`url(#tree-${cfg.start.replace('#','')})`} />
+          </g>
+        );
+      case 5: // Strong Tree
+        return (
+          <g>
+            <path d="M50 85V60" stroke="#78350F" strokeWidth="14" strokeLinecap="round" />
+            <circle cx="50" cy="40" r="35" fill={`url(#tree-${cfg.start.replace('#','')})`} />
+          </g>
+        );
+      case 6: // Branching Tree
+        return (
+          <g>
+            <path d="M50 85V65L30 45M50 65L70 45" stroke="#451A03" strokeWidth="10" strokeLinecap="round" />
+            <circle cx="50" cy="35" r="30" fill={`url(#tree-${cfg.start.replace('#','')})`} />
+          </g>
+        );
+      case 7: // Blooming Tree
+        return (
+          <g>
+            <circle cx="50" cy="45" r="38" fill="#065F46" />
+            <circle cx="35" cy="35" r="6" fill="#FB7185" />
+            <circle cx="65" cy="40" r="6" fill="#FB7185" />
+            <circle cx="50" cy="25" r="6" fill="#FB7185" />
+          </g>
+        );
+      case 8: // Fruiting Tree
+        return (
+          <g>
+            <circle cx="50" cy="45" r="38" fill="#063B2B" />
+            <circle cx="40" cy="30" r="7" fill="#F59E0B" />
+            <circle cx="60" cy="55" r="7" fill="#F59E0B" />
+            <circle cx="30" cy="50" r="7" fill="#F59E0B" />
+          </g>
+        );
+      case 9: // Tree of Wisdom
+        return (
+          <g>
+            <circle cx="50" cy="50" r="45" fill="#064E3B" />
+            <circle cx="50" cy="50" r="30" fill="#10B981" opacity="0.4" />
+            <path d="M50 25L55 40H45L50 25Z" fill="#FDE68A" />
+            <circle cx="50" cy="50" r="8" fill="#FDE68A" />
+          </g>
+        );
+      default:
+        return <circle cx="50" cy="50" r="20" fill="gray" />;
+    }
+  };
+
+  return (
+    <ArtifactBase rpgMode={rpgMode} colorStart={cfg.start} colorEnd={cfg.end} size={size} idPrefix="tree">
+      {renderTreeContent()}
+    </ArtifactBase>
+  );
+};
+
+// --- MODE ILLUSTRATIONS ---
+
+const DecisionIllustration = ({ rpgMode, size = 32 }: { rpgMode: boolean, size?: number }) => (
+  <ArtifactBase rpgMode={rpgMode} colorStart="#F59E0B" colorEnd="#D97706" size={size} idPrefix="dec">
+    <path 
+      d="M50 10L20 55H45L30 90L80 40H55L70 10H50Z" 
+      fill={`url(#dec-F59E0B)`} 
+      className="animate-pulse"
+    />
+  </ArtifactBase>
+);
+
+const EmotionsIllustration = ({ rpgMode, size = 26 }: { rpgMode: boolean, size?: number }) => (
+  <ArtifactBase rpgMode={rpgMode} colorStart="#FB7185" colorEnd="#E11D48" size={size} idPrefix="emo" isOutline={true}>
+    <path 
+      d="M50 82C30 72 12 55 12 35C12 22 25 15 40 22C45 25 50 30 50 30C50 30 55 25 60 22C75 15 88 22 88 35C88 55 70 72 50 82Z" 
+      stroke={`url(#emo-FB7185)`} 
+      strokeWidth="6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill={rpgMode ? "#991B1B" : "#FB7185"}
+      fillOpacity="0.05"
+    />
+  </ArtifactBase>
+);
+
+const ReflectionIllustration = ({ rpgMode, size = 26 }: { rpgMode: boolean, size?: number }) => (
+  <ArtifactBase rpgMode={rpgMode} colorStart="#34D399" colorEnd="#059669" size={size} idPrefix="ref" isOutline={true}>
+    <rect 
+      x="22" y="18" width="56" height="64" rx="6" 
+      stroke={`url(#ref-34D399)`} 
+      strokeWidth="6"
+      fill={rpgMode ? "#064E3B" : "#34D399"}
+      fillOpacity="0.05"
+    />
+    <path d="M35 35H65M35 50H65M35 65H55" stroke={`url(#ref-34D399)`} strokeWidth="4" strokeLinecap="round" opacity="0.4" />
+    <path d="M60 18V45L68 38L76 45V18H60Z" fill={rpgMode ? "#FDE68A" : "#059669"} fillOpacity="0.6" />
+  </ArtifactBase>
+);
+
+// --- APP COMPONENT ---
 
 const ARCHETYPES: Archetype[] = [
   { id: '1', name: 'Шут', role: 'Мастер игры', motto: 'Живи моментом!', strength: 'Юмор и игривость', weakness: 'Легкомыслие', quote: 'Смех — это кратчайшее расстояние между двумя людьми.', description: 'Вы умеете находить радость в любой ситуации и превращать скуку в праздник.', meaning: 'Учит не принимать жизнь слишком серьезно и видеть абсурдность проблем.' },
@@ -565,10 +723,10 @@ const App: React.FC = () => {
       <div className="space-y-6">
         {RANKS.map((rank, i) => (
           <div key={i} className={`p-6 rounded-[28px] border flex items-center space-x-5 ${userProfile.xp >= rank.threshold ? (userProfile.rpgMode ? 'rpg-card' : 'bg-indigo-50 border-indigo-100') : 'opacity-40 bg-slate-50 border-slate-100'}`}>
-            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shadow-sm">
-              <TreeIcon stage={i} size={36} />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center">
+              <TreeIcon stage={i} size={48} rpgMode={userProfile.rpgMode} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 ml-2">
               <h3 className={`font-bold text-lg ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{rank.title}</h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{rank.threshold} XP</p>
               <p className="text-sm mt-1 text-slate-500 leading-tight">{rank.desc}</p>
@@ -595,51 +753,61 @@ const App: React.FC = () => {
       </div>
 
       <div className="px-6 mb-6 relative z-20">
-        {/* Bento Hero Card for Decisions */}
+        {/* Bento Hero Card for Decisions - RE-DESIGNED TO BE LARGER HERO */}
         <button 
           onClick={() => handleModeSelection('DECISION')}
-          className={`w-full mb-6 p-6 sm:p-8 rounded-[32px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${
+          className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${
             userProfile.rpgMode 
-              ? 'rpg-card border-amber-500/40 shadow-none' 
-              : 'bg-white border-white shadow-xl shadow-slate-200/50'
+              ? 'rpg-card border-amber-500 shadow-xl shadow-red-900/10' 
+              : 'bg-white border-white shadow-2xl shadow-slate-300/40'
           }`}
         >
-          <div className="flex justify-between items-start mb-4">
-             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${
-               userProfile.rpgMode ? 'bg-red-800 text-white shadow-md' : 'bg-amber-50 text-amber-500'
-             }`}>
-               <Zap size={32} fill={userProfile.rpgMode ? "currentColor" : "none"} />
-             </div>
-             <div className="text-right">
-                <span className={`block text-3xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>
-                  {userProfile.totalDecisions || 0}
-                </span>
-                <span className={`text-[9px] font-black uppercase tracking-widest opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
-                  решений
-                </span>
-             </div>
+          <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10 pointer-events-none scale-150 transform rotate-12">
+            <DecisionIllustration rpgMode={userProfile.rpgMode} size={180} />
           </div>
-          <div>
-            <h3 className={`text-xl font-black uppercase tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-              Принять решение
-            </h3>
-            <p className={`text-[10px] font-bold uppercase tracking-widest leading-snug mt-2 opacity-50 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
-              Анализ дилемм и выбор верного пути
-            </p>
+
+          <div className="relative z-10 flex flex-col h-full justify-between">
+            <div className="flex justify-between items-start mb-12">
+               <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center shrink-0 ${
+                 userProfile.rpgMode ? 'bg-red-800 text-white shadow-xl' : 'bg-amber-50 text-amber-500'
+               }`}>
+                 <DecisionIllustration rpgMode={userProfile.rpgMode} size={50} />
+               </div>
+               <div className="text-right">
+                  <span className={`block text-5xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>
+                    {userProfile.totalDecisions || 0}
+                  </span>
+                  <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
+                    решений
+                  </span>
+               </div>
+            </div>
+            <div>
+              <h3 className={`text-3xl font-black uppercase tracking-tighter leading-none mb-3 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+                Принять решение
+              </h3>
+              <p className={`text-[11px] font-bold uppercase tracking-[0.2em] leading-snug opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
+                Выбор верного пути через анализ
+              </p>
+            </div>
           </div>
         </button>
 
         <div className="grid grid-cols-2 gap-4">
           {[
-            { id: 'EMOTIONS', label: 'Состояние', icon: Heart, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-400' },
-            { id: 'REFLECTION', label: 'Дневник', icon: BookOpen, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-400' }
+            { id: 'EMOTIONS', label: 'Состояние', color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-400' },
+            { id: 'REFLECTION', label: 'Дневник', color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-400' }
           ].map(m => (
             <button key={m.id} onClick={() => handleModeSelection(m.id as JournalMode)} 
-              className={`w-full py-6 rounded-[28px] border flex flex-col items-center justify-center space-y-2 active:scale-95 transition-all duration-300 ${
+              className={`w-full py-8 rounded-[36px] border flex flex-col items-center justify-center space-y-4 active:scale-95 transition-all duration-300 ${
                 userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'
               }`}>
-              <m.icon size={26} className={m.color} />
-              <span className={`text-[9px] font-bold uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-950/60 font-display-fantasy' : 'text-slate-400'}`}>
+              {m.id === 'EMOTIONS' ? (
+                <EmotionsIllustration rpgMode={userProfile.rpgMode} size={36} />
+              ) : (
+                <ReflectionIllustration rpgMode={userProfile.rpgMode} size={36} />
+              )}
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-950/40 font-display-fantasy' : 'text-slate-400'}`}>
                 {m.label}
               </span>
             </button>
@@ -651,10 +819,10 @@ const App: React.FC = () => {
          <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white'}`}>
             <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
             <div className="flex items-center space-x-4 mb-6">
-               <div className="w-12 h-12 rounded-2xl bg-[#F0FDFA] flex items-center justify-center shrink-0">
-                 <TreeIcon stage={RANKS.indexOf(currentRank)} size={40} />
+               <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0">
+                 <TreeIcon stage={RANKS.indexOf(currentRank)} size={48} rpgMode={userProfile.rpgMode} />
                </div>
-               <div>
+               <div className="ml-2">
                  <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Прогресс роста</p>
                  <h4 className={`text-lg font-bold tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
                </div>

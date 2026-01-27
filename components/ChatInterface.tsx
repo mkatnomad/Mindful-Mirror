@@ -149,14 +149,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const items = side === 'A' ? decisionData.pros : decisionData.cons;
     const title = side === 'A' ? (isCompare ? decisionData.optionA : 'За') : (isCompare ? decisionData.optionB : 'Против');
     
-    // Цвет колонки "Против" для одиночного выбора делаем розовым
+    // Цвет колонки
     const sideColorClass = !isCompare && side === 'B' 
         ? (isActive ? (rpgMode ? 'rpg-card ring-2 ring-red-800/40' : 'bg-rose-50 border-rose-200 shadow-xl shadow-rose-100/30 scale-[1.02]') : (rpgMode ? 'bg-rose-900/10 border-red-800/10 opacity-50' : 'bg-rose-50/30 border-transparent opacity-50'))
-        : (isActive ? (rpgMode ? 'rpg-card ring-2 ring-red-800/20' : 'bg-white border-indigo-100 shadow-xl shadow-indigo-100/30 scale-[1.02]') : (rpgMode ? 'bg-white/40 border-red-800/10 opacity-50' : 'bg-slate-50 border-transparent opacity-50'));
+        : (isActive 
+            ? (rpgMode ? 'rpg-card ring-2 ring-red-800/20' : 'bg-emerald-50/40 border-emerald-100 shadow-xl shadow-emerald-100/30 scale-[1.02]') 
+            : (rpgMode ? 'bg-white/40 border-red-800/10 opacity-50' : 'bg-slate-50 border-transparent opacity-50'));
 
     const titleColorClass = !isCompare && side === 'B' 
         ? (isActive ? 'text-rose-600' : 'text-rose-300') 
-        : (isActive ? (rpgMode ? 'text-red-800' : 'text-indigo-600') : 'text-slate-400');
+        : (isActive ? (rpgMode ? 'text-red-800' : 'text-emerald-600') : 'text-slate-400');
 
     return (
       <div 
