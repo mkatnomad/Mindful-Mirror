@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, Archetype, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
@@ -507,7 +508,7 @@ const App: React.FC = () => {
     const arc = userProfile.archetype;
     if (!arc) return null;
     return (
-      <div className={`h-screen w-full overflow-y-auto animate-fade-in transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-slate-50'}`}>
+      <div className={`h-screen w-full overflow-y-auto animate-fade-in transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F1F5F9]'}`}>
         <div className="min-h-full flex flex-col items-center p-6 pb-20 justify-center">
             <ArchetypeCard archetype={arc} expanded={true} onToggle={() => {}} />
             <button 
@@ -533,7 +534,7 @@ const App: React.FC = () => {
   };
 
   const renderRanksInfo = () => (
-    <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
+    <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
       <header className="mb-10 flex items-center space-x-4">
         <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
           <ArrowLeft size={24}/>
@@ -847,16 +848,16 @@ const App: React.FC = () => {
             reportEvent('session', { seconds: Math.round(dur), mode: selectedMode }); 
         }} />}
         {currentView === 'ARCHETYPE_TEST' && (
-           <div className={`h-full p-8 flex flex-col animate-fade-in transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-white'}`}>
+           <div className={`h-full p-8 flex flex-col animate-fade-in transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F1F5F9]'}`}>
              <header className="mb-12 flex items-center justify-between"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><X size={24}/></button><div className="flex-1 px-8"><div className={`h-1 rounded-full ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-100'}`}><div className={`h-full rounded-full transition-all ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-500'}`} style={{ width: `${((testQuestionIdx + 1) / QUESTIONS.length) * 100}%` }}></div></div></div><span className="text-[10px] font-bold">{testQuestionIdx + 1}/{QUESTIONS.length}</span></header>
-             <div className="flex-1 flex flex-col justify-center"><h2 className={`text-3xl font-black mb-12 italic ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2><div className="space-y-3">{QUESTIONS[testQuestionIdx].options.map((opt, idx) => (<button key={idx} onClick={() => handleTestAnswer(idx)} className={`w-full text-left p-6 rounded-[28px] border-2 transition-all ${localSelectedIdx === idx ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white') : (userProfile.rpgMode ? 'bg-white/60 border-red-800/20' : 'bg-white border-slate-50')}`}><span className="text-lg font-bold">{opt}</span></button>))}</div></div>
+             <div className="flex-1 flex flex-col justify-center"><h2 className={`text-3xl font-black mb-12 italic ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2><div className="space-y-3">{QUESTIONS[testQuestionIdx].options.map((opt, idx) => (<button key={idx} onClick={() => handleTestAnswer(idx)} className={`w-full text-left p-6 rounded-[28px] border-2 transition-all ${localSelectedIdx === idx ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white') : (userProfile.rpgMode ? 'bg-white/60 border-red-800/20' : 'bg-white border-slate-50 shadow-sm')}`}><span className="text-lg font-bold">{opt}</span></button>))}</div></div>
            </div>
         )}
         {currentView === 'ARCHETYPE_RESULT' && renderArchetypeResult()}
         {currentView === 'ARCHETYPE_GLOSSARY' && (
-           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'}`}>
+           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
              <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Глоссарий</h1></header>
-             <div className="space-y-6">{ARCHETYPES.map(arc => (<div key={arc.id} className={`p-6 rounded-[28px] border ${userProfile.rpgMode ? 'rpg-card' : 'bg-slate-50'}`}><h3 className="text-xl font-bold mb-1">{arc.name}</h3><p className="text-xs uppercase font-bold text-indigo-500 mb-4">{arc.role}</p><p className="text-sm italic mb-4 opacity-70">"{arc.motto}"</p><p className="text-xs leading-relaxed opacity-80">{arc.description}</p></div>))}</div>
+             <div className="space-y-6">{ARCHETYPES.map(arc => (<div key={arc.id} className={`p-6 rounded-[28px] border ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100 shadow-sm'}`}><h3 className="text-xl font-bold mb-1">{arc.name}</h3><p className="text-xs uppercase font-bold text-indigo-500 mb-4">{arc.role}</p><p className="text-sm italic mb-4 opacity-70">"{arc.motto}"</p><p className="text-xs leading-relaxed opacity-80">{arc.description}</p></div>))}</div>
            </div>
         )}
         {currentView === 'PROFILE' && renderProfile()}
