@@ -6,7 +6,7 @@ import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Sparkle, RefreshCw, Quote, Loader2, Trophy, Wand2, Award, Info, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, CreditCard, RefreshCcw, BarChart3, ShieldAlert, Users, Clock, Flame, Shield, Target, RotateCcw, ChevronDown, ChevronUp, AlertCircle, Sparkle as SparkleIcon, ZapOff, Gift, CheckCircle2 } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 
 const FREE_DECISIONS_PER_DAY = 2;
 const FREE_EMOTIONS_PER_DAY = 2;
@@ -21,11 +21,15 @@ declare global {
   }
 }
 
+// Специализированный помощник для облачного хранилища Telegram (для критичных данных)
 const cloudStorage = {
   setItem: (key: string, value: any): Promise<void> => {
     return new Promise((resolve) => {
       if (window.Telegram?.WebApp?.CloudStorage) {
-        window.Telegram.WebApp.CloudStorage.setItem(key, JSON.stringify(value), () => resolve());
+        window.Telegram.WebApp.CloudStorage.setItem(key, JSON.stringify(value), (err: any) => {
+          if (err) console.error(`CloudStorage Set Error [${key}]:`, err);
+          resolve();
+        });
       } else {
         localStorage.setItem(key, JSON.stringify(value));
         resolve();
@@ -65,16 +69,11 @@ const ArtifactBase = ({ children, rpgMode, colorStart, colorEnd, size, idPrefix 
           <stop offset="100%" stopColor={rpgMode ? "#450A0A" : colorEnd} />
         </linearGradient>
       </defs>
-      {/* Background Aura - More subtle for outlines */}
       <circle cx="50" cy="50" r="48" fill={rpgMode ? "#991B1B" : colorStart} fillOpacity={isOutline ? "0.03" : "0.05"} />
       <circle cx="50" cy="50" r="40" fill={rpgMode ? "#991B1B" : colorStart} fillOpacity={isOutline ? "0.05" : "0.08"} />
-      
-      {/* Central Artifact Body */}
       <g transform="translate(10, 10) scale(0.8)">
         {children}
       </g>
-
-      {/* Unified Glassy Highlight Layer */}
       <path 
         d="M25 40C25 40 40 20 75 35" 
         stroke="white" 
@@ -83,8 +82,6 @@ const ArtifactBase = ({ children, rpgMode, colorStart, colorEnd, size, idPrefix 
         opacity={isOutline ? "0.15" : "0.25"} 
       />
       <circle cx="75" cy="30" r="4" fill="white" opacity={isOutline ? "0.1" : "0.3"} />
-      
-      {/* RPG Ornate details */}
       {rpgMode && (
         <circle cx="50" cy="50" r="46" stroke="#FDE68A" strokeWidth="1" strokeDasharray="2 4" opacity="0.3" />
       )}
@@ -92,62 +89,50 @@ const ArtifactBase = ({ children, rpgMode, colorStart, colorEnd, size, idPrefix 
   );
 };
 
-// --- REDESIGNED TREE ICONS (ARTIFACT STYLE) ---
-
 const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?: number, rpgMode?: boolean }) => {
   const treeConfigs = [
-    { start: "#FEF3C7", end: "#D97706", label: "seed" },     // 0: Зерно
-    { start: "#ECFDF5", end: "#10B981", label: "sprout" },   // 1: Росток
-    { start: "#D1FAE5", end: "#059669", label: "shoot" },    // 2: Побег
-    { start: "#A7F3D0", end: "#047857", label: "sapling" },  // 3: Саженец
-    { start: "#6EE7B7", end: "#065F46", label: "young" },    // 4: Молодое дерево
-    { start: "#34D399", end: "#064E3B", label: "strong" },   // 5: Крепкое дерево
-    { start: "#10B981", end: "#164E63", label: "branchy" },  // 6: Ветвистое дерево
-    { start: "#F472B6", end: "#BE185D", label: "blooming" }, // 7: Цветущее дерево
-    { start: "#FBBF24", end: "#B45309", label: "fruiting" }, // 8: Плодоносящее дерево
-    { start: "#818CF8", end: "#4338CA", label: "wisdom" },   // 9: Древо Мудрости
+    { start: "#FEF3C7", end: "#D97706", label: "seed" },
+    { start: "#ECFDF5", end: "#10B981", label: "sprout" },
+    { start: "#D1FAE5", end: "#059669", label: "shoot" },
+    { start: "#A7F3D0", end: "#047857", label: "sapling" },
+    { start: "#6EE7B7", end: "#065F46", label: "young" },
+    { start: "#34D399", end: "#064E3B", label: "strong" },
+    { start: "#10B981", end: "#164E63", label: "branchy" },
+    { start: "#F472B6", end: "#BE185D", label: "blooming" },
+    { start: "#FBBF24", end: "#B45309", label: "fruiting" },
+    { start: "#818CF8", end: "#4338CA", label: "wisdom" },
   ];
-
   const cfg = treeConfigs[stage] || treeConfigs[0];
-
   const renderTreeContent = () => {
     switch(stage) {
-      case 0: // Seed
-        return <circle cx="50" cy="60" r="15" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
-      case 1: // Sprout
-        return <path d="M50 80V50C50 50 50 30 70 30" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="8" strokeLinecap="round" />;
-      case 2: // Shoot
-        return (
+      case 0: return <circle cx="50" cy="60" r="15" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
+      case 1: return <path d="M50 80V50C50 50 50 30 70 30" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="8" strokeLinecap="round" />;
+      case 2: return (
           <g>
             <path d="M50 80V40" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="8" strokeLinecap="round" />
             <path d="M50 55C50 55 70 50 75 35" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="6" strokeLinecap="round" />
           </g>
         );
-      case 3: // Sapling
-        return <circle cx="50" cy="45" r="25" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
-      case 4: // Young Tree
-        return (
+      case 3: return <circle cx="50" cy="45" r="25" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
+      case 4: return (
           <g>
             <rect x="44" y="50" width="12" height="35" rx="4" fill="#78350F" />
             <circle cx="50" cy="40" r="28" fill={`url(#tree-${cfg.start.replace('#','')})`} />
           </g>
         );
-      case 5: // Strong Tree
-        return (
+      case 5: return (
           <g>
             <path d="M50 85V60" stroke="#78350F" strokeWidth="14" strokeLinecap="round" />
             <circle cx="50" cy="40" r="35" fill={`url(#tree-${cfg.start.replace('#','')})`} />
           </g>
         );
-      case 6: // Branching Tree
-        return (
+      case 6: return (
           <g>
             <path d="M50 85V65L30 45M50 65L70 45" stroke="#451A03" strokeWidth="10" strokeLinecap="round" />
             <circle cx="50" cy="35" r="30" fill={`url(#tree-${cfg.start.replace('#','')})`} />
           </g>
         );
-      case 7: // Blooming Tree
-        return (
+      case 7: return (
           <g>
             <circle cx="50" cy="45" r="38" fill="#065F46" />
             <circle cx="35" cy="35" r="6" fill="#FB7185" />
@@ -155,8 +140,7 @@ const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?:
             <circle cx="50" cy="25" r="6" fill="#FB7185" />
           </g>
         );
-      case 8: // Fruiting Tree
-        return (
+      case 8: return (
           <g>
             <circle cx="50" cy="45" r="38" fill="#063B2B" />
             <circle cx="40" cy="30" r="7" fill="#F59E0B" />
@@ -164,8 +148,7 @@ const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?:
             <circle cx="30" cy="50" r="7" fill="#F59E0B" />
           </g>
         );
-      case 9: // Tree of Wisdom
-        return (
+      case 9: return (
           <g>
             <circle cx="50" cy="50" r="45" fill="#064E3B" />
             <circle cx="50" cy="50" r="30" fill="#10B981" opacity="0.4" />
@@ -173,19 +156,15 @@ const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?:
             <circle cx="50" cy="50" r="8" fill="#FDE68A" />
           </g>
         );
-      default:
-        return <circle cx="50" cy="50" r="20" fill="gray" />;
+      default: return <circle cx="50" cy="50" r="20" fill="gray" />;
     }
   };
-
   return (
     <ArtifactBase rpgMode={rpgMode} colorStart={cfg.start} colorEnd={cfg.end} size={size} idPrefix="tree">
       {renderTreeContent()}
     </ArtifactBase>
   );
 };
-
-// --- MODE ILLUSTRATIONS ---
 
 const DecisionIllustration = ({ rpgMode, size = 32 }: { rpgMode: boolean, size?: number }) => (
   <ArtifactBase rpgMode={rpgMode} colorStart="#F59E0B" colorEnd="#D97706" size={size} idPrefix="dec">
@@ -224,8 +203,6 @@ const ReflectionIllustration = ({ rpgMode, size = 26 }: { rpgMode: boolean, size
     <path d="M60 18V45L68 38L76 45V18H60Z" fill={rpgMode ? "#FDE68A" : "#059669"} fillOpacity="0.6" />
   </ArtifactBase>
 );
-
-// --- APP COMPONENT ---
 
 const ARCHETYPES: Archetype[] = [
   { id: '1', name: 'Шут', role: 'Мастер игры', motto: 'Живи моментом!', strength: 'Юмор и игривость', weakness: 'Легкомыслие', quote: 'Смех — это кратчайшее расстояние между двумя людьми.', description: 'Вы умеете находить радость в любой ситуации и превращать скуку в праздник.', meaning: 'Учит не принимать жизнь слишком серьезно и видеть абсурдность проблем.' },
@@ -352,9 +329,18 @@ const App: React.FC = () => {
   useEffect(() => {
     const initData = async () => {
       try {
+        // Профиль берем из облака для надежности
         const profile = await cloudStorage.getItem<UserProfile>('mm_profile');
-        const hist = await cloudStorage.getItem<ChatSession[]>('mm_history');
-        const entries = await cloudStorage.getItem<JournalEntry[]>('mm_journal_entries');
+        
+        // Историю и Дневник берем из localStorage для обхода лимита 4КБ CloudStorage
+        const localHistRaw = localStorage.getItem('mm_history');
+        const localEntriesRaw = localStorage.getItem('mm_journal_entries');
+        
+        let localHist: ChatSession[] = [];
+        let localEntries: JournalEntry[] = [];
+        
+        try { if (localHistRaw) localHist = JSON.parse(localHistRaw); } catch(e) { console.error("History parse fail"); }
+        try { if (localEntriesRaw) localEntries = JSON.parse(localEntriesRaw); } catch(e) { console.error("Entries parse fail"); }
 
         if (profile) {
             setUserProfile(prev => ({ ...prev, ...profile }));
@@ -367,8 +353,8 @@ const App: React.FC = () => {
             setCurrentView('ONBOARDING');
         }
 
-        if (hist) setHistory(hist);
-        if (entries) setJournalEntries(entries);
+        if (localHist.length > 0) setHistory(localHist);
+        if (localEntries.length > 0) setJournalEntries(localEntries);
 
         if (window.Telegram?.WebApp) {
           const tg = window.Telegram.WebApp;
@@ -396,16 +382,33 @@ const App: React.FC = () => {
     initData();
   }, [syncSubscription, fetchStats]);
 
+  // Сохранение профиля в Облако
   useEffect(() => {
-    if (!isInitializing) cloudStorage.setItem('mm_profile', userProfile);
+    if (!isInitializing) {
+      cloudStorage.setItem('mm_profile', userProfile);
+    }
   }, [userProfile, isInitializing]);
 
+  // Сохранение истории в LocalStorage (для обхода 4KB CloudStorage limit)
   useEffect(() => {
-    if (!isInitializing) cloudStorage.setItem('mm_history', history);
+    if (!isInitializing) {
+      try {
+        localStorage.setItem('mm_history', JSON.stringify(history));
+      } catch (e) {
+        console.error("Failed to save history locally (too big?):", e);
+      }
+    }
   }, [history, isInitializing]);
 
+  // Сохранение записей дневника в LocalStorage
   useEffect(() => {
-    if (!isInitializing) cloudStorage.setItem('mm_journal_entries', journalEntries);
+    if (!isInitializing) {
+      try {
+        localStorage.setItem('mm_journal_entries', JSON.stringify(journalEntries));
+      } catch (e) {
+        console.error("Failed to save journal locally:", e);
+      }
+    }
   }, [journalEntries, isInitializing]);
 
   const handleOnboardingComplete = () => {
@@ -436,12 +439,9 @@ const App: React.FC = () => {
         if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < PREMIUM_MAX_PER_DAY;
         return true;
     }
-    
-    // Welcome Bonus check (first 24h)
     const iWelcomePeriod = userProfile.firstRunDate && (Date.now() - userProfile.firstRunDate < 24 * 60 * 60 * 1000);
     const freeLimitDecisions = iWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_DECISIONS_PER_DAY;
     const freeLimitEmotions = iWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
-
     if (mode === 'DECISION') return userProfile.dailyDecisionCount < freeLimitDecisions;
     if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < freeLimitEmotions;
     return true; 
@@ -456,7 +456,6 @@ const App: React.FC = () => {
     const tg = window.Telegram?.WebApp;
     const userId = getTelegramUserId();
     if (!userId) { alert("Ошибка: ID пользователя не найден"); return; }
-
     setIsPaying(true);
     try {
       const response = await fetch('/api/create-invoice', {
@@ -466,7 +465,6 @@ const App: React.FC = () => {
       });
       const data = await response.json();
       if (!data.ok || !data.result) throw new Error(data.description || "Ошибка");
-
       tg.openInvoice(data.result, (status: string) => {
         if (status === 'paid') {
           setUserProfile(prev => ({ ...prev, isSubscribed: true }));
@@ -485,9 +483,7 @@ const App: React.FC = () => {
   const handleResetSub = async () => {
     const userId = getTelegramUserId();
     if (!userId) return;
-
     if (!confirm("Вы уверены, что хотите сбросить Premium?")) return;
-
     setIsResetting(true);
     try {
       const resp = await fetch(`/api/reset-sub?userId=${userId}`);
@@ -552,7 +548,6 @@ const App: React.FC = () => {
           name: s.archetype.name, 
           percent: Math.max(1, Math.round((s.score / totalPoints) * 100)) 
         }));
-
         setUserProfile(prev => ({ ...prev, archetype: mainArc, secondaryArchetypes: secondary }));
         reportEvent('test_finished', { name: mainArc.name });
         setCurrentView('ARCHETYPE_RESULT');
@@ -562,9 +557,7 @@ const App: React.FC = () => {
   };
 
   const isQuestAvailable = () => {
-    if (!userProfile.isSubscribed) {
-        return userProfile.totalQuestsDone < 3;
-    }
+    if (!userProfile.isSubscribed) return userProfile.totalQuestsDone < 3;
     if (!userProfile.lastQuestDate) return true;
     const lastDate = new Date(userProfile.lastQuestDate).toDateString();
     const today = new Date().toDateString();
@@ -573,16 +566,12 @@ const App: React.FC = () => {
 
   const handleStartQuest = async () => {
     if (!isQuestAvailable()) {
-        if (!userProfile.isSubscribed) {
-          setCurrentView('SUBSCRIPTION');
-        } else {
+        if (!userProfile.isSubscribed) setCurrentView('SUBSCRIPTION');
+        else {
           const tg = window.Telegram?.WebApp;
           const msg = "Вы уже прошли сегодняшний квест. Возвращайтесь завтра за новым испытанием!";
-          if (tg && tg.showAlert) {
-            tg.showAlert(msg);
-          } else {
-            alert(msg);
-          }
+          if (tg && tg.showAlert) tg.showAlert(msg);
+          else alert(msg);
         }
         return;
     }
@@ -620,22 +609,18 @@ const App: React.FC = () => {
         className={`p-8 rounded-[40px] mb-8 border relative overflow-hidden transition-all duration-700 cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'} ${isProfile ? 'shadow-sm border-slate-100' : 'shadow-xl'}`}
       >
          <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none"><Wand2 size={80} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /></div>
-
          <div className="flex items-center justify-center space-x-3 mb-6 opacity-60">
             <div className="h-[1px] w-8 bg-slate-300"></div>
             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">Свиток Судьбы</p>
             <div className="h-[1px] w-8 bg-slate-300"></div>
             {expanded ? <ChevronUp size={16} className="text-slate-300 ml-2" /> : <ChevronDown size={16} className="text-slate-300 ml-2" />}
          </div>
-
          <h2 className={`text-4xl font-black italic uppercase tracking-tighter mb-2 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{archetype.name}</h2>
          <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{archetype.role}</p>
-
          <div className={`p-5 rounded-3xl mb-6 italic text-[13px] leading-relaxed border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10 text-red-900' : 'bg-slate-50 border-slate-100 text-slate-600'}`}>
             <Quote size={18} className="mb-2 opacity-30 mx-auto" />
             "{archetype.quote}"
          </div>
-
          <div className={`space-y-4 text-left transition-all duration-500 overflow-hidden ${expanded ? 'max-h-[1000px] opacity-100 mb-6' : 'max-h-0 opacity-0 mb-0'}`}>
             <div>
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Ваша природа</p>
@@ -645,7 +630,6 @@ const App: React.FC = () => {
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-1">Высший смысл</p>
               <p className={`text-[13px] leading-relaxed font-medium ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-600'}`}>{archetype.meaning}</p>
             </div>
-
             <div className="grid grid-cols-2 gap-3 mt-4">
               <div className={`p-4 rounded-2xl border text-left ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'bg-emerald-50/30 border-emerald-50'}`}>
                  <div className="flex items-center space-x-2 mb-1.5"><Flame size={14} className="text-emerald-500" /><span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Свет</span></div>
@@ -656,22 +640,15 @@ const App: React.FC = () => {
                  <p className="text-[11px] font-bold text-slate-700 leading-tight">{archetype.weakness}</p>
               </div>
             </div>
-
             {showReset && (
-              <button 
-                onClick={(e) => { e.stopPropagation(); setTestQuestionIdx(0); setTestAnswers([]); setCurrentView('ARCHETYPE_TEST'); }}
-                className={`w-full py-4 rounded-[28px] mt-6 font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center space-x-2 border-2 active:scale-95 transition-all ${userProfile.rpgMode ? 'bg-white border-red-800 text-red-800' : 'bg-slate-900 border-slate-900 text-white shadow-md'}`}
-              >
-                <RotateCcw size={14} />
-                <span>Перепройти тест</span>
+              <button onClick={(e) => { e.stopPropagation(); setTestQuestionIdx(0); setTestAnswers([]); setCurrentView('ARCHETYPE_TEST'); }} className={`w-full py-4 rounded-[28px] mt-6 font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center space-x-2 border-2 active:scale-95 transition-all ${userProfile.rpgMode ? 'bg-white border-red-800 text-red-800' : 'bg-slate-900 border-slate-900 text-white shadow-md'}`}>
+                <RotateCcw size={14} /><span>Перепройти тест</span>
               </button>
             )}
          </div>
-         
          {!expanded && (
            <div className="flex items-center justify-center space-x-2 text-[10px] font-bold text-indigo-400 uppercase tracking-widest animate-pulse mt-2">
-              <Sparkles size={12} />
-              <span>Нажмите для подробной информации</span>
+              <Sparkles size={12} /><span>Нажмите для подробной информации</span>
            </div>
          )}
       </div>
@@ -685,12 +662,7 @@ const App: React.FC = () => {
       <div className={`h-screen w-full overflow-y-auto animate-fade-in transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F1F5F9]'}`}>
         <div className="min-h-full flex flex-col items-center p-6 pb-20 justify-center">
             <ArchetypeCard archetype={arc} expanded={true} onToggle={() => {}} />
-            <button 
-              onClick={() => setCurrentView('HOME')} 
-              className={`w-full max-w-md py-4 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-md active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}
-            >
-              Принять путь
-            </button>
+            <button onClick={() => setCurrentView('HOME')} className={`w-full max-w-md py-4 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-md active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}>Принять путь</button>
         </div>
       </div>
     );
@@ -710,22 +682,14 @@ const App: React.FC = () => {
   const renderRanksInfo = () => (
     <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
       <header className="mb-10 flex items-center space-x-4">
-        <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
-          <ArrowLeft size={24}/>
-        </button>
+        <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button>
         <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Ранги Сознания</h1>
       </header>
-      
-      <p className={`text-base mb-8 leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>
-        Древо Мудрости отражает глубину вашего самопознания. Каждая завершенная сессия и минута осознанности питают ваши корни, позволяя духу расти и раскрываться в новых рангах.
-      </p>
-
+      <p className={`text-base mb-8 leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>Древо Мудрости отражает глубину вашего самопознания. Каждая завершенная сессия и минута осознанности питают ваши корни, позволяя духу расти и раскрываться в новых рангах.</p>
       <div className="space-y-6">
         {RANKS.map((rank, i) => (
           <div key={i} className={`p-6 rounded-[28px] border flex items-center space-x-5 ${userProfile.xp >= rank.threshold ? (userProfile.rpgMode ? 'rpg-card' : 'bg-indigo-50 border-indigo-100') : 'opacity-40 bg-slate-50 border-slate-100'}`}>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center">
-              <TreeIcon stage={i} size={48} rpgMode={userProfile.rpgMode} />
-            </div>
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center"><TreeIcon stage={i} size={48} rpgMode={userProfile.rpgMode} /></div>
             <div className="flex-1 ml-2">
               <h3 className={`font-bold text-lg ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{rank.title}</h3>
               <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">{rank.threshold} XP</p>
@@ -751,102 +715,53 @@ const App: React.FC = () => {
           </div>
         </div>
       </div>
-
       <div className="px-6 mb-6 relative z-20">
-        {/* Bento Hero Card for Decisions - RE-DESIGNED TO BE LARGER HERO */}
-        <button 
-          onClick={() => handleModeSelection('DECISION')}
-          className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${
-            userProfile.rpgMode 
-              ? 'rpg-card border-amber-500 shadow-xl shadow-red-900/10' 
-              : 'bg-white border-white shadow-2xl shadow-slate-300/40'
-          }`}
-        >
-          <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10 pointer-events-none scale-150 transform rotate-12">
-            <DecisionIllustration rpgMode={userProfile.rpgMode} size={180} />
-          </div>
-
+        <button onClick={() => handleModeSelection('DECISION')} className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${userProfile.rpgMode ? 'rpg-card border-amber-500 shadow-xl shadow-red-900/10' : 'bg-white border-white shadow-2xl shadow-slate-300/40'}`}>
+          <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10 pointer-events-none scale-150 transform rotate-12"><DecisionIllustration rpgMode={userProfile.rpgMode} size={180} /></div>
           <div className="relative z-10 flex flex-col h-full justify-between">
             <div className="flex justify-between items-start mb-12">
-               <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center shrink-0 ${
-                 userProfile.rpgMode ? 'bg-red-800 text-white shadow-xl' : 'bg-amber-50 text-amber-500'
-               }`}>
-                 <DecisionIllustration rpgMode={userProfile.rpgMode} size={50} />
-               </div>
+               <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-xl' : 'bg-amber-50 text-amber-500'}`}><DecisionIllustration rpgMode={userProfile.rpgMode} size={50} /></div>
                <div className="text-right">
-                  <span className={`block text-5xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>
-                    {userProfile.totalDecisions || 0}
-                  </span>
-                  <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
-                    решений
-                  </span>
+                  <span className={`block text-5xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>{userProfile.totalDecisions || 0}</span>
+                  <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>решений</span>
                </div>
             </div>
             <div>
-              <h3 className={`text-3xl font-black uppercase tracking-tighter leading-none mb-3 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-                Принять решение
-              </h3>
-              <p className={`text-[11px] font-bold uppercase tracking-[0.2em] leading-snug opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
-                Выбор верного пути через анализ
-              </p>
+              <h3 className={`text-3xl font-black uppercase tracking-tighter leading-none mb-3 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Принять решение</h3>
+              <p className={`text-[11px] font-bold uppercase tracking-[0.2em] leading-snug opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>Выбор верного пути через анализ</p>
             </div>
           </div>
         </button>
-
         <div className="grid grid-cols-2 gap-4">
           {[
             { id: 'EMOTIONS', label: 'Состояние', color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-400' },
             { id: 'REFLECTION', label: 'Дневник', color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-400' }
           ].map(m => (
-            <button key={m.id} onClick={() => handleModeSelection(m.id as JournalMode)} 
-              className={`w-full py-8 rounded-[36px] border flex flex-col items-center justify-center space-y-4 active:scale-95 transition-all duration-300 ${
-                userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'
-              }`}>
-              {m.id === 'EMOTIONS' ? (
-                <EmotionsIllustration rpgMode={userProfile.rpgMode} size={36} />
-              ) : (
-                <ReflectionIllustration rpgMode={userProfile.rpgMode} size={36} />
-              )}
-              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-950/40 font-display-fantasy' : 'text-slate-400'}`}>
-                {m.label}
-              </span>
+            <button key={m.id} onClick={() => handleModeSelection(m.id as JournalMode)} className={`w-full py-8 rounded-[36px] border flex flex-col items-center justify-center space-y-4 active:scale-95 transition-all duration-300 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'}`}>
+              {m.id === 'EMOTIONS' ? <EmotionsIllustration rpgMode={userProfile.rpgMode} size={36} /> : <ReflectionIllustration rpgMode={userProfile.rpgMode} size={36} />}
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-950/40 font-display-fantasy' : 'text-slate-400'}`}>{m.label}</span>
             </button>
           ))}
         </div>
       </div>
-
       <div className="px-6 mb-6">
          <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white'}`}>
             <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
             <div className="flex items-center space-x-4 mb-6">
-               <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0">
-                 <TreeIcon stage={RANKS.indexOf(currentRank)} size={48} rpgMode={userProfile.rpgMode} />
-               </div>
+               <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={RANKS.indexOf(currentRank)} size={48} rpgMode={userProfile.rpgMode} /></div>
                <div className="ml-2">
                  <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Прогресс роста</p>
                  <h4 className={`text-lg font-bold tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
                </div>
             </div>
-            <div className={`h-1.5 w-full rounded-full overflow-hidden mb-5 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}>
-              <div className={`h-full transition-all duration-1000 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (userProfile.xp / (RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000)) * 100)}%` }}></div>
-            </div>
+            <div className={`h-1.5 w-full rounded-full overflow-hidden mb-5 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}><div className={`h-full transition-all duration-1000 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (userProfile.xp / (RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000)) * 100)}%` }}></div></div>
             <div className="grid grid-cols-3 gap-2 text-center">
-               <div>
-                 <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">XP</p>
-                 <p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.xp}</p>
-               </div>
-               <div className={`border-x ${userProfile.rpgMode ? 'border-red-800/10' : 'border-slate-100'}`}>
-                 <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Сессии</p>
-                 <p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalSessions}</p>
-               </div>
-               <div>
-                 <p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Мин.</p>
-                 <p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalMinutes}</p>
-               </div>
+               <div><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">XP</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.xp}</p></div>
+               <div className={`border-x ${userProfile.rpgMode ? 'border-red-800/10' : 'border-slate-100'}`}><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Сессии</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalSessions}</p></div>
+               <div><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Мин.</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalMinutes}</p></div>
             </div>
          </button>
       </div>
-
       <div className="px-6 mb-10">
         {!userProfile.archetype ? (
           <div className={`rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`} onClick={() => { setTestQuestionIdx(0); setTestAnswers([]); reportEvent('test_started', {}); setCurrentView('ARCHETYPE_TEST'); }}>
@@ -878,16 +793,10 @@ const App: React.FC = () => {
               <div className={`rounded-[32px] p-8 shadow-sm border flex justify-between items-center cursor-pointer transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'} ${!isQuestAvailable() ? 'opacity-90' : 'active:scale-[0.98]'}`} onClick={handleStartQuest}>
                 <div className="flex-1 pr-4">
                   <div className="flex items-center space-x-2 mb-2"><Sword size={16} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /><p className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} text-[10px] font-bold uppercase tracking-widest`}>{isQuestAvailable() ? 'Квесты' : 'Лимит квестов'}</p></div>
-                  <h3 className={`text-2xl font-black tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-                    {isQuestAvailable() ? 'Пройти квест' : 'Квест пройден'}
-                  </h3>
-                  <p className={`text-xs mt-1 ${userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-400'}`}>
-                    {isQuestAvailable() ? 'Ежедневное испытание' : userProfile.isSubscribed ? 'Новый квест будет доступен завтра.' : 'Активируйте Premium для ежедневных квестов.'}
-                  </p>
+                  <h3 className={`text-2xl font-black tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{isQuestAvailable() ? 'Пройти квест' : 'Квест пройден'}</h3>
+                  <p className={`text-xs mt-1 ${userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-400'}`}>{isQuestAvailable() ? 'Ежедневное испытание' : userProfile.isSubscribed ? 'Новый квест будет доступен завтра.' : 'Активируйте Premium для ежедневных квестов.'}</p>
                 </div>
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-indigo-50 text-indigo-500'} ${!isQuestAvailable() ? 'bg-emerald-50 text-emerald-500 border-none shadow-none grayscale opacity-80' : ''}`}>
-                  {isQuestAvailable() ? <ArrowRight size={24} /> : userProfile.isSubscribed ? <Check size={24} /> : <Lock size={20} />}
-                </div>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-indigo-50 text-indigo-500'} ${!isQuestAvailable() ? 'bg-emerald-50 text-emerald-500 border-none shadow-none grayscale opacity-80' : ''}`}>{isQuestAvailable() ? <ArrowRight size={24} /> : userProfile.isSubscribed ? <Check size={24} /> : <Lock size={20} />}</div>
               </div>
             )}
           </div>
@@ -900,15 +809,11 @@ const App: React.FC = () => {
     const isSubscribed = userProfile.isSubscribed;
     const isOwner = getTelegramUserId() === ADMIN_ID;
     const arc = userProfile.archetype;
-
     return (
       <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
         <header className="mb-10 flex items-center justify-between"><h1 className={`text-3xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Профиль</h1></header>
-        
         <div className="flex items-center space-x-6 mb-10">
-           <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-sm ${userProfile.rpgMode ? 'border-red-800' : 'border-white'}`}>
-              {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={40} className="m-6 text-slate-200" />}
-           </div>
+           <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-sm ${userProfile.rpgMode ? 'border-red-800' : 'border-white'}`}>{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={40} className="m-6 text-slate-200" />}</div>
            <div>
               <h3 className={`text-2xl font-black leading-tight ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{userProfile.name || 'Странник'}</h3>
               <div className="flex items-center space-x-2 mt-2">
@@ -917,32 +822,20 @@ const App: React.FC = () => {
               </div>
            </div>
         </div>
-
-        {arc && (
-          <ArchetypeCard archetype={arc} expanded={arcExpanded} onToggle={() => setArcExpanded(!arcExpanded)} showReset={true} isProfile={true} />
-        )}
-
+        {arc && <ArchetypeCard archetype={arc} expanded={arcExpanded} onToggle={() => setArcExpanded(!arcExpanded)} showReset={true} isProfile={true} />}
         {!isSubscribed && (
           <div className={`p-6 rounded-[32px] mb-6 shadow-sm border transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-blue-600 text-white border-blue-700'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
-            <div className="flex items-center space-x-3 mb-2">
-              <Star size={18} fill="currentColor" className="text-amber-400" />
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-100">Статус: Странник</p>
-            </div>
+            <div className="flex items-center space-x-3 mb-2"><Star size={18} fill="currentColor" className="text-amber-400" /><p className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-100">Статус: Странник</p></div>
             <h4 className="text-xl font-black mb-1 leading-tight uppercase tracking-tighter italic">Открой все функции</h4>
             <p className="text-[11px] opacity-80 mb-6 leading-relaxed text-blue-50">Безлимитные сессии, ежедневные квесты и полное самопознание.</p>
-            <button className={`w-full py-3.5 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-blue-600 shadow-md active:scale-95'}`}>
-              <Sparkles size={14} fill="currentColor" />
-              <span>Подробнее о Premium</span>
-            </button>
+            <button className={`w-full py-3.5 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-blue-600 shadow-md active:scale-95'}`}><Sparkles size={14} fill="currentColor" /><span>Подробнее о Premium</span></button>
           </div>
         )}
-
         <div className="space-y-4">
            <button onClick={() => setCurrentView('ONBOARDING')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Compass size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Путеводитель</span></div><ChevronRight size={18} /></button>
            <button onClick={() => setUserProfile(p => ({...p, rpgMode: !p.rpgMode}))} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Settings2 size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>RPG Режим</span></div><div className={`w-12 h-6 rounded-full transition-all relative ${userProfile.rpgMode ? 'bg-red-800' : 'bg-slate-200'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${userProfile.rpgMode ? 'left-7' : 'left-1'}`}></div></div></button>
            <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий</span></div><ChevronRight size={18} /></button>
         </div>
-
         {isOwner && (
           <div className="mt-8 pt-8 border-t border-slate-100">
              <button onClick={() => setCurrentView('ADMIN')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between shadow-sm transition-all ${userProfile.rpgMode ? 'rpg-card border-amber-500' : 'bg-amber-50 border-amber-100 text-amber-900'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-amber-600 text-white shadow-lg' : 'bg-amber-200 text-amber-700'}`}><ShieldAlert size={20} /></div><span className="font-bold">Админ-панель</span></div><ChevronRight size={18} /></button>
@@ -954,14 +847,8 @@ const App: React.FC = () => {
 
   const renderLimitReached = () => (
     <div className={`h-full overflow-y-auto flex flex-col items-center p-8 text-center animate-fade-in transition-all duration-700 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F1F5F9]'}`}>
-       <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-8 shadow-2xl animate-float mt-10 shrink-0 transition-all ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white shadow-indigo-200'}`}>
-          <Lock size={32} strokeWidth={2.5} />
-       </div>
-       
-       <h2 className={`text-4xl font-bold mb-6 uppercase tracking-tighter leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-          Граница достигнута
-       </h2>
-       
+       <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-8 shadow-2xl animate-float mt-10 shrink-0 transition-all ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white shadow-indigo-200'}`}><Lock size={32} strokeWidth={2.5} /></div>
+       <h2 className={`text-4xl font-bold mb-6 uppercase tracking-tighter leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Граница достигнута</h2>
        <div className={`p-8 rounded-[40px] border mb-10 w-full transition-all ${userProfile.rpgMode ? 'rpg-card border-red-800/20 shadow-none' : 'glass-card border-white/40 shadow-none'}`}>
           <p className={`text-[10px] font-black uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>Текущий статус: Странник</p>
           <div className="flex flex-col space-y-4 text-[15px] font-bold">
@@ -970,11 +857,8 @@ const App: React.FC = () => {
              <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-950/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>3 всего</span></div>
           </div>
           <div className={`h-[1px] my-6 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-200/50'}`}></div>
-          <p className="text-sm leading-relaxed text-slate-500">
-            Продолжайте путь бесплатно с лимитами или активируйте <span className="text-indigo-600 font-extrabold">Premium на 30 дней</span> для полного раскрытия потенциала.
-          </p>
+          <p className="text-sm leading-relaxed text-slate-500">Продолжайте путь бесплатно с лимитами или активируйте <span className="text-indigo-600 font-extrabold">Premium на 30 дней</span> для полного раскрытия потенциала.</p>
        </div>
-       
        <div className="w-full space-y-4 mb-10">
           {[
             { id: '1', label: 'Безлимитные Решения', desc: 'Снимает оковы сомнений. Идеально для тех, кто ищет ясности.', icon: Zap, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-600', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600' },
@@ -990,28 +874,11 @@ const App: React.FC = () => {
             </div>
           ))}
        </div>
-
        <div className="w-full space-y-6 mb-24">
-          <button 
-            onClick={handlePay} 
-            disabled={isPaying} 
-            className={`w-full py-5 rounded-[32px] font-bold text-lg flex items-center justify-center space-x-3 transition-all transform duration-300 ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95 hover:scale-[1.02] shadow-2xl'} ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white shadow-slate-900/30'}`}
-          >
-             {isPaying ? <Loader2 size={24} className="animate-spin" /> : <Star size={24} fill="currentColor" className={userProfile.rpgMode ? 'text-white' : 'text-amber-400'} />}
-             <span className="tracking-tight">{isPaying ? 'Вызов звёзд...' : 'Активировать Premium'}</span>
-          </button>
-          
+          <button onClick={handlePay} disabled={isPaying} className={`w-full py-5 rounded-[32px] font-bold text-lg flex items-center justify-center space-x-3 transition-all transform duration-300 ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95 hover:scale-[1.02] shadow-2xl'} ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white shadow-slate-900/30'}`}>{isPaying ? <Loader2 size={24} className="animate-spin" /> : <Star size={24} fill="currentColor" className={userProfile.rpgMode ? 'text-white' : 'text-amber-400'} />}<span className="tracking-tight">{isPaying ? 'Вызов звёзд...' : 'Активировать Premium'}</span></button>
           <div className="flex flex-col items-center space-y-2">
-             <div className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                <ShieldCheck size={14} />
-                <span>Безопасная оплата через Telegram Stars</span>
-             </div>
-             <button 
-               onClick={() => setCurrentView('HOME')} 
-               className={`text-base font-bold transition-colors pt-3 pb-2 border-b-2 ${userProfile.rpgMode ? 'text-red-800 border-red-800/20 hover:border-red-800' : 'text-indigo-400 border-indigo-50 hover:text-indigo-600 hover:border-indigo-100'}`}
-             >
-               Вернуться назад
-             </button>
+             <div className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400"><ShieldCheck size={14} /><span>Безопасная оплата через Telegram Stars</span></div>
+             <button onClick={() => setCurrentView('HOME')} className={`text-base font-bold transition-colors pt-3 pb-2 border-b-2 ${userProfile.rpgMode ? 'text-red-800 border-red-800/20 hover:border-red-800' : 'text-indigo-400 border-indigo-50 hover:text-indigo-600 hover:border-indigo-100'}`}>Вернуться назад</button>
           </div>
        </div>
     </div>
@@ -1041,15 +908,7 @@ const App: React.FC = () => {
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { 
             setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); 
             const xpGain = Math.max(1, Math.ceil(dur / 60)); 
-            setUserProfile(p => ({
-                ...p, 
-                xp: p.xp + xpGain, 
-                totalSessions: p.totalSessions + 1, 
-                totalMinutes: p.totalMinutes + xpGain,
-                totalDecisions: selectedMode === 'DECISION' ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0),
-                dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount,
-                dailyEmotionsCount: selectedMode === 'EMOTIONS' ? p.dailyEmotionsCount + 1 : p.dailyEmotionsCount
-            })); 
+            setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: selectedMode === 'DECISION' ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount, dailyEmotionsCount: selectedMode === 'EMOTIONS' ? p.dailyEmotionsCount + 1 : p.dailyEmotionsCount })); 
             reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); 
         }} />}
         {currentView === 'ARCHETYPE_TEST' && (
