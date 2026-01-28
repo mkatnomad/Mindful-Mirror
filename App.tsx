@@ -6,6 +6,7 @@ import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
+import { motion } from 'framer-motion';
 import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
 
 const FREE_DECISIONS_PER_DAY = 2;
@@ -702,108 +703,126 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderHome = () => (
-    <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
-      <div className="px-6 pt-6 mb-8 flex justify-between items-center">
-        <div className="flex items-center space-x-3">
-          <div className={`w-11 h-11 rounded-full overflow-hidden bg-white shadow-sm border-2 ${userProfile.rpgMode ? 'border-red-800' : 'border-white'} cursor-pointer`} onClick={() => setCurrentView('PROFILE')}>
-            {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={22} className="m-2.5 text-slate-300" />}
-          </div>
-          <div>
-            <h4 className={`text-[15px] font-extrabold leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{userProfile.name}</h4>
-            {userProfile.archetype && <p className={`text-[10px] font-bold uppercase mt-1 tracking-wider ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>{userProfile.archetype.name}</p>}
-          </div>
-        </div>
-      </div>
-      <div className="px-6 mb-6 relative z-20">
-        <button onClick={() => handleModeSelection('DECISION')} className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${userProfile.rpgMode ? 'rpg-card border-amber-500 shadow-xl shadow-red-900/10' : 'bg-white border-white shadow-2xl shadow-slate-300/40'}`}>
-          <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10 pointer-events-none scale-150 transform rotate-12"><DecisionIllustration rpgMode={userProfile.rpgMode} size={180} /></div>
-          <div className="relative z-10 flex flex-col h-full justify-between">
-            <div className="flex justify-between items-start mb-12">
-               <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-xl' : 'bg-amber-50 text-amber-500'}`}><DecisionIllustration rpgMode={userProfile.rpgMode} size={50} /></div>
-               <div className="text-right">
-                  <span className={`block text-5xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>{userProfile.totalDecisions || 0}</span>
-                  <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>решений</span>
-               </div>
+  const renderHome = () => {
+    const nextThreshold = RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000;
+    const progress = Math.min(100, (userProfile.xp / nextThreshold) * 100);
+
+    return (
+      <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
+        <div className="px-6 pt-6 mb-8 flex justify-between items-center">
+          <div className="flex items-center space-x-3">
+            <div className={`w-11 h-11 rounded-full overflow-hidden bg-white shadow-sm border-2 ${userProfile.rpgMode ? 'border-red-800' : 'border-white'} cursor-pointer`} onClick={() => setCurrentView('PROFILE')}>
+              {userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={22} className="m-2.5 text-slate-300" />}
             </div>
             <div>
-              <h3 className={`text-3xl font-black uppercase tracking-tighter leading-none mb-3 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Принять решение</h3>
-              <p className={`text-[11px] font-bold uppercase tracking-[0.2em] leading-snug opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>Выбор верного пути через анализ</p>
+              <h4 className={`text-[15px] font-extrabold leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{userProfile.name}</h4>
+              {userProfile.archetype && <p className={`text-[10px] font-bold uppercase mt-1 tracking-wider ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>{userProfile.archetype.name}</p>}
             </div>
           </div>
-        </button>
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { id: 'EMOTIONS', label: 'Состояние', color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-400' },
-            { id: 'REFLECTION', label: 'Дневник', color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-400' }
-          ].map(m => (
-            <button key={m.id} onClick={() => handleModeSelection(m.id as JournalMode)} className={`w-full py-8 rounded-[36px] border flex flex-col items-center justify-center space-y-4 active:scale-95 transition-all duration-300 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'}`}>
-              {m.id === 'EMOTIONS' ? <EmotionsIllustration rpgMode={userProfile.rpgMode} size={36} /> : <ReflectionIllustration rpgMode={userProfile.rpgMode} size={36} />}
-              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-950/40 font-display-fantasy' : 'text-slate-400'}`}>{m.label}</span>
-            </button>
-          ))}
+        </div>
+        <div className="px-6 mb-6 relative z-20">
+          <button onClick={() => handleModeSelection('DECISION')} className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${userProfile.rpgMode ? 'rpg-card border-amber-500 shadow-xl shadow-red-900/10' : 'bg-white border-white shadow-2xl shadow-slate-300/40'}`}>
+            <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10 pointer-events-none scale-150 transform rotate-12"><DecisionIllustration rpgMode={userProfile.rpgMode} size={180} /></div>
+            <div className="relative z-10 flex flex-col h-full justify-between">
+              <div className="flex justify-between items-start mb-12">
+                 <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-xl' : 'bg-amber-50 text-amber-500'}`}><DecisionIllustration rpgMode={userProfile.rpgMode} size={50} /></div>
+                 <div className="text-right">
+                    <span className={`block text-5xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>{userProfile.totalDecisions || 0}</span>
+                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>решений</span>
+                 </div>
+              </div>
+              <div>
+                <h3 className={`text-3xl font-black uppercase tracking-tighter leading-none mb-3 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Принять решение</h3>
+                <p className={`text-[11px] font-bold uppercase tracking-[0.2em] leading-snug opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>Выбор верного пути через анализ</p>
+              </div>
+            </div>
+          </button>
+          <div className="grid grid-cols-2 gap-4">
+            {[
+              { id: 'EMOTIONS', label: 'Состояние', color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-400' },
+              { id: 'REFLECTION', label: 'Дневник', color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-400' }
+            ].map(m => (
+              <button key={m.id} onClick={() => handleModeSelection(m.id as JournalMode)} className={`w-full py-8 rounded-[36px] border flex flex-col items-center justify-center space-y-4 active:scale-95 transition-all duration-300 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'}`}>
+                {m.id === 'EMOTIONS' ? <EmotionsIllustration rpgMode={userProfile.rpgMode} size={36} /> : <ReflectionIllustration rpgMode={userProfile.rpgMode} size={36} />}
+                <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-950/40 font-display-fantasy' : 'text-slate-400'}`}>{m.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="px-6 mb-6">
+           <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white'}`}>
+              <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
+              <div className="flex items-center space-x-4 mb-6">
+                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={RANKS.indexOf(currentRank)} size={48} rpgMode={userProfile.rpgMode} /></div>
+                 <div className="ml-2">
+                   <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Прогресс роста</p>
+                   <h4 className={`text-lg font-bold tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
+                 </div>
+              </div>
+              
+              {/* ADVANCED PROGRESS BAR */}
+              <div className={`h-3.5 w-full rounded-full overflow-hidden mb-5 relative ${userProfile.rpgMode ? 'bg-red-950/20 rpg-progress-inner-shadow border border-red-800/20' : 'bg-slate-100 progress-inner-shadow'}`}>
+                 <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                    transition={{ type: 'spring', damping: 20, stiffness: 60 }}
+                    className={`h-full relative overflow-hidden transition-all duration-1000 ${userProfile.rpgMode ? 'rpg-energy-bar-gradient' : 'energy-bar-gradient'}`}
+                 >
+                    {/* Shimmer Overlay */}
+                    <div className="shimmer-layer" />
+                 </motion.div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center">
+                 <div><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">XP</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.xp}</p></div>
+                 <div className={`border-x ${userProfile.rpgMode ? 'border-red-800/10' : 'border-slate-100'}`}><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Сессии</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalSessions}</p></div>
+                 <div><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Мин.</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalMinutes}</p></div>
+              </div>
+           </button>
+        </div>
+        <div className="px-6 mb-10">
+          {!userProfile.archetype ? (
+            <div className={`rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`} onClick={() => { setTestQuestionIdx(0); setTestAnswers([]); reportEvent('test_started', {}); setCurrentView('ARCHETYPE_TEST'); }}>
+              <div className="flex items-center space-x-2 mb-3"><Sparkles size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /><p className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} text-[10px] font-bold uppercase tracking-widest`}>Первый шаг</p></div>
+              <h2 className={`text-[26px] font-black mb-2 leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Узнать архетип и пройти квест</h2>
+              <p className={`text-xs ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>Раскройте свою истинную суть и начните свое легендарное путешествие.</p>
+            </div>
+          ) : (
+            <div className="relative">
+              {gameStatus === 'LOADING' ? (
+                <div className={`rounded-[32px] p-10 flex flex-col items-center justify-center min-h-[200px] shadow-sm border ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><Loader2 size={32} className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} animate-spin mb-4`} /><p className={`${userProfile.rpgMode ? 'text-red-900' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest italic`}>Мастер пишет историю...</p></div>
+              ) : gameStatus === 'QUEST' && questData ? (
+                <div className={`rounded-[32px] p-8 shadow-sm border animate-fade-in ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
+                  <h3 className={`text-lg font-bold mb-8 leading-relaxed italic ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>"{questData.scene}"</h3>
+                  <div className="space-y-3">
+                     <button onClick={() => handleChoice(questData.optA)} className={`w-full p-5 rounded-2xl font-bold text-sm border active:scale-95 transition-all ${userProfile.rpgMode ? 'bg-white border-red-800 text-red-950' : 'bg-white border-slate-200 text-slate-700 shadow-sm'}`}>{questData.optA}</button>
+                     <button onClick={() => handleChoice(questData.optB)} className={`w-full p-5 rounded-2xl font-bold text-sm border active:scale-95 transition-all ${userProfile.rpgMode ? 'bg-white border-red-800 text-red-950' : 'bg-white border-slate-200 text-slate-700 shadow-sm'}`}>{questData.optB}</button>
+                  </div>
+                </div>
+              ) : gameStatus === 'RESULT' && questOutcome ? (
+                <div className={`rounded-[32px] p-8 shadow-2xl animate-fade-in text-center border ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${userProfile.rpgMode ? 'bg-red-50 text-red-900' : 'bg-emerald-50 text-emerald-600'}`}><Trophy size={32} /></div>
+                  <h4 className={`text-2xl font-black mb-2 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>+50 XP</h4>
+                  <p className={`text-sm mb-6 leading-relaxed italic ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
+                  <div className={`p-4 rounded-2xl mb-8 border ${userProfile.rpgMode ? 'bg-white border-red-800' : 'bg-slate-50 border-slate-100'}`}><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Получен дар</p><p className={`text-lg font-bold ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>{questOutcome.artifact}</p></div>
+                  <button onClick={acceptGift} className={`w-full py-4 rounded-2xl font-bold active:scale-95 transition-all shadow-xl ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}>Продолжить рост</button>
+                </div>
+              ) : (
+                <div className={`rounded-[32px] p-8 shadow-sm border flex justify-between items-center cursor-pointer transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'} ${!isQuestAvailable() ? 'opacity-90' : 'active:scale-[0.98]'}`} onClick={handleStartQuest}>
+                  <div className="flex-1 pr-4">
+                    <div className="flex items-center space-x-2 mb-2"><Sword size={16} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /><p className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} text-[10px] font-bold uppercase tracking-widest`}>{isQuestAvailable() ? 'Квесты' : 'Лимит квестов'}</p></div>
+                    <h3 className={`text-2xl font-black tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{isQuestAvailable() ? 'Пройти квест' : 'Квест пройден'}</h3>
+                    <p className={`text-xs mt-1 ${userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-400'}`}>{isQuestAvailable() ? 'Ежедневное испытание' : userProfile.isSubscribed ? 'Новый квест будет доступен завтра.' : 'Активируйте Premium для ежедневных квестов.'}</p>
+                  </div>
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-indigo-50 text-indigo-500'} ${!isQuestAvailable() ? 'bg-emerald-50 text-emerald-500 border-none shadow-none grayscale opacity-80' : ''}`}>{isQuestAvailable() ? <ArrowRight size={24} /> : userProfile.isSubscribed ? <Check size={24} /> : <Lock size={20} />}</div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
-      <div className="px-6 mb-6">
-         <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white'}`}>
-            <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
-            <div className="flex items-center space-x-4 mb-6">
-               <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={RANKS.indexOf(currentRank)} size={48} rpgMode={userProfile.rpgMode} /></div>
-               <div className="ml-2">
-                 <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Прогресс роста</p>
-                 <h4 className={`text-lg font-bold tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
-               </div>
-            </div>
-            <div className={`h-1.5 w-full rounded-full overflow-hidden mb-5 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-50'}`}><div className={`h-full transition-all duration-1000 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-emerald-400'}`} style={{ width: `${Math.min(100, (userProfile.xp / (RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000)) * 100)}%` }}></div></div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-               <div><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">XP</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.xp}</p></div>
-               <div className={`border-x ${userProfile.rpgMode ? 'border-red-800/10' : 'border-slate-100'}`}><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Сессии</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalSessions}</p></div>
-               <div><p className="text-[7px] uppercase font-black text-slate-400 mb-0.5 tracking-widest">Мин.</p><p className={`font-black text-lg ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-900'}`}>{userProfile.totalMinutes}</p></div>
-            </div>
-         </button>
-      </div>
-      <div className="px-6 mb-10">
-        {!userProfile.archetype ? (
-          <div className={`rounded-[32px] p-8 shadow-sm border active:scale-[0.98] transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`} onClick={() => { setTestQuestionIdx(0); setTestAnswers([]); reportEvent('test_started', {}); setCurrentView('ARCHETYPE_TEST'); }}>
-            <div className="flex items-center space-x-2 mb-3"><Sparkles size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /><p className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} text-[10px] font-bold uppercase tracking-widest`}>Первый шаг</p></div>
-            <h2 className={`text-[26px] font-black mb-2 leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Узнать архетип и пройти квест</h2>
-            <p className={`text-xs ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-500'}`}>Раскройте свою истинную суть и начните свое легендарное путешествие.</p>
-          </div>
-        ) : (
-          <div className="relative">
-            {gameStatus === 'LOADING' ? (
-              <div className={`rounded-[32px] p-10 flex flex-col items-center justify-center min-h-[200px] shadow-sm border ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><Loader2 size={32} className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} animate-spin mb-4`} /><p className={`${userProfile.rpgMode ? 'text-red-900' : 'text-slate-400'} text-[10px] font-bold uppercase tracking-widest italic`}>Мастер пишет историю...</p></div>
-            ) : gameStatus === 'QUEST' && questData ? (
-              <div className={`rounded-[32px] p-8 shadow-sm border animate-fade-in ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
-                <h3 className={`text-lg font-bold mb-8 leading-relaxed italic ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>"{questData.scene}"</h3>
-                <div className="space-y-3">
-                   <button onClick={() => handleChoice(questData.optA)} className={`w-full p-5 rounded-2xl font-bold text-sm border active:scale-95 transition-all ${userProfile.rpgMode ? 'bg-white border-red-800 text-red-950' : 'bg-white border-slate-200 text-slate-700 shadow-sm'}`}>{questData.optA}</button>
-                   <button onClick={() => handleChoice(questData.optB)} className={`w-full p-5 rounded-2xl font-bold text-sm border active:scale-95 transition-all ${userProfile.rpgMode ? 'bg-white border-red-800 text-red-950' : 'bg-white border-slate-200 text-slate-700 shadow-sm'}`}>{questData.optB}</button>
-                </div>
-              </div>
-            ) : gameStatus === 'RESULT' && questOutcome ? (
-              <div className={`rounded-[32px] p-8 shadow-2xl animate-fade-in text-center border ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}>
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${userProfile.rpgMode ? 'bg-red-50 text-red-900' : 'bg-emerald-50 text-emerald-600'}`}><Trophy size={32} /></div>
-                <h4 className={`text-2xl font-black mb-2 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>+50 XP</h4>
-                <p className={`text-sm mb-6 leading-relaxed italic ${userProfile.rpgMode ? 'text-red-900/70' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
-                <div className={`p-4 rounded-2xl mb-8 border ${userProfile.rpgMode ? 'bg-white border-red-800' : 'bg-slate-50 border-slate-100'}`}><p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Получен дар</p><p className={`text-lg font-bold ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>{questOutcome.artifact}</p></div>
-                <button onClick={acceptGift} className={`w-full py-4 rounded-2xl font-bold active:scale-95 transition-all shadow-xl ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}>Продолжить рост</button>
-              </div>
-            ) : (
-              <div className={`rounded-[32px] p-8 shadow-sm border flex justify-between items-center cursor-pointer transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'} ${!isQuestAvailable() ? 'opacity-90' : 'active:scale-[0.98]'}`} onClick={handleStartQuest}>
-                <div className="flex-1 pr-4">
-                  <div className="flex items-center space-x-2 mb-2"><Sword size={16} className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} /><p className={`${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'} text-[10px] font-bold uppercase tracking-widest`}>{isQuestAvailable() ? 'Квесты' : 'Лимит квестов'}</p></div>
-                  <h3 className={`text-2xl font-black tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{isQuestAvailable() ? 'Пройти квест' : 'Квест пройден'}</h3>
-                  <p className={`text-xs mt-1 ${userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-400'}`}>{isQuestAvailable() ? 'Ежедневное испытание' : userProfile.isSubscribed ? 'Новый квест будет доступен завтра.' : 'Активируйте Premium для ежедневных квестов.'}</p>
-                </div>
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-indigo-50 text-indigo-500'} ${!isQuestAvailable() ? 'bg-emerald-50 text-emerald-500 border-none shadow-none grayscale opacity-80' : ''}`}>{isQuestAvailable() ? <ArrowRight size={24} /> : userProfile.isSubscribed ? <Check size={24} /> : <Lock size={20} />}</div>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderProfile = () => {
     const isSubscribed = userProfile.isSubscribed;
