@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, Image as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star, PieChart, TrendingUp, Sparkles, BookOpen } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, ImageIcon as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star, PieChart, TrendingUp, Sparkles, BookOpen } from 'lucide-react';
 import { SiteConfig } from '../types';
 
 interface AdminInterfaceProps {
@@ -98,7 +98,7 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#F1F5F9] animate-fade-in relative z-[200]">
+    <div className="flex flex-col h-full bg-[#E5E7EB] animate-fade-in relative z-[200]">
       <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-slate-100 sticky top-0 z-10">
         <div className="flex items-center">
           <button onClick={onBack} className="p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-full hover:bg-slate-50">

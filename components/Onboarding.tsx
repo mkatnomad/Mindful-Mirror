@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Heart, Sparkles, BookOpen, ArrowRight, ChevronRight } from 'lucide-react';
@@ -61,7 +60,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
   const Icon = slide.icon;
 
   return (
-    <div className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-1000 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F1F5F9]'}`}>
+    <div className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-1000 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#E5E7EB]'}`}>
       {/* Background Glow */}
       <motion.div 
         key={currentSlide}
