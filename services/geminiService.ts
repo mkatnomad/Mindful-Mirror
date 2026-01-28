@@ -101,6 +101,7 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
   return result.text || "...";
 };
 
+// Fixed: Upgraded model to gemini-3-pro-preview for advanced reasoning
 export const analyzeDecision = async (data: DecisionData): Promise<DecisionData> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   let prompt = '';
@@ -118,7 +119,7 @@ export const analyzeDecision = async (data: DecisionData): Promise<DecisionData>
   }
 
   const result = await ai.models.generateContent({ 
-    model: 'gemini-3-flash-preview', 
+    model: 'gemini-3-pro-preview', 
     contents: prompt,
     config: {
       responseMimeType: "application/json",
@@ -135,10 +136,11 @@ export const analyzeDecision = async (data: DecisionData): Promise<DecisionData>
   }
 };
 
+// Fixed: Upgraded model to gemini-3-pro-preview for advanced reasoning
 export const refineDecision = async (currentData: DecisionData, userInput: string): Promise<{ text: string; data: DecisionData }> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const result = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-3-pro-preview',
     contents: `Обнови список аргументов и проведи анализ. Ввод пользователя: ${userInput}. Данные: ${JSON.stringify(currentData)}`,
     config: {
       responseMimeType: "application/json",

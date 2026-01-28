@@ -160,6 +160,19 @@
       .animate-float {
         animation: float 6s ease-in-out infinite;
       }
+
+      /* PORTAL QUEST ANIMATIONS */
+      @keyframes portal-spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes portal-pulse-glow {
+        0%, 100% { opacity: 0.5; filter: blur(40px); transform: scale(1); }
+        50% { opacity: 0.8; filter: blur(60px); transform: scale(1.1); }
+      }
+      .portal-glow {
+        animation: portal-pulse-glow 5s ease-in-out infinite;
+      }
     </style>
   <script type="importmap">
 {
