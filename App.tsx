@@ -167,18 +167,19 @@ const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?:
   );
 };
 
-const DecisionIllustration = ({ rpgMode, size = 32 }: { rpgMode: boolean, size?: number }) => (
+const DecisionIllustration = ({ rpgMode, size = 32, opacity = 1 }: { rpgMode: boolean, size?: number, opacity?: number }) => (
   <ArtifactBase rpgMode={rpgMode} colorStart="#F59E0B" colorEnd="#D97706" size={size} idPrefix="dec">
     <path 
       d="M50 10L20 55H45L30 90L80 40H55L70 10H50Z" 
       fill={`url(#dec-F59E0B)`} 
-      className="animate-pulse"
+      fillOpacity={opacity}
+      className={opacity === 1 ? "animate-pulse" : ""}
     />
   </ArtifactBase>
 );
 
-const EmotionsIllustration = ({ rpgMode, size = 26 }: { rpgMode: boolean, size?: number }) => (
-  <ArtifactBase rpgMode={rpgMode} colorStart="#FB7185" colorEnd="#E11D48" size={size} idPrefix="emo" isOutline={true}>
+const EmotionsIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: boolean, size?: number, opacity?: number }) => (
+  <ArtifactBase rpgMode={rpgMode} colorStart="#FB7185" colorEnd="#E11D48" size={size} idPrefix="emo" isOutline={opacity < 1}>
     <path 
       d="M50 82C30 72 12 55 12 35C12 22 25 15 40 22C45 25 50 30 50 30C50 30 55 25 60 22C75 15 88 22 88 35C88 55 70 72 50 82Z" 
       stroke={`url(#emo-FB7185)`} 
@@ -186,22 +187,25 @@ const EmotionsIllustration = ({ rpgMode, size = 26 }: { rpgMode: boolean, size?:
       strokeLinecap="round"
       strokeLinejoin="round"
       fill={rpgMode ? "#991B1B" : "#FB7185"}
-      fillOpacity="0.05"
+      fillOpacity={opacity < 1 ? 0.1 : 0.05}
+      opacity={opacity}
     />
   </ArtifactBase>
 );
 
-const ReflectionIllustration = ({ rpgMode, size = 26 }: { rpgMode: boolean, size?: number }) => (
-  <ArtifactBase rpgMode={rpgMode} colorStart="#34D399" colorEnd="#059669" size={size} idPrefix="ref" isOutline={true}>
-    <rect 
-      x="22" y="18" width="56" height="64" rx="6" 
-      stroke={`url(#ref-34D399)`} 
-      strokeWidth="6"
-      fill={rpgMode ? "#064E3B" : "#34D399"}
-      fillOpacity="0.05"
-    />
-    <path d="M35 35H65M35 50H65M35 65H55" stroke={`url(#ref-34D399)`} strokeWidth="4" strokeLinecap="round" opacity="0.4" />
-    <path d="M60 18V45L68 38L76 45V18H60Z" fill={rpgMode ? "#FDE68A" : "#059669"} fillOpacity="0.6" />
+const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: boolean, size?: number, opacity?: number }) => (
+  <ArtifactBase rpgMode={rpgMode} colorStart="#34D399" colorEnd="#059669" size={size} idPrefix="ref" isOutline={opacity < 1}>
+    <g opacity={opacity}>
+      <rect 
+        x="22" y="18" width="56" height="64" rx="6" 
+        stroke={`url(#ref-34D399)`} 
+        strokeWidth="6"
+        fill={rpgMode ? "#064E3B" : "#34D399"}
+        fillOpacity="0.05"
+      />
+      <path d="M35 35H65M35 50H65M35 65H55" stroke={`url(#ref-34D399)`} strokeWidth="4" strokeLinecap="round" opacity="0.4" />
+      <path d="M60 18V45L68 38L76 45V18H60Z" fill={rpgMode ? "#FDE68A" : "#059669"} fillOpacity="0.6" />
+    </g>
   </ArtifactBase>
 );
 
@@ -737,18 +741,30 @@ const App: React.FC = () => {
               </div>
             </div>
           </button>
+          
           <div className="grid grid-cols-2 gap-4">
             {[
-              { id: 'EMOTIONS', label: 'Состояние', color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-400' },
-              { id: 'REFLECTION', label: 'Дневник', color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-400' }
+              { id: 'EMOTIONS', label: 'Состояние', icon: EmotionsIllustration, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-500' },
+              { id: 'REFLECTION', label: 'Дневник', icon: ReflectionIllustration, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-500' }
             ].map(m => (
-              <button key={m.id} onClick={() => handleModeSelection(m.id as JournalMode)} className={`w-full py-8 rounded-[36px] border flex flex-col items-center justify-center space-y-4 active:scale-95 transition-all duration-300 ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'}`}>
-                {m.id === 'EMOTIONS' ? <EmotionsIllustration rpgMode={userProfile.rpgMode} size={36} /> : <ReflectionIllustration rpgMode={userProfile.rpgMode} size={36} />}
-                <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-950/40 font-display-fantasy' : 'text-slate-400'}`}>{m.label}</span>
+              <button 
+                key={m.id} 
+                onClick={() => handleModeSelection(m.id as JournalMode)} 
+                className={`w-full h-24 rounded-[32px] border relative overflow-hidden active:scale-95 transition-all duration-300 text-left p-4 flex items-center ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'}`}
+              >
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2.5 rounded-2xl flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-50'}`}>
+                    <m.icon rpgMode={userProfile.rpgMode} size={20} />
+                  </div>
+                  <span className={`text-[12px] font-black uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+                    {m.label}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
         </div>
+        
         <div className="px-6 mb-6">
            <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white'}`}>
               <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>

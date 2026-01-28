@@ -63,7 +63,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, [mode, readOnly, initialMessages, rpgMode]);
 
   const handleBack = () => {
-    if (!readOnly && onSessionComplete && (messages.length > 0 || decisionStep > 1)) {
+    // Проверяем, было ли реальное взаимодействие
+    const hasUserInteraction = mode === 'DECISION' 
+      ? (decisionStep >= 2) // Пользователь ввел тему и нажал "Далее"
+      : messages.some(m => m.role === 'user'); // В чате есть хотя бы одно сообщение от пользователя
+
+    if (!readOnly && onSessionComplete && hasUserInteraction) {
       onSessionComplete(
         messages, 
         (Date.now() - startTimeRef.current) / 1000,
