@@ -305,7 +305,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
         }`}>
           <X size={24} />
         </button>
-        <span className={`font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy italic' : 'text-slate-800'}`}>
+        <span className={`font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
           {editingId ? (rpgMode ? 'Правка свитков' : 'Редактировать') : (rpgMode ? 'Новое заклятие' : 'Новая запись')}
         </span>
         <button 
@@ -376,7 +376,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                 }`}>
                   <ArrowLeft size={20} />
                 </button>
-                <h2 className={`ml-2 text-xl font-black italic uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+                <h2 className={`ml-2 text-xl font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
                   {rpgMode ? 'Свитки мудрости' : 'Дневник'}
                 </h2>
             </div>

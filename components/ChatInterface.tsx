@@ -226,7 +226,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {/* Header */}
       <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
         <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>
-        <h2 className={`text-base font-black uppercase tracking-tighter italic ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+        <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
           {mode === 'DECISION' ? 'Архитектор решений' : mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
         </h2>
         <div className="w-8"></div>
