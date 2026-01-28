@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { Share2, Check, Sparkles, Search, AlertTriangle, Activity, Compass, ShieldAlert } from 'lucide-react';
 import { DecisionData } from '../types';
-import { motion } from 'framer-motion';
+import { motion, Variants } from 'framer-motion';
 
 interface InsightCardProps {
   data: DecisionData;
   rpgMode?: boolean;
 }
 
-const itemVariants = {
+// Fixed: Explicitly typed variants as Variants to prevent type widening and resolve "AnimationGeneratorType" mismatch
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
 };
@@ -100,11 +101,11 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
            </p>
         </motion.div>
 
-        {/* 4. СКРЫТЫЙ ФАКТОР */}
-        <motion.div variants={itemVariants} className={`col-span-2 p-10 rounded-[44px] border relative overflow-hidden ${rpgMode ? 'bg-white/80 border-red-800/20' : 'bg-indigo-50/50 border-indigo-100/50'}`}>
+        {/* 4. СКРЫТЫЙ ФАКТОР - ТЕПЕРЬ БЕЛЫЙ КАК И ОСТАЛЬНЫЕ */}
+        <motion.div variants={itemVariants} className={`col-span-2 p-10 rounded-[44px] border relative overflow-hidden ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white border-white shadow-sm'}`}>
            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center"><Search size={14} /></div>
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-600">Скрытый фактор</span>
+              <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}><Search size={14} /></div>
+              <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>Скрытый фактор</span>
            </div>
            <p className={`text-base font-bold leading-relaxed ${rpgMode ? 'text-red-950 italic' : 'text-slate-800'}`}>
              {analysis.hiddenFactor}

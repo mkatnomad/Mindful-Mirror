@@ -154,21 +154,39 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const items = side === 'A' ? decisionData.pros : decisionData.cons;
     const title = side === 'A' ? (isCompare ? decisionData.optionA : 'За') : (isCompare ? decisionData.optionB : 'Против');
     
-    // Цвет колонки
-    const sideColorClass = !isCompare && side === 'B' 
-        ? (isActive ? (rpgMode ? 'rpg-card ring-2 ring-red-800/40' : 'bg-rose-50 border-rose-200 shadow-xl shadow-rose-100/30 scale-[1.02]') : (rpgMode ? 'bg-rose-900/10 border-red-800/10 opacity-50' : 'bg-rose-50/30 border-transparent opacity-50'))
-        : (isActive 
-            ? (rpgMode ? 'rpg-card ring-2 ring-red-800/20' : 'bg-emerald-50/40 border-emerald-100 shadow-xl shadow-emerald-100/30 scale-[1.02]') 
-            : (rpgMode ? 'bg-white/40 border-red-800/10 opacity-50' : 'bg-slate-50 border-transparent opacity-50'));
+    // Smart Border Styles for standard theme
+    const baseClass = "flex flex-col rounded-[24px] p-5 border border-l-4 transition-all duration-500 cursor-pointer h-full";
+    
+    // Side B (Con/Option B) - Reddish Accent
+    const isSideB = !isCompare && side === 'B';
+    
+    let columnStyles = "";
+    if (rpgMode) {
+      columnStyles = isActive 
+        ? "rpg-card ring-2 ring-red-800/40" 
+        : (isSideB ? "bg-rose-900/10 border-red-800/10 opacity-50" : "bg-white/40 border-red-800/10 opacity-50");
+    } else {
+      if (side === 'A') {
+        columnStyles = isActive 
+          ? "bg-emerald-50/40 border-emerald-200 border-l-emerald-500 shadow-xl shadow-emerald-100/30 scale-[1.02]" 
+          : "bg-white/60 border-slate-100 border-l-slate-200 opacity-60 hover:opacity-100";
+      } else {
+        columnStyles = isActive 
+          ? "bg-rose-50 border-rose-200 border-l-rose-500 shadow-xl shadow-rose-100/30 scale-[1.02]" 
+          : "bg-white/60 border-slate-100 border-l-slate-200 opacity-60 hover:opacity-100";
+      }
+    }
 
-    const titleColorClass = !isCompare && side === 'B' 
-        ? (isActive ? 'text-rose-600' : 'text-rose-300') 
-        : (isActive ? (rpgMode ? 'text-red-800' : 'text-emerald-600') : 'text-slate-400');
+    const titleColorClass = rpgMode 
+      ? (isActive ? 'text-red-800' : 'text-slate-400')
+      : (side === 'A' 
+          ? (isActive ? 'text-emerald-600' : 'text-slate-400')
+          : (isActive ? 'text-rose-600' : 'text-slate-400'));
 
     return (
       <div 
         onClick={() => setActiveSide(side)}
-        className={`flex flex-col rounded-[32px] p-5 border transition-all duration-500 cursor-pointer h-full ${sideColorClass}`}
+        className={`${baseClass} ${columnStyles}`}
       >
         <div className="flex justify-between items-center mb-4 shrink-0">
            <h4 className={`text-[10px] font-black uppercase tracking-widest truncate max-w-[80%] ${titleColorClass}`}>
@@ -227,7 +245,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
         <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>
         <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-          {mode === 'DECISION' ? 'Архитектор решений' : mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
+          {mode === 'DECISION' ? '' : mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
         </h2>
         <div className="w-8"></div>
       </div>
