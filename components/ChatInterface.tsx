@@ -63,10 +63,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, [mode, readOnly, initialMessages, rpgMode]);
 
   const handleBack = () => {
-    // Проверяем, было ли реальное взаимодействие
     const hasUserInteraction = mode === 'DECISION' 
-      ? (decisionStep >= 2) // Пользователь ввел тему и нажал "Далее"
-      : messages.some(m => m.role === 'user'); // В чате есть хотя бы одно сообщение от пользователя
+      ? (decisionStep >= 2) 
+      : messages.some(m => m.role === 'user'); 
 
     if (!readOnly && onSessionComplete && hasUserInteraction) {
       onSessionComplete(
@@ -154,83 +153,79 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const items = side === 'A' ? decisionData.pros : decisionData.cons;
     const title = side === 'A' ? (isCompare ? decisionData.optionA : 'За') : (isCompare ? decisionData.optionB : 'Против');
     
-    // Smart Border Styles for standard theme
-    const baseClass = "flex flex-col rounded-[24px] p-5 border border-l-4 transition-all duration-500 cursor-pointer h-full";
-    
-    // Side B (Con/Option B) - Reddish Accent
-    const isSideB = !isCompare && side === 'B';
+    // Zen Editorial Styles
+    const baseClass = "flex flex-col rounded-[32px] p-5 border-2 transition-all duration-500 cursor-pointer h-full relative overflow-hidden";
     
     let columnStyles = "";
     if (rpgMode) {
       columnStyles = isActive 
         ? "rpg-card ring-2 ring-red-800/40" 
-        : (isSideB ? "bg-rose-900/10 border-red-800/10 opacity-50" : "bg-white/40 border-red-800/10 opacity-50");
+        : "bg-white/40 border-red-800/10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100";
     } else {
-      if (side === 'A') {
-        columnStyles = isActive 
-          ? "bg-emerald-50/40 border-emerald-200 border-l-emerald-500 shadow-xl shadow-emerald-100/30 scale-[1.02]" 
-          : "bg-white/60 border-slate-100 border-l-slate-200 opacity-60 hover:opacity-100";
-      } else {
-        columnStyles = isActive 
-          ? "bg-rose-50 border-rose-200 border-l-rose-500 shadow-xl shadow-rose-100/30 scale-[1.02]" 
-          : "bg-white/60 border-slate-100 border-l-slate-200 opacity-60 hover:opacity-100";
-      }
+      // Always white background for Bento consistency
+      const accentColor = side === 'A' ? 'border-l-indigo-500' : 'border-l-rose-500';
+      const shadowStyle = isActive ? 'shadow-2xl shadow-slate-200/50 scale-[1.02] border-white' : 'shadow-none border-transparent opacity-60 hover:opacity-100';
+      columnStyles = `bg-white border-l-4 ${accentColor} ${shadowStyle}`;
     }
 
     const titleColorClass = rpgMode 
       ? (isActive ? 'text-red-800' : 'text-slate-400')
-      : (side === 'A' 
-          ? (isActive ? 'text-emerald-600' : 'text-slate-400')
-          : (isActive ? 'text-rose-600' : 'text-slate-400'));
+      : (isActive ? 'text-slate-900' : 'text-slate-400');
 
     return (
       <div 
         onClick={() => setActiveSide(side)}
         className={`${baseClass} ${columnStyles}`}
       >
-        <div className="flex justify-between items-center mb-4 shrink-0">
+        <div className="flex justify-between items-center mb-6 shrink-0 relative z-10">
            <h4 className={`text-[10px] font-black uppercase tracking-widest truncate max-w-[80%] ${titleColorClass}`}>
              {title}
            </h4>
-           <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-[10px] font-black shrink-0 ${isActive ? (side === 'B' && !isCompare ? 'bg-rose-500 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'}`}>
+           <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${isActive ? (side === 'A' ? 'bg-indigo-600 text-white' : 'bg-rose-500 text-white') : 'bg-slate-100 text-slate-300'}`}>
              {items.length}
            </div>
         </div>
 
-        <div className="flex-1 space-y-2 mb-4 overflow-y-auto no-scrollbar">
+        <div className="flex-1 space-y-2.5 mb-4 overflow-y-auto no-scrollbar relative z-10">
           <AnimatePresence>
             {items.map((text, i) => (
               <motion.div 
                 key={i} 
-                initial={{ opacity: 0, x: side === 'A' ? -10 : 10 }} 
-                animate={{ opacity: 1, x: 0 }}
-                className={`group relative p-3 pr-8 rounded-2xl text-[11px] font-bold border transition-all ${rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-white border-slate-50 text-slate-700 shadow-sm'}`}
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className={`group relative p-4 pr-10 rounded-2xl text-[12px] font-bold border transition-all ${rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-slate-50 border-slate-100 text-slate-700 shadow-sm hover:border-slate-200'}`}
               >
                 {text}
                 <button 
                   onClick={(e) => { e.stopPropagation(); removeArgument(side, i); }}
-                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-opacity bg-slate-50 hover:bg-slate-100 ${rpgMode ? 'text-red-800' : 'text-slate-400'}`}
+                  className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity ${rpgMode ? 'text-red-800' : 'text-slate-300 hover:text-rose-500 hover:bg-rose-50'}`}
                 >
-                  <X size={12} strokeWidth={3} />
+                  <X size={14} strokeWidth={3} />
                 </button>
               </motion.div>
             ))}
           </AnimatePresence>
+          
+          {items.length === 0 && !isActive && (
+            <div className="h-full flex items-center justify-center opacity-10">
+              <Plus size={40} />
+            </div>
+          )}
         </div>
 
         {isActive && (
-          <div className="mt-auto animate-fade-in shrink-0">
-             <div className={`relative flex items-center rounded-2xl border p-1 transition-all ${rpgMode ? 'bg-white border-red-800/40' : 'bg-slate-50 border-indigo-100 focus-within:bg-white'}`}>
+          <div className="mt-auto animate-fade-in shrink-0 relative z-10">
+             <div className={`relative flex items-center rounded-2xl border p-1 transition-all ${rpgMode ? 'bg-white border-red-800/40' : 'bg-slate-100 border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-100 focus-within:border-indigo-200'}`}>
                 <input 
                   autoFocus
                   value={inlineInput}
                   onChange={(e) => setInlineInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addArgument()}
-                  placeholder="Добавить..."
-                  className="flex-1 bg-transparent px-3 py-2 text-[12px] font-bold focus:outline-none w-full"
+                  placeholder="Добавить мысль..."
+                  className="flex-1 bg-transparent px-3 py-2.5 text-[12px] font-bold focus:outline-none w-full"
                 />
-                <button onClick={addArgument} className={`p-2 rounded-xl shrink-0 ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}>
-                  <Plus size={14} />
+                <button onClick={addArgument} className={`p-2.5 rounded-xl shrink-0 shadow-lg active:scale-90 transition-transform ${rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white'}`}>
+                  <Plus size={16} strokeWidth={3} />
                 </button>
              </div>
           </div>
@@ -240,7 +235,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#E5E7EB]'}`}>
+    <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
       {/* Header */}
       <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
         <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>

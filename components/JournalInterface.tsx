@@ -362,7 +362,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
 
   return (
     <div className={`flex flex-col h-full relative overflow-hidden transition-all duration-500 ${
-      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#E5E7EB]'
+      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'
     }`}>
       {isEditorOpen && renderEditor()}
 
