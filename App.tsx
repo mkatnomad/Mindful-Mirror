@@ -296,12 +296,16 @@ const App: React.FC = () => {
 
   const getTelegramUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
+  // FIXED: Midnight reset in local time
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    if (userProfile.lastUsageDate !== today) {
+    // Construct local YYYY-MM-DD date
+    const now = new Date();
+    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    
+    if (userProfile.lastUsageDate !== localDate) {
       setUserProfile(prev => ({
         ...prev,
-        lastUsageDate: today,
+        lastUsageDate: localDate,
         dailyDecisionCount: 0,
         dailyEmotionsCount: 0
       }));
@@ -899,6 +903,21 @@ const App: React.FC = () => {
     const limitEmotions = isWelcome ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
     const isSubscribed = userProfile.isSubscribed;
 
+    // --- ТЕКСТЫ ДЛЯ РЕДАКТИРОВАНИЯ ---
+    const texts = {
+      title: isRpg ? 'Пробудить полную силу' : 'Расширь границы',
+      subTitle: isRpg ? 'Станьте Мастером своей судьбы' : 'Mindful Mirror остается бесплатным для вас',
+      description: isRpg 
+        ? 'Ваши силы восстановятся завтра. Premium открывает ежедневные квесты и убирает все лимиты.' 
+        : 'Вы можете продолжить путь завтра или снять ограничения и открыть ежедневные квесты прямо сейчас.',
+      mentorSpeech: isRpg 
+        ? "Ваше древо упирается в свод... Чтобы расти дальше, нужны Звездные Ключи." 
+        : "Твой путь осознанности требует больше пространства для маневра.",
+      counterTitle: 'Энергия исчерпана',
+      resetInfo: 'Восстановление в полночь по вашему времени'
+    };
+    // --------------------------------
+
     return (
       <div className={`h-full overflow-y-auto flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
         {/* Background Decorative Glow */}
@@ -915,7 +934,7 @@ const App: React.FC = () => {
              <TreeIcon stage={mentorStage} size={80} rpgMode={isRpg} />
              <div className={`mt-4 px-5 py-3 rounded-3xl rounded-tl-none border shadow-sm max-w-[240px] ${isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'}`}>
                 <p className="text-[13px] font-bold leading-tight">
-                   {isRpg ? "Ваше древо упирается в свод... Чтобы расти дальше, нужны Звездные Ключи." : "Твой путь осознанности требует больше пространства для маневра."}
+                   {texts.mentorSpeech}
                 </p>
              </div>
           </div>
@@ -923,7 +942,7 @@ const App: React.FC = () => {
 
         {/* 2. USAGE BALANCE CARD */}
         <div className={`w-full p-6 rounded-[32px] mb-8 relative z-10 border transition-all ${isRpg ? 'bg-white/60 border-red-800/20' : 'bg-white bento-border shadow-sm'}`}>
-           <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isRpg ? 'text-red-800' : 'text-slate-400'}`}>Энергия исчерпана</p>
+           <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isRpg ? 'text-red-800' : 'text-slate-400'}`}>{texts.counterTitle}</p>
            <div className="grid grid-cols-2 gap-3 mb-3">
               <div className={`p-4 rounded-2xl border flex flex-col items-center ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
                  <div className="flex items-center space-x-2 mb-1"><Zap size={14} className={isRpg ? 'text-red-800' : 'text-amber-500'} /><span className="text-[10px] font-black uppercase tracking-tighter">Решения</span></div>
@@ -935,7 +954,7 @@ const App: React.FC = () => {
               </div>
            </div>
            
-           {/* New Quest Counter row */}
+           {/* Quest Counter row */}
            <div className={`w-full p-4 rounded-2xl border flex items-center justify-between ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
               <div className="flex items-center space-x-3">
                  <Compass size={18} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
@@ -948,20 +967,20 @@ const App: React.FC = () => {
 
            <div className="flex items-center justify-center space-x-2 text-[10px] font-bold text-slate-400 mt-4">
               <RefreshCcw size={12} />
-              <span>Восстановление в полночь</span>
+              <span>{texts.resetInfo}</span>
            </div>
         </div>
 
         {/* 3. MAIN CALL TO ACTION */}
         <div className="mb-10 space-y-2 relative z-10">
            <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>
-             {isRpg ? 'Пробудить полную силу' : 'Расширь границы'}
+             {texts.title}
            </h2>
            <p className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-50 ${isRpg ? 'text-red-800' : 'text-slate-500'}`}>
-             {isRpg ? 'Станьте Мастером своей судьбы' : 'Mindful Mirror остается бесплатным для вас'}
+             {texts.subTitle}
            </p>
            <p className={`text-[12px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>
-             {isRpg ? 'Ваши силы восстановятся завтра. Premium открывает ежедневные квесты и убирает лимиты.' : 'Вы можете продолжить путь завтра или снять ограничения и открыть ежедневные квесты прямо сейчас.'}
+             {texts.description}
            </p>
         </div>
 
