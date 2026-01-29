@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, ArrowLeft, Loader2, Sparkles, Plus, Zap, X, ChevronRight, Target, LayoutGrid, Wand2, MessageSquare, Lightbulb, Compass, Rocket, CheckCircle2, ArrowRightLeft } from 'lucide-react';
-import { JournalMode, Message, DecisionData } from '../types';
+import { Send, ArrowLeft, Loader2, Sparkles, Plus, Zap, X, ChevronRight, Target, LayoutGrid, Wand2, MessageSquare, Lightbulb, Compass, Rocket, CheckCircle2, ArrowRightLeft, MessageCircle } from 'lucide-react';
+import { JournalMode, Message, DecisionData, Archetype } from '../types';
 import { InsightCard } from './InsightCard';
 import { sendMessageToGemini, analyzeDecision } from '../services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
+import { TreeIcon, RANKS } from '../App';
 
 interface ChatInterfaceProps {
   mode: JournalMode;
@@ -12,7 +13,16 @@ interface ChatInterfaceProps {
   readOnly?: boolean;
   initialMessages?: Message[];
   rpgMode?: boolean;
+  archetype?: Archetype | null;
 }
+
+const QUICK_STARTERS = [
+  "Уволиться или остаться?",
+  "Купить это сейчас или подождать?",
+  "Сказать правду или промолчать?",
+  "Пойти на риск или стабильность?",
+  "Взять паузу или продолжать?"
+];
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
   mode, 
@@ -20,7 +30,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onSessionComplete, 
   readOnly = false,
   initialMessages = [],
-  rpgMode = false
+  rpgMode = false,
+  archetype = null
 }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -87,6 +98,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setDecisionData(prev => ({ ...prev, decisionType: 'SINGLE', optionA: 'За', optionB: 'Против' }));
     }
     setDecisionStep(2);
+    if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
   };
 
   const addArgument = () => {
@@ -152,7 +164,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const items = side === 'A' ? decisionData.pros : decisionData.cons;
     const title = side === 'A' ? (decisionData.optionA || 'За') : (decisionData.optionB || 'Против');
     
-    // Duolingo Visual Weights
     let cardClasses = `flex flex-col rounded-[32px] p-5 border-2 border-b-[6px] transition-all duration-300 cursor-pointer h-full relative overflow-hidden `;
     
     if (rpgMode) {
@@ -212,7 +223,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           )}
         </div>
         
-        {/* Fill effect like Duolingo progress */}
         <div 
           className={`absolute bottom-0 left-0 right-0 h-1 transition-all duration-1000 ${side === 'A' ? 'bg-indigo-500' : 'bg-rose-500'}`}
           style={{ height: `${Math.min(items.length * 10, 100)}%`, opacity: 0.03 }}
@@ -221,9 +231,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     );
   };
 
+  const renderProgress = (step: number) => {
+    return (
+      <div className="flex space-x-1.5 px-6 pt-4 mb-4">
+        {[1, 2, 4].map((s, idx) => (
+          <div 
+            key={s} 
+            className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${
+              step >= s 
+                ? (rpgMode ? 'bg-red-800' : 'bg-indigo-600') 
+                : (rpgMode ? 'bg-red-800/10' : 'bg-slate-200')
+            }`} 
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
-      {/* Header - Hidden for Decision mode to maximize space */}
+      {/* Header logic */}
       {mode !== 'DECISION' && (
         <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
           <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>
@@ -238,77 +265,117 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         {mode === 'DECISION' ? (
           <div className="h-full flex flex-col">
             {decisionStep === 1 && (
-              <div className="p-6 space-y-4 animate-fade-in">
-                <button onClick={handleBack} className={`mb-2 p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800 hover:bg-red-50' : 'text-slate-400 hover:bg-white shadow-sm hover:text-slate-800'}`}>
-                  <ArrowLeft size={24} />
-                </button>
-
-                <div className={`p-8 rounded-[40px] border relative overflow-hidden transition-all shadow-xl ${rpgMode ? 'rpg-card' : 'bg-white bento-border bento-shadow shadow-slate-200/40'}`}>
-                   <div className="flex items-center space-x-2 mb-6">
-                      <div className={`p-2 rounded-xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-                        <Target size={18} />
-                      </div>
-                      <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Суть дилеммы</p>
-                   </div>
-                   <textarea 
-                     autoFocus
-                     value={decisionData.topic}
-                     onChange={(e) => setDecisionData(prev => ({ ...prev, topic: e.target.value }))}
-                     placeholder="Перед каким выбором вы стоите?"
-                     className={`w-full bg-transparent text-2xl font-black tracking-tight focus:outline-none resize-none min-h-[160px] ${rpgMode ? 'text-red-950 font-display-fantasy italic' : 'text-slate-800'}`}
-                   />
+              <div className="flex-1 flex flex-col animate-fade-in relative">
+                {/* 1. Header & Progress */}
+                <div className="flex items-center px-4 pt-4">
+                  <button onClick={handleBack} className={`p-3 rounded-full transition-colors ${rpgMode ? 'text-red-800' : 'text-slate-400 hover:text-slate-800'}`}>
+                    <ArrowLeft size={24} />
+                  </button>
+                  <div className="flex-1">{renderProgress(1)}</div>
+                  <div className="w-10"></div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                   <div className={`p-6 rounded-[32px] border transition-all ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white bento-border bento-shadow shadow-slate-100'}`}>
-                      <div className="flex items-center space-x-2 mb-3">
-                         <Lightbulb size={14} className="text-amber-500" />
-                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Совет</span>
-                      </div>
-                      <p className={`text-[11px] font-bold leading-tight ${rpgMode ? 'text-red-900/60' : 'text-slate-500'}`}>
-                        Если есть выбор из двух, напишите через "или".
-                      </p>
+                {/* 2. Mentor Section */}
+                <div className="px-6 py-6 flex flex-col items-center text-center">
+                   <motion.div 
+                     initial={{ scale: 0, rotate: -10 }}
+                     animate={{ scale: 1, rotate: 0 }}
+                     className="mb-4"
+                   >
+                     {archetype ? (
+                       <TreeIcon stage={6} size={80} rpgMode={rpgMode} />
+                     ) : (
+                       <div className={`w-20 h-20 rounded-[28px] flex items-center justify-center ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
+                          <Sparkles size={40} />
+                       </div>
+                     )}
+                   </motion.div>
+                   
+                   <motion.div 
+                     initial={{ opacity: 0, y: 10 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     className={`px-6 py-3 rounded-[24px] rounded-tl-none border shadow-sm max-w-[280px] relative ${
+                       rpgMode ? 'bg-white border-red-800 text-red-950 font-serif-fantasy italic' : 'bg-white bento-border text-slate-600'
+                     }`}
+                   >
+                     <p className="text-[14px] leading-tight font-bold">
+                       {archetype ? `${archetype.name} слушает... Какое испытание подготовила тебе судьба?` : "Какое решение требует ясности прямо сейчас?"}
+                     </p>
+                   </motion.div>
+                </div>
+
+                {/* 3. Thought Cloud Input */}
+                <div className="px-6 flex-1 flex flex-col">
+                   <div className="flex-1 flex flex-col items-center justify-center min-h-[160px] relative group">
+                      <div className={`absolute inset-0 transition-all duration-500 rounded-[48px] ${
+                        decisionData.topic.trim() 
+                          ? (rpgMode ? 'bg-red-800/5 ring-4 ring-red-800/10' : 'bg-indigo-50/30 ring-4 ring-indigo-50')
+                          : 'bg-transparent'
+                      }`} />
+                      
+                      <textarea 
+                        autoFocus
+                        value={decisionData.topic}
+                        onChange={(e) => setDecisionData(prev => ({ ...prev, topic: e.target.value }))}
+                        placeholder="Опишите вашу дилемму..."
+                        className={`w-full bg-transparent text-center text-2xl font-black tracking-tight focus:outline-none resize-none px-4 relative z-10 transition-all duration-300 ${
+                          rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'
+                        } ${decisionData.topic.length > 50 ? 'text-xl' : 'text-3xl'}`}
+                      />
                    </div>
-                   <div className={`p-6 rounded-[32px] border transition-all ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white bento-border bento-shadow shadow-slate-100'}`}>
-                      <div className="flex items-center space-x-2 mb-3">
-                         <Rocket size={14} className="text-indigo-500" />
-                         <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Этап</span>
-                      </div>
-                      <p className={`text-[11px] font-bold leading-tight ${rpgMode ? 'text-red-900/60' : 'text-slate-500'}`}>
-                        Формирование намерения перед анализом.
-                      </p>
+
+                   {/* Quick Starters chips */}
+                   <div className="mt-8 mb-6 overflow-x-auto no-scrollbar flex space-x-2 py-2">
+                     {QUICK_STARTERS.map((s, i) => (
+                       <button 
+                         key={i}
+                         onClick={() => {
+                            setDecisionData(prev => ({ ...prev, topic: s }));
+                            if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+                         }}
+                         className={`shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${
+                           rpgMode 
+                            ? 'bg-white border-red-800 text-red-800 hover:bg-red-50' 
+                            : 'bg-white bento-border text-slate-400 hover:text-slate-800 hover:border-slate-300'
+                         }`}
+                       >
+                         {s}
+                       </button>
+                     ))}
                    </div>
                 </div>
 
-                <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim()} className={`w-full py-7 rounded-[40px] font-black text-[13px] uppercase tracking-[0.3em] flex items-center justify-center space-x-4 transition-all shadow-2xl active:scale-95 disabled:opacity-20 ${rpgMode ? 'rpg-button' : 'bg-slate-900 text-white'}`}>
-                   <span>Разложить на факторы</span><ChevronRight size={18} strokeWidth={3} />
-                </button>
+                {/* 4. Action Button */}
+                <div className="p-6 pb-10">
+                   <button 
+                     onClick={handleDecisionStart} 
+                     disabled={!decisionData.topic.trim()} 
+                     className={`w-full py-7 rounded-[40px] font-black text-[13px] uppercase tracking-[0.3em] flex items-center justify-center space-x-5 transition-all shadow-2xl active:scale-95 border-b-[8px] disabled:opacity-20 disabled:grayscale ${
+                       rpgMode ? 'rpg-button border-red-950' : 'bg-slate-900 text-white border-slate-950'
+                     }`}
+                   >
+                     <span>Взвесить факторы</span>
+                     <ChevronRight size={18} strokeWidth={4} />
+                   </button>
+                </div>
               </div>
             )}
 
             {decisionStep === 2 && (
               <div className="p-6 flex-1 flex flex-col space-y-4 animate-fade-in h-full overflow-hidden">
                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 flex-1">
                       <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800 hover:bg-red-50' : 'text-slate-400 hover:bg-white shadow-sm hover:text-slate-800'}`}>
                         <ArrowLeft size={20} />
                       </button>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">На чаше весов</span>
+                      <div className="flex-1 pr-6">{renderProgress(2)}</div>
                     </div>
-                    {decisionData.archetype && (
-                       <div className="flex items-center space-x-2 bg-white px-3 py-1.5 rounded-full border shadow-sm">
-                          <div className="w-4 h-4 rounded-full bg-indigo-500" />
-                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-600">{decisionData.archetype.name} наблюдает</span>
-                       </div>
-                    )}
                  </div>
 
-                 {/* VS Area */}
                  <div className="flex-1 flex flex-col min-h-0">
                    <div className="flex-1 flex space-x-3 items-stretch min-h-0 py-2 relative">
                       <div className="flex-1">{renderArgumentCard('A')}</div>
                       
-                      {/* VS Badge */}
                       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-sm border-4 transition-all duration-300 ${rpgMode ? 'bg-red-800 text-white border-red-950 shadow-lg' : 'bg-white text-slate-300 border-slate-100 shadow-xl'}`}>
                            VS
@@ -319,7 +386,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                    </div>
                  </div>
 
-                 {/* Duolingo Input Panel */}
                  <div className="space-y-4 pb-6 mt-4">
                     <div className={`p-2 rounded-[28px] border-2 border-b-4 flex items-center space-x-3 transition-all ${
                       rpgMode 
@@ -378,7 +444,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     <button onClick={handleBack} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800 hover:bg-red-50' : 'text-slate-400 hover:bg-white shadow-sm hover:text-slate-800'}`}>
                       <ArrowLeft size={20} />
                     </button>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Результат анализа</span>
+                    <div className="flex-1 pr-12">{renderProgress(4)}</div>
                 </div>
                 <InsightCard data={decisionData} rpgMode={rpgMode} />
               </div>
@@ -402,7 +468,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )}
       </div>
 
-      {/* Footer Controls for non-Decision or Step 4 */}
       {(decisionStep === 4 && !readOnly) ? (
         <div className={`p-6 safe-area-bottom z-30 transition-all ${rpgMode ? 'bg-parchment' : 'bg-white/80 backdrop-blur-md'}`}>
            <button 
