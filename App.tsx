@@ -14,6 +14,7 @@ const FREE_DECISIONS_PER_DAY = 2;
 const FREE_EMOTIONS_PER_DAY = 2;
 const WELCOME_BONUS_LIMIT = 5;
 const PREMIUM_MAX_PER_DAY = 25; 
+const FREE_QUESTS_TOTAL = 3;
 
 const ADMIN_ID = 379881747; 
 
@@ -890,47 +891,159 @@ const App: React.FC = () => {
     );
   };
 
-  const renderLimitReached = () => (
-    <div className={`h-full overflow-y-auto flex flex-col items-center p-8 text-center animate-fade-in transition-all duration-700 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
-       <div className={`w-20 h-20 rounded-full flex items-center justify-center mb-8 shadow-2xl animate-float mt-10 shrink-0 transition-all ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white shadow-indigo-200'}`}><Lock size={32} strokeWidth={2.5} /></div>
-       <h2 className={`text-4xl font-bold mb-6 uppercase tracking-tighter leading-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Граница достигнута</h2>
-       <div className={`p-8 rounded-[40px] border mb-10 w-full transition-all ${userProfile.rpgMode ? 'rpg-card border-red-800/20 shadow-none' : 'glass-card bento-border shadow-none'}`}>
-          <p className={`text-[10px] font-black uppercase tracking-widest mb-4 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>Текущий статус: Странник</p>
-          <div className="flex flex-col space-y-4 text-[15px] font-bold">
-             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Решения:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600'}>{FREE_DECISIONS_PER_DAY} / день</span></div>
-             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-900/60' : 'text-slate-500'}>Состояния:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-rose-500'}>{FREE_EMOTIONS_PER_DAY} / день</span></div>
-             <div className="flex items-center justify-between"><span className={userProfile.rpgMode ? 'text-red-950/60' : 'text-slate-500'}>Квесты:</span><span className={userProfile.rpgMode ? 'text-red-800' : 'text-amber-500'}>3 всего</span></div>
-          </div>
-          <div className={`h-[1px] my-6 ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-200/50'}`}></div>
-          <p className="text-sm leading-relaxed text-slate-500">Продолжайте путь бесплатно с лимитами или активируйте <span className="text-indigo-600 font-extrabold">Premium на 30 дней</span> для полного раскрытия потенциала.</p>
-       </div>
-       <div className="w-full space-y-4 mb-10">
-          {[
-            { id: '1', label: 'Безлимитные Решения', desc: 'Снимает оковы сомнений. Идеально для тех, кто ищет ясности.', icon: Zap, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-600', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600' },
-            { id: '2', label: 'Безлимитные Состояния', desc: 'Ваша эмоциональная крепость. Сохраняйте покой всегда.', icon: Heart, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-rose-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-rose-600' },
-            { id: '3', label: 'Ежедневные Квесты', desc: 'Ваш путь героя. Регулярные испытания мудрости.', icon: Sword, color: userProfile.rpgMode ? 'bg-red-800' : 'bg-amber-500', textColor: userProfile.rpgMode ? 'text-red-800' : 'text-amber-600' }
-          ].map(benefit => (
-            <div key={benefit.id} className={`flex items-center space-x-4 p-5 rounded-[32px] border transition-all ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10' : 'glass-card bento-border'}`}>
-               <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg shrink-0 ${benefit.color}`}><benefit.icon size={22} /></div>
-               <div className="text-left flex-1">
-                 <p className={`text-[11px] font-black uppercase tracking-wider mb-0.5 ${benefit.textColor}`}>{benefit.label}</p>
-                 <p className={`text-[12px] leading-snug opacity-70 ${userProfile.rpgMode ? 'text-red-950 font-medium' : 'text-slate-600'}`}>{benefit.desc}</p>
-               </div>
-            </div>
-          ))}
-       </div>
-       <div className="w-full space-y-6 mb-24">
-          <button onClick={handlePay} disabled={isPaying} className={`w-full py-5 rounded-[32px] font-bold text-lg flex items-center justify-center space-x-3 transition-all transform duration-300 ${isPaying ? 'opacity-70 scale-[0.98]' : 'active:scale-95 hover:scale-[1.02] shadow-2xl'} ${userProfile.rpgMode ? 'rpg-button' : 'bg-slate-900 text-white shadow-slate-900/30'}`}>{isPaying ? <Loader2 size={24} className="animate-spin" /> : <Star size={24} fill="currentColor" className={userProfile.rpgMode ? 'text-white' : 'text-amber-400'} />}<span className="tracking-tight">{isPaying ? 'Вызов звёзд...' : 'Активировать Premium'}</span></button>
-          <div className="flex flex-col items-center space-y-2">
-             <div className="flex flex-col items-center space-y-1.5 text-center px-4">
-                <ShieldCheck size={16} className="text-slate-300" />
-                <span className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400 leading-tight">Безопасная оплата через Telegram Stars</span>
+  const renderLimitReached = () => {
+    const isRpg = userProfile.rpgMode;
+    const mentorStage = Math.max(0, RANKS.indexOf(currentRank));
+    const isWelcome = userProfile.firstRunDate && (Date.now() - userProfile.firstRunDate < 24 * 60 * 60 * 1000);
+    const limitDecisions = isWelcome ? WELCOME_BONUS_LIMIT : FREE_DECISIONS_PER_DAY;
+    const limitEmotions = isWelcome ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
+    const isSubscribed = userProfile.isSubscribed;
+
+    return (
+      <div className={`h-full overflow-y-auto flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
+        {/* Background Decorative Glow */}
+        <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-red-800' : 'bg-indigo-500'}`} />
+
+        {/* 1. MENTOR / PORTAL SECTION */}
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="mt-4 mb-4 relative"
+        >
+          <div className={`absolute inset-0 blur-3xl rounded-full scale-150 opacity-20 ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} />
+          <div className="relative z-10 flex flex-col items-center">
+             <TreeIcon stage={mentorStage} size={80} rpgMode={isRpg} />
+             <div className={`mt-4 px-5 py-3 rounded-3xl rounded-tl-none border shadow-sm max-w-[240px] ${isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'}`}>
+                <p className="text-[13px] font-bold leading-tight">
+                   {isRpg ? "Ваше древо упирается в свод... Чтобы расти дальше, нужны Звездные Ключи." : "Твой путь осознанности требует больше пространства для маневра."}
+                </p>
              </div>
-             <button onClick={() => setCurrentView('HOME')} className={`text-base font-bold transition-colors pt-3 pb-2 border-b-2 ${userProfile.rpgMode ? 'text-red-800 border-red-800/20 hover:border-red-800' : 'text-indigo-400 border-indigo-50 hover:text-indigo-600 hover:border-indigo-100'}`}>Вернуться назад</button>
           </div>
-       </div>
-    </div>
-  );
+        </motion.div>
+
+        {/* 2. USAGE BALANCE CARD */}
+        <div className={`w-full p-6 rounded-[32px] mb-8 relative z-10 border transition-all ${isRpg ? 'bg-white/60 border-red-800/20' : 'bg-white bento-border shadow-sm'}`}>
+           <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isRpg ? 'text-red-800' : 'text-slate-400'}`}>Энергия исчерпана</p>
+           <div className="grid grid-cols-2 gap-3 mb-3">
+              <div className={`p-4 rounded-2xl border flex flex-col items-center ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
+                 <div className="flex items-center space-x-2 mb-1"><Zap size={14} className={isRpg ? 'text-red-800' : 'text-amber-500'} /><span className="text-[10px] font-black uppercase tracking-tighter">Решения</span></div>
+                 <p className="text-xl font-black">{userProfile.dailyDecisionCount} / {isSubscribed ? PREMIUM_MAX_PER_DAY : limitDecisions}</p>
+              </div>
+              <div className={`p-4 rounded-2xl border flex flex-col items-center ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
+                 <div className="flex items-center space-x-2 mb-1"><Heart size={14} className={isRpg ? 'text-red-800' : 'text-rose-500'} /><span className="text-[10px] font-black uppercase tracking-tighter">Состояния</span></div>
+                 <p className="text-xl font-black">{userProfile.dailyEmotionsCount} / {isSubscribed ? PREMIUM_MAX_PER_DAY : limitEmotions}</p>
+              </div>
+           </div>
+           
+           {/* New Quest Counter row */}
+           <div className={`w-full p-4 rounded-2xl border flex items-center justify-between ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
+              <div className="flex items-center space-x-3">
+                 <Compass size={18} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
+                 <span className="text-[11px] font-black uppercase tracking-widest">Испытания Пути</span>
+              </div>
+              <p className="text-lg font-black">
+                {isSubscribed ? "1 / 1 сегодня" : `${userProfile.totalQuestsDone} / ${FREE_QUESTS_TOTAL} всего`}
+              </p>
+           </div>
+
+           <div className="flex items-center justify-center space-x-2 text-[10px] font-bold text-slate-400 mt-4">
+              <RefreshCcw size={12} />
+              <span>Восстановление в полночь</span>
+           </div>
+        </div>
+
+        {/* 3. MAIN CALL TO ACTION */}
+        <div className="mb-10 space-y-2 relative z-10">
+           <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>
+             {isRpg ? 'Пробудить полную силу' : 'Расширь границы'}
+           </h2>
+           <p className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-50 ${isRpg ? 'text-red-800' : 'text-slate-500'}`}>
+             {isRpg ? 'Станьте Мастером своей судьбы' : 'Mindful Mirror остается бесплатным для вас'}
+           </p>
+           <p className={`text-[12px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>
+             {isRpg ? 'Ваши силы восстановятся завтра. Premium открывает ежедневные квесты и убирает лимиты.' : 'Вы можете продолжить путь завтра или снять ограничения и открыть ежедневные квесты прямо сейчас.'}
+           </p>
+        </div>
+
+        {/* 4. ARTIFACT CARDS (BENEFITS) */}
+        <div className="w-full space-y-4 mb-10 relative z-10">
+           {[
+             { 
+               id: '1', 
+               label: isRpg ? 'Око Истины' : 'Безлимитные Решения', 
+               desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы без дневных лимитов.',
+               icon: Zap, 
+               color: isRpg ? 'bg-red-800' : 'bg-amber-500', 
+               textColor: isRpg ? 'text-red-800' : 'text-amber-600' 
+             },
+             { 
+               id: '2', 
+               label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', 
+               desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Записывайте свои чувства столько раз, сколько нужно.',
+               icon: Heart, 
+               color: isRpg ? 'bg-red-800' : 'bg-rose-500', 
+               textColor: isRpg ? 'text-red-800' : 'text-rose-600' 
+             },
+             { 
+               id: '3', 
+               label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', 
+               desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.',
+               icon: Sword, 
+               color: isRpg ? 'bg-red-800' : 'bg-indigo-500', 
+               textColor: isRpg ? 'text-red-800' : 'text-indigo-600' 
+             }
+           ].map((benefit, idx) => (
+             <motion.div 
+               key={benefit.id} 
+               initial={{ x: -20, opacity: 0 }}
+               animate={{ x: 0, opacity: 1 }}
+               transition={{ delay: 0.1 * idx }}
+               className={`flex items-center space-x-4 p-5 rounded-[32px] border-2 border-b-4 text-left transition-all ${isRpg ? 'bg-white border-red-800 shadow-[0_4px_0_#7f1d1d]' : 'bg-white bento-border shadow-sm shadow-slate-200/50'}`}
+             >
+                <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg shrink-0 ${benefit.color}`}>
+                   <benefit.icon size={22} fill="currentColor" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-[11px] font-black uppercase tracking-wider mb-0.5 ${benefit.textColor}`}>{benefit.label}</p>
+                  <p className={`text-[12px] leading-snug opacity-70 font-bold ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>{benefit.desc}</p>
+                </div>
+             </motion.div>
+           ))}
+        </div>
+
+        {/* 5. ACTION RITUAL */}
+        <div className="w-full space-y-6 mb-24 relative z-10">
+           <button 
+             onClick={handlePay} 
+             disabled={isPaying} 
+             className={`group w-full py-6 rounded-[40px] font-black text-lg flex items-center justify-center space-x-4 transition-all transform duration-300 border-b-[8px] active:scale-95 ${
+               isPaying ? 'opacity-70 grayscale' : 'shadow-2xl'
+             } ${isRpg ? 'rpg-button border-[#7f1d1d]' : 'bg-slate-900 text-white border-slate-950'}`}
+           >
+              {isPaying ? (
+                <Loader2 size={24} className="animate-spin" />
+              ) : (
+                <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />
+              )}
+              <span className="tracking-tight uppercase">{isPaying ? 'Соединение...' : 'Пробудить Силу'}</span>
+           </button>
+           
+           <div className="flex flex-col items-center space-y-6">
+              <div className="flex items-center space-x-2 text-slate-400">
+                 <ShieldCheck size={16} />
+                 <span className="text-[10px] font-black uppercase tracking-widest">Безопасно через Telegram Stars</span>
+              </div>
+              <button 
+                onClick={() => setCurrentView('HOME')} 
+                className={`w-full py-4 rounded-[32px] font-black uppercase tracking-[0.2em] transition-all text-xs border-2 ${isRpg ? 'bg-white border-red-800/20 text-red-800' : 'bg-slate-50 border-slate-100 text-slate-500 hover:text-slate-800'}`}
+              >
+                Понятно, подожду завтра
+              </button>
+           </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderRanksInfo = () => (
     <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
@@ -944,7 +1057,7 @@ const App: React.FC = () => {
             <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Ваш статус</p>
             <div className={`px-3 py-1 rounded-full text-[11px] font-black ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-600 text-white'}`}>{userProfile.xp} XP</div>
          </div>
-         <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70 font-medium italic' : 'text-slate-500'}`}>
+         <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium italic' : 'text-slate-500'}`}>
             Каждая сессия рефлексии и принятое решение — это шаг к трансформации вашего внутреннего состояния. Ваше древо растет вместе с вашим опытом, открывая новые грани мудрости.
          </p>
       </div>
@@ -980,7 +1093,7 @@ const App: React.FC = () => {
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
-    return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleResetSub} />;
+    return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleGiftSub} onResetStats={handleResetSub} />;
   };
 
   const renderArchetypeResult = () => {
