@@ -235,20 +235,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
-      {/* Header */}
-      <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
-        <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>
-        <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-          {mode === 'DECISION' ? '' : mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
-        </h2>
-        <div className="w-8"></div>
-      </div>
+      {/* Header - Hidden for Decision mode to maximize space */}
+      {mode !== 'DECISION' && (
+        <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
+          <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>
+          <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+            {mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
+          </h2>
+          <div className="w-8"></div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto no-scrollbar">
         {mode === 'DECISION' ? (
           <div className="h-full flex flex-col">
             {decisionStep === 1 && (
               <div className="p-6 space-y-4 animate-fade-in">
+                {/* Independent Back Button for step 1 since global header is gone */}
+                <button onClick={handleBack} className={`mb-2 p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800 hover:bg-red-50' : 'text-slate-400 hover:bg-white shadow-sm hover:text-slate-800'}`}>
+                  <ArrowLeft size={24} />
+                </button>
+
                 {/* Hero Bento Input */}
                 <div className={`p-8 rounded-[40px] border relative overflow-hidden transition-all shadow-xl ${rpgMode ? 'rpg-card' : 'bg-white bento-border bento-shadow shadow-slate-200/40'}`}>
                    <div className="flex items-center space-x-2 mb-6">
@@ -261,7 +268,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                      autoFocus
                      value={decisionData.topic}
                      onChange={(e) => setDecisionData(prev => ({ ...prev, topic: e.target.value }))}
-                     placeholder="Что вы планируете сделать?"
+                     placeholder="Перед каким выбором вы стоите?"
                      className={`w-full bg-transparent text-2xl font-black tracking-tight focus:outline-none resize-none min-h-[160px] ${rpgMode ? 'text-red-950 font-display-fantasy italic' : 'text-slate-800'}`}
                    />
                 </div>
@@ -295,6 +302,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             {decisionStep === 2 && (
               <div className="p-6 flex-1 flex flex-col space-y-4 animate-fade-in h-full overflow-hidden">
+                 <div className="flex items-center space-x-2 mb-2">
+                    <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800 hover:bg-red-50' : 'text-slate-400 hover:bg-white shadow-sm hover:text-slate-800'}`}>
+                      <ArrowLeft size={20} />
+                    </button>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Вернуться к теме</span>
+                 </div>
                  <div className={`p-6 rounded-[32px] border shrink-0 ${rpgMode ? 'rpg-card' : 'bg-white bento-border bento-shadow shadow-slate-100'}`}>
                     <h3 className={`text-lg font-black leading-tight ${rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{decisionData.topic}</h3>
                  </div>
@@ -324,6 +337,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             {decisionStep === 4 && (
               <div className="animate-fade-in pb-32">
+                <div className="px-6 pt-6 flex items-center space-x-2 mb-2">
+                    <button onClick={handleBack} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800 hover:bg-red-50' : 'text-slate-400 hover:bg-white shadow-sm hover:text-slate-800'}`}>
+                      <ArrowLeft size={20} />
+                    </button>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Результат анализа</span>
+                </div>
                 <InsightCard data={decisionData} rpgMode={rpgMode} />
               </div>
             )}
