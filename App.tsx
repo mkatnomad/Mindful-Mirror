@@ -25,7 +25,7 @@ const SUBSCRIPTION_TEXTS = {
     subTitle: 'Mindful Mirror остается бесплатным для вас',
     description: 'Вы можете продолжить путь завтра или снять ограничения и открыть ежедневные квесты прямо сейчас.',
     mentorSpeech: 'Твой путь осознанности требует больше пространства для маневра.',
-    counterTitle: 'Энергия исчерпана',
+    counterTitle: 'Дневная энергия',
     resetInfo: 'Восстановление в полночь по вашему времени'
   },
   // RPG режим
@@ -957,7 +957,7 @@ const App: React.FC = () => {
            <div className={`w-full p-4 rounded-2xl border flex items-center justify-between ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
               <div className="flex items-center space-x-3">
                  <Compass size={18} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
-                 <span className="text-[11px] font-black uppercase tracking-widest">Испытания</span>
+                 <span className="text-[11px] font-black uppercase tracking-widest">Квесты</span>
               </div>
               <p className="text-lg font-black">
                 {isSubscribed ? "1 / 1 сегодня" : `${userProfile.totalQuestsDone} / ${FREE_QUESTS_TOTAL} всего`}
