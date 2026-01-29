@@ -162,9 +162,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         ? "rpg-card ring-2 ring-red-800/40" 
         : "bg-white/40 border-red-800/10 opacity-50 grayscale hover:grayscale-0 hover:opacity-100";
     } else {
-      // Always white background for Bento consistency
       const accentColor = side === 'A' ? 'border-l-indigo-500' : 'border-l-rose-500';
-      const shadowStyle = isActive ? 'shadow-2xl shadow-slate-200/50 scale-[1.02] border-white' : 'shadow-none border-transparent opacity-60 hover:opacity-100';
+      const shadowStyle = isActive ? 'shadow-2xl shadow-slate-200/50 scale-[1.02] bento-border' : 'bento-border opacity-60 hover:opacity-100';
       columnStyles = `bg-white border-l-4 ${accentColor} ${shadowStyle}`;
     }
 
@@ -181,7 +180,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
            <h4 className={`text-[10px] font-black uppercase tracking-widest truncate max-w-[80%] ${titleColorClass}`}>
              {title}
            </h4>
-           <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${isActive ? (side === 'A' ? 'bg-indigo-600 text-white' : 'bg-rose-500 text-white') : 'bg-slate-100 text-slate-300'}`}>
+           <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black shrink-0 ${isActive ? (side === 'A' ? 'bg-indigo-600 text-white' : 'bg-rose-50 text-white') : 'bg-slate-100 text-slate-300'}`}>
              {items.length}
            </div>
         </div>
@@ -193,7 +192,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 key={i} 
                 initial={{ opacity: 0, y: 10 }} 
                 animate={{ opacity: 1, y: 0 }}
-                className={`group relative p-4 pr-10 rounded-2xl text-[12px] font-bold border transition-all ${rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-slate-50 border-slate-100 text-slate-700 shadow-sm hover:border-slate-200'}`}
+                className={`group relative p-4 pr-10 rounded-2xl text-[12px] font-bold border transition-all ${rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-slate-50 bento-border text-slate-700 shadow-sm hover:border-slate-200'}`}
               >
                 {text}
                 <button 
@@ -251,7 +250,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {decisionStep === 1 && (
               <div className="p-6 space-y-4 animate-fade-in">
                 {/* Hero Bento Input */}
-                <div className={`p-8 rounded-[40px] border relative overflow-hidden transition-all shadow-xl ${rpgMode ? 'rpg-card' : 'bg-white border-white shadow-slate-200/40'}`}>
+                <div className={`p-8 rounded-[40px] border relative overflow-hidden transition-all shadow-xl ${rpgMode ? 'rpg-card' : 'bg-white bento-border bento-shadow shadow-slate-200/40'}`}>
                    <div className="flex items-center space-x-2 mb-6">
                       <div className={`p-2 rounded-xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
                         <Target size={18} />
@@ -268,7 +267,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                   <div className={`p-6 rounded-[32px] border transition-all ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white border-white shadow-sm'}`}>
+                   <div className={`p-6 rounded-[32px] border transition-all ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white bento-border bento-shadow shadow-slate-100'}`}>
                       <div className="flex items-center space-x-2 mb-3">
                          <Lightbulb size={14} className="text-amber-500" />
                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Совет</span>
@@ -277,7 +276,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         Если есть выбор из двух, напишите через "или".
                       </p>
                    </div>
-                   <div className={`p-6 rounded-[32px] border transition-all ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white border-white shadow-sm'}`}>
+                   <div className={`p-6 rounded-[32px] border transition-all ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white bento-border bento-shadow shadow-slate-100'}`}>
                       <div className="flex items-center space-x-2 mb-3">
                          <Rocket size={14} className="text-indigo-500" />
                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Этап</span>
@@ -296,7 +295,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             {decisionStep === 2 && (
               <div className="p-6 flex-1 flex flex-col space-y-4 animate-fade-in h-full overflow-hidden">
-                 <div className={`p-6 rounded-[32px] border shrink-0 ${rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm'}`}>
+                 <div className={`p-6 rounded-[32px] border shrink-0 ${rpgMode ? 'rpg-card' : 'bg-white bento-border bento-shadow shadow-slate-100'}`}>
                     <h3 className={`text-lg font-black leading-tight ${rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{decisionData.topic}</h3>
                  </div>
                  <div className="flex-1 grid grid-cols-2 gap-4 overflow-hidden py-2">
@@ -336,7 +335,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                  <div className={`max-w-[85%] px-5 py-4 rounded-[28px] text-[15px] leading-relaxed shadow-sm ${
                    msg.role === 'user' 
                      ? (rpgMode ? 'rpg-button rounded-br-sm' : 'bg-slate-900 text-white rounded-br-sm') 
-                     : (rpgMode ? 'bg-white border-2 border-red-800/20 text-red-950 rounded-bl-sm' : 'bg-white text-slate-700 border border-slate-100 rounded-bl-sm')
+                     : (rpgMode ? 'bg-white border-2 border-red-800/20 text-red-950 rounded-bl-sm' : 'bg-white text-slate-700 bento-border rounded-bl-sm')
                  }`}>
                    {msg.content}
                  </div>
@@ -361,7 +360,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       ) : (mode !== 'DECISION' || (decisionStep === 4 && readOnly)) ? (
         <div className={`p-4 safe-area-bottom z-30 transition-all ${rpgMode ? 'bg-parchment' : 'bg-white/80 backdrop-blur-md'}`}>
            {!readOnly ? (
-             <div className={`flex items-center p-1 rounded-[32px] border shadow-2xl ${rpgMode ? 'bg-white border-red-800/40' : 'bg-white border-slate-100 focus-within:border-indigo-300'}`}>
+             <div className={`flex items-center p-1 rounded-[32px] border shadow-2xl ${rpgMode ? 'bg-white border-red-800/40' : 'bg-white bento-border focus-within:border-indigo-300'}`}>
                 <div className="pl-5 text-slate-300"><MessageSquare size={18} /></div>
                 <input 
                   value={input} 

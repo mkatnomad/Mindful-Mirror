@@ -45,7 +45,7 @@
       }
 
       .rpg-card {
-        background: #fffdfa;
+        background: #fffefc;
         border: 2px solid #d4a373;
         box-shadow: 4px 4px 0px #b91c1c;
         position: relative;
@@ -55,7 +55,7 @@
         content: '';
         position: absolute;
         inset: 2px;
-        border: 1px solid rgba(212, 163, 115, 0.3);
+        border: 1px solid rgba(212, 163, 115, 0.4);
         pointer-events: none;
         border-radius: inherit;
       }
@@ -79,10 +79,12 @@
         border: 4px double #d4a373;
       }
 
-      .rpg-divider {
-        height: 2px;
-        background: linear-gradient(90deg, transparent, #b91c1c, transparent);
-        margin: 1rem 0;
+      .bento-border {
+        border: 1px solid rgba(203, 213, 225, 0.5); /* slate-300 with low opacity */
+      }
+
+      .bento-shadow {
+        box-shadow: 0 4px 24px -1px rgba(148, 163, 184, 0.06), 0 2px 8px -1px rgba(148, 163, 184, 0.04);
       }
 
       /* Custom scrollbar */
@@ -98,27 +100,18 @@
       }
       
       .glass-panel {
-        background: rgba(255, 255, 255, 0.7);
+        background: rgba(255, 255, 255, 0.75);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        border: 1px solid rgba(203, 213, 225, 0.4);
       }
       
       .glass-card {
-        background: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.65);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-        box-shadow: 0 10px 40px -10px rgba(200, 210, 255, 0.3);
-      }
-
-      .neumorphic-button {
-        background: linear-gradient(145deg, #ffffff, #f0f4f8);
-        box-shadow: 5px 5px 10px #e6e9ef, -5px -5px 10px #ffffff;
-      }
-
-      .soft-shadow {
-        box-shadow: 0 10px 25px -5px rgba(100, 116, 139, 0.05), 0 8px 10px -6px rgba(100, 116, 139, 0.01);
+        border: 1px solid rgba(203, 213, 225, 0.4);
+        box-shadow: 0 10px 40px -10px rgba(148, 163, 184, 0.15);
       }
 
       /* PROGRESS BAR ANIMATIONS */
@@ -135,11 +128,11 @@
       }
 
       .progress-inner-shadow {
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.08);
       }
 
       .rpg-progress-inner-shadow {
-        box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.3);
+        box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.25);
       }
 
       .energy-bar-gradient {
@@ -172,19 +165,6 @@
       
       .animate-float {
         animation: float 6s ease-in-out infinite;
-      }
-
-      /* PORTAL QUEST ANIMATIONS */
-      @keyframes portal-spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-      }
-      @keyframes portal-pulse-glow {
-        0%, 100% { opacity: 0.5; filter: blur(40px); transform: scale(1); }
-        50% { opacity: 0.8; filter: blur(60px); transform: scale(1.1); }
-      }
-      .portal-glow {
-        animation: portal-pulse-glow 5s ease-in-out infinite;
       }
     </style>
   <script type="importmap">

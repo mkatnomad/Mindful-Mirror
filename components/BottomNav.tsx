@@ -24,8 +24,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChangeView,
     <div className="fixed bottom-6 left-0 w-full px-8 z-50 pointer-events-none">
       <div className={`pointer-events-auto flex justify-between items-center h-[72px] max-w-xs mx-auto border rounded-[36px] px-2 transition-all duration-500 ${
         rpgMode 
-          ? 'bg-[#fffdfa] border-red-800/30 shadow-[0_15px_35px_-5px_rgba(185,28,28,0.15)]' 
-          : 'bg-white border-white shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)]'
+          ? 'bg-[#fffefc] border-red-800/30 shadow-[0_15px_35px_-5px_rgba(185,28,28,0.15)]' 
+          : 'bg-white bento-border shadow-[0_20px_40px_-10px_rgba(148,163,184,0.15)]'
       }`}>
         <button className={navItemClass(isHomeActive)} onClick={() => onChangeView('HOME')}>
           <div className={`p-3 rounded-full transition-all ${

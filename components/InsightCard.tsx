@@ -8,7 +8,7 @@ interface InsightCardProps {
   rpgMode?: boolean;
 }
 
-// Fixed: Explicitly typed variants as Variants to prevent type widening and resolve "AnimationGeneratorType" mismatch
+// Explicitly typed variants as Variants to prevent type widening
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } }
@@ -36,8 +36,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
       initial="hidden" animate="visible"
       className="w-full space-y-4 px-4 pt-4 pb-12"
     >
-      {/* 1. ВЕРДИКТ - УБРАНА ТЕНЬ */}
-      <motion.div variants={itemVariants} className={`p-10 rounded-[44px] border text-center relative overflow-hidden shadow-sm ${rpgMode ? 'rpg-card bg-slate-950 text-white border-red-800/30' : 'bg-slate-900 text-white border-slate-800'}`}>
+      {/* 1. ВЕРДИКТ */}
+      <motion.div variants={itemVariants} className={`p-10 rounded-[44px] border text-center relative overflow-hidden bento-shadow ${rpgMode ? 'rpg-card bg-slate-950 text-white border-red-800/30' : 'bg-slate-900 text-white bento-border'}`}>
         <div className="absolute top-0 right-0 p-8 opacity-10"><Sparkles size={100} /></div>
         <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-40 mb-4">Вердикт</p>
         <h3 className={`text-2xl sm:text-3xl font-black leading-tight italic ${rpgMode ? 'font-display-fantasy' : ''}`}>
@@ -47,7 +47,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
 
       <div className="grid grid-cols-2 gap-4">
         {/* 2. БАЛАНС СИЛ */}
-        <motion.div variants={itemVariants} className={`col-span-2 p-8 rounded-[40px] border ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white border-white shadow-sm'}`}>
+        <motion.div variants={itemVariants} className={`col-span-2 p-8 rounded-[40px] border bento-shadow ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white bento-border'}`}>
           <div className="flex justify-between items-center mb-6">
              <div className="flex items-center space-x-2">
                 <Activity size={18} className="text-indigo-600" />
@@ -73,7 +73,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         </motion.div>
 
         {/* 3. УРОВЕНЬ РИСКА */}
-        <motion.div variants={itemVariants} className={`col-span-2 p-8 rounded-[40px] border flex flex-col items-center ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white border-white shadow-sm'}`}>
+        <motion.div variants={itemVariants} className={`col-span-2 p-8 rounded-[40px] border bento-shadow flex flex-col items-center ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white bento-border'}`}>
            <div className="w-full flex justify-between items-start mb-6">
               <div className="p-3.5 rounded-2xl bg-rose-50 text-rose-500"><AlertTriangle size={24} /></div>
               <div className="text-right">
@@ -101,8 +101,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
            </p>
         </motion.div>
 
-        {/* 4. СКРЫТЫЙ ФАКТОР - ТЕПЕРЬ БЕЛЫЙ КАК И ОСТАЛЬНЫЕ */}
-        <motion.div variants={itemVariants} className={`col-span-2 p-10 rounded-[44px] border relative overflow-hidden ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white border-white shadow-sm'}`}>
+        {/* 4. СКРЫТЫЙ ФАКТОР */}
+        <motion.div variants={itemVariants} className={`col-span-2 p-10 rounded-[44px] border bento-shadow relative overflow-hidden ${rpgMode ? 'bg-white/60 border-red-800/10' : 'bg-white bento-border'}`}>
            <div className="flex items-center space-x-3 mb-4">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}><Search size={14} /></div>
               <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>Скрытый фактор</span>
@@ -117,7 +117,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
           variants={itemVariants}
           className="col-span-2 p-1 rounded-[44px] bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 shadow-xl shadow-indigo-100"
         >
-          <div className={`bg-white m-[2px] p-10 rounded-[42px] flex flex-col transition-all ${rpgMode ? 'bg-[#fffdfa]' : ''}`}>
+          <div className={`bg-white m-[2px] p-10 rounded-[42px] flex flex-col transition-all ${rpgMode ? 'bg-[#fffefc]' : ''}`}>
              <div className="flex items-center space-x-3 mb-3 opacity-40">
                 <Compass size={18} className="text-indigo-600" />
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-800">Первый шаг</span>
@@ -132,7 +132,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         <motion.button 
           variants={itemVariants}
           onClick={handleShare}
-          className={`col-span-2 py-6 rounded-[36px] font-black text-[11px] uppercase tracking-[0.4em] flex items-center justify-center space-x-3 border transition-all ${isCopied ? 'bg-emerald-50 border-emerald-100 text-emerald-600 shadow-inner' : 'bg-white border-slate-100 text-slate-400 active:scale-95 shadow-sm'}`}
+          className={`col-span-2 py-6 rounded-[36px] font-black text-[11px] uppercase tracking-[0.4em] flex items-center justify-center space-x-3 border transition-all ${isCopied ? 'bg-emerald-50 bento-border text-emerald-600 shadow-inner' : 'bg-white bento-border text-slate-400 active:scale-95 bento-shadow'}`}
         >
           {isCopied ? <Check size={18} strokeWidth={3} /> : <Share2 size={18} />}
           <span>{isCopied ? 'Сохранено' : 'Поделиться результатом'}</span>
