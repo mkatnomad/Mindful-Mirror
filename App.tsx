@@ -5,7 +5,6 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
-// Fixed: Removed non-existent processRPGQuest import
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
@@ -17,6 +16,28 @@ const PREMIUM_MAX_PER_DAY = 25;
 const FREE_QUESTS_TOTAL = 3;
 
 const ADMIN_ID = 379881747; 
+
+// --- РЕДАКТИРОВАНИЕ ТЕКСТОВ ЭКРАНА ПОДПИСКИ ---
+const SUBSCRIPTION_TEXTS = {
+  // Обычный режим
+  normal: {
+    title: 'Расширь границы',
+    subTitle: 'Mindful Mirror остается бесплатным для вас',
+    description: 'Вы можете продолжить путь завтра или снять ограничения и открыть ежедневные квесты прямо сейчас.',
+    mentorSpeech: 'Твой путь осознанности требует больше пространства для маневра.',
+    counterTitle: 'Энергия исчерпана',
+    resetInfo: 'Восстановление в полночь по вашему времени'
+  },
+  // RPG режим
+  rpg: {
+    title: 'Пробудить полную силу',
+    subTitle: 'Станьте Мастером своей судьбы',
+    description: 'Ваши силы восстановятся завтра. Premium открывает ежедневные квесты и убирает все лимиты.',
+    mentorSpeech: 'Ваше древо упирается в свод... Чтобы расти дальше, нужны Звездные Ключи.',
+    counterTitle: 'Энергия исчерпана',
+    resetInfo: 'Восстановление в полночь по вашему времени'
+  }
+};
 
 const QUEST_CALLS = [
   "Нити судьбы переплелись...",
@@ -298,9 +319,9 @@ const App: React.FC = () => {
 
   // FIXED: Midnight reset in local time
   useEffect(() => {
-    // Construct local YYYY-MM-DD date
+    // Construct local YYYY-MM-DD date using local timezone
     const now = new Date();
-    const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    const localDate = now.toLocaleDateString('en-CA'); // en-CA gives YYYY-MM-DD format
     
     if (userProfile.lastUsageDate !== localDate) {
       setUserProfile(prev => ({
@@ -903,46 +924,25 @@ const App: React.FC = () => {
     const limitEmotions = isWelcome ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
     const isSubscribed = userProfile.isSubscribed;
 
-    // --- ТЕКСТЫ ДЛЯ РЕДАКТИРОВАНИЯ ---
-    const texts = {
-      title: isRpg ? 'Пробудить полную силу' : 'Расширь границы',
-      subTitle: isRpg ? 'Станьте Мастером своей судьбы' : 'Mindful Mirror остается бесплатным для вас',
-      description: isRpg 
-        ? 'Ваши силы восстановятся завтра. Premium открывает ежедневные квесты и убирает все лимиты.' 
-        : 'Вы можете продолжить путь завтра или снять ограничения и открыть ежедневные квесты прямо сейчас.',
-      mentorSpeech: isRpg 
-        ? "Ваше древо упирается в свод... Чтобы расти дальше, нужны Звездные Ключи." 
-        : "Твой путь осознанности требует больше пространства для маневра.",
-      counterTitle: 'Энергия исчерпана',
-      resetInfo: 'Восстановление в полночь по вашему времени'
-    };
-    // --------------------------------
+    // Использование константы для текстов
+    const t = isRpg ? SUBSCRIPTION_TEXTS.rpg : SUBSCRIPTION_TEXTS.normal;
 
     return (
       <div className={`h-full overflow-y-auto flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
-        {/* Background Decorative Glow */}
         <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-red-800' : 'bg-indigo-500'}`} />
 
-        {/* 1. MENTOR / PORTAL SECTION */}
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="mt-4 mb-4 relative"
-        >
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-4 mb-4 relative">
           <div className={`absolute inset-0 blur-3xl rounded-full scale-150 opacity-20 ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} />
           <div className="relative z-10 flex flex-col items-center">
              <TreeIcon stage={mentorStage} size={80} rpgMode={isRpg} />
              <div className={`mt-4 px-5 py-3 rounded-3xl rounded-tl-none border shadow-sm max-w-[240px] ${isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'}`}>
-                <p className="text-[13px] font-bold leading-tight">
-                   {texts.mentorSpeech}
-                </p>
+                <p className="text-[13px] font-bold leading-tight">{t.mentorSpeech}</p>
              </div>
           </div>
         </motion.div>
 
-        {/* 2. USAGE BALANCE CARD */}
         <div className={`w-full p-6 rounded-[32px] mb-8 relative z-10 border transition-all ${isRpg ? 'bg-white/60 border-red-800/20' : 'bg-white bento-border shadow-sm'}`}>
-           <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isRpg ? 'text-red-800' : 'text-slate-400'}`}>{texts.counterTitle}</p>
+           <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isRpg ? 'text-red-800' : 'text-slate-400'}`}>{t.counterTitle}</p>
            <div className="grid grid-cols-2 gap-3 mb-3">
               <div className={`p-4 rounded-2xl border flex flex-col items-center ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
                  <div className="flex items-center space-x-2 mb-1"><Zap size={14} className={isRpg ? 'text-red-800' : 'text-amber-500'} /><span className="text-[10px] font-black uppercase tracking-tighter">Решения</span></div>
@@ -954,11 +954,10 @@ const App: React.FC = () => {
               </div>
            </div>
            
-           {/* Quest Counter row */}
            <div className={`w-full p-4 rounded-2xl border flex items-center justify-between ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
               <div className="flex items-center space-x-3">
                  <Compass size={18} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
-                 <span className="text-[11px] font-black uppercase tracking-widest">Испытания Пути</span>
+                 <span className="text-[11px] font-black uppercase tracking-widest">Испытания</span>
               </div>
               <p className="text-lg font-black">
                 {isSubscribed ? "1 / 1 сегодня" : `${userProfile.totalQuestsDone} / ${FREE_QUESTS_TOTAL} всего`}
@@ -967,97 +966,38 @@ const App: React.FC = () => {
 
            <div className="flex items-center justify-center space-x-2 text-[10px] font-bold text-slate-400 mt-4">
               <RefreshCcw size={12} />
-              <span>{texts.resetInfo}</span>
+              <span>{t.resetInfo}</span>
            </div>
         </div>
 
-        {/* 3. MAIN CALL TO ACTION */}
         <div className="mb-10 space-y-2 relative z-10">
-           <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>
-             {texts.title}
-           </h2>
-           <p className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-50 ${isRpg ? 'text-red-800' : 'text-slate-500'}`}>
-             {texts.subTitle}
-           </p>
-           <p className={`text-[12px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>
-             {texts.description}
-           </p>
+           <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>{t.title}</h2>
+           <p className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-50 ${isRpg ? 'text-red-800' : 'text-slate-500'}`}>{t.subTitle}</p>
+           <p className={`text-[12px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>{t.description}</p>
         </div>
 
-        {/* 4. ARTIFACT CARDS (BENEFITS) */}
         <div className="w-full space-y-4 mb-10 relative z-10">
            {[
-             { 
-               id: '1', 
-               label: isRpg ? 'Око Истины' : 'Безлимитные Решения', 
-               desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы без дневных лимитов.',
-               icon: Zap, 
-               color: isRpg ? 'bg-red-800' : 'bg-amber-500', 
-               textColor: isRpg ? 'text-red-800' : 'text-amber-600' 
-             },
-             { 
-               id: '2', 
-               label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', 
-               desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Записывайте свои чувства столько раз, сколько нужно.',
-               icon: Heart, 
-               color: isRpg ? 'bg-red-800' : 'bg-rose-500', 
-               textColor: isRpg ? 'text-red-800' : 'text-rose-600' 
-             },
-             { 
-               id: '3', 
-               label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', 
-               desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.',
-               icon: Sword, 
-               color: isRpg ? 'bg-red-800' : 'bg-indigo-500', 
-               textColor: isRpg ? 'text-red-800' : 'text-indigo-600' 
-             }
+             { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы без дневных лимитов.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
+             { id: '2', label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Записывайте свои чувства столько раз, сколько нужно.', icon: Heart, color: isRpg ? 'bg-red-800' : 'bg-rose-500', textColor: isRpg ? 'text-red-800' : 'text-rose-600' },
+             { id: '3', label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.', icon: Sword, color: isRpg ? 'bg-red-800' : 'bg-indigo-500', textColor: isRpg ? 'text-red-800' : 'text-indigo-600' }
            ].map((benefit, idx) => (
-             <motion.div 
-               key={benefit.id} 
-               initial={{ x: -20, opacity: 0 }}
-               animate={{ x: 0, opacity: 1 }}
-               transition={{ delay: 0.1 * idx }}
-               className={`flex items-center space-x-4 p-5 rounded-[32px] border-2 border-b-4 text-left transition-all ${isRpg ? 'bg-white border-red-800 shadow-[0_4px_0_#7f1d1d]' : 'bg-white bento-border shadow-sm shadow-slate-200/50'}`}
-             >
-                <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg shrink-0 ${benefit.color}`}>
-                   <benefit.icon size={22} fill="currentColor" />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-[11px] font-black uppercase tracking-wider mb-0.5 ${benefit.textColor}`}>{benefit.label}</p>
-                  <p className={`text-[12px] leading-snug opacity-70 font-bold ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>{benefit.desc}</p>
-                </div>
+             <motion.div key={benefit.id} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 * idx }} className={`flex items-center space-x-4 p-5 rounded-[32px] border-2 border-b-4 text-left transition-all ${isRpg ? 'bg-white border-red-800 shadow-[0_4px_0_#7f1d1d]' : 'bg-white bento-border shadow-sm shadow-slate-200/50'}`}>
+                <div className={`w-12 h-12 rounded-2xl text-white flex items-center justify-center shadow-lg shrink-0 ${benefit.color}`}><benefit.icon size={22} fill="currentColor" /></div>
+                <div className="flex-1"><p className={`text-[11px] font-black uppercase tracking-wider mb-0.5 ${benefit.textColor}`}>{benefit.label}</p><p className={`text-[12px] leading-snug opacity-70 font-bold ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>{benefit.desc}</p></div>
              </motion.div>
            ))}
         </div>
 
-        {/* 5. ACTION RITUAL */}
         <div className="w-full space-y-6 mb-24 relative z-10">
-           <button 
-             onClick={handlePay} 
-             disabled={isPaying} 
-             className={`group w-full py-6 rounded-[40px] font-black text-lg flex items-center justify-center space-x-4 transition-all transform duration-300 border-b-[8px] active:scale-95 ${
-               isPaying ? 'opacity-70 grayscale' : 'shadow-2xl'
-             } ${isRpg ? 'rpg-button border-[#7f1d1d]' : 'bg-slate-900 text-white border-slate-950'}`}
-           >
-              {isPaying ? (
-                <Loader2 size={24} className="animate-spin" />
-              ) : (
-                <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />
-              )}
+           <button onClick={handlePay} disabled={isPaying} className={`group w-full py-6 rounded-[40px] font-black text-lg flex items-center justify-center space-x-4 transition-all transform duration-300 border-b-[8px] active:scale-95 ${isPaying ? 'opacity-70 grayscale' : 'shadow-2xl'} ${isRpg ? 'rpg-button border-[#7f1d1d]' : 'bg-slate-900 text-white border-slate-950'}`}>
+              {isPaying ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />}
               <span className="tracking-tight uppercase">{isPaying ? 'Соединение...' : 'Пробудить Силу'}</span>
            </button>
            
            <div className="flex flex-col items-center space-y-6">
-              <div className="flex items-center space-x-2 text-slate-400">
-                 <ShieldCheck size={16} />
-                 <span className="text-[10px] font-black uppercase tracking-widest">Безопасно через Telegram Stars</span>
-              </div>
-              <button 
-                onClick={() => setCurrentView('HOME')} 
-                className={`w-full py-4 rounded-[32px] font-black uppercase tracking-[0.2em] transition-all text-xs border-2 ${isRpg ? 'bg-white border-red-800/20 text-red-800' : 'bg-slate-50 border-slate-100 text-slate-500 hover:text-slate-800'}`}
-              >
-                Понятно, подожду завтра
-              </button>
+              <div className="flex items-center space-x-2 text-slate-400"><ShieldCheck size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Безопасно через Telegram Stars</span></div>
+              <button onClick={() => setCurrentView('HOME')} className={`w-full py-4 rounded-[32px] font-black uppercase tracking-[0.2em] transition-all text-xs border-2 ${isRpg ? 'bg-white border-red-800/20 text-red-800' : 'bg-slate-50 border-slate-100 text-slate-500 hover:text-slate-800'}`}>Понятно, подожду завтра</button>
            </div>
         </div>
       </div>
@@ -1076,9 +1016,7 @@ const App: React.FC = () => {
             <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Ваш статус</p>
             <div className={`px-3 py-1 rounded-full text-[11px] font-black ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-600 text-white'}`}>{userProfile.xp} XP</div>
          </div>
-         <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium italic' : 'text-slate-500'}`}>
-            Каждая сессия рефлексии и принятое решение — это шаг к трансформации вашего внутреннего состояния. Ваше древо растет вместе с вашим опытом, открывая новые грани мудрости.
-         </p>
+         <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium italic' : 'text-slate-500'}`}>Каждая сессия рефлексии и принятое решение — это шаг к трансформации вашего внутреннего состояния.</p>
       </div>
 
       <div className="space-y-6">
@@ -1086,17 +1024,13 @@ const App: React.FC = () => {
           const isReached = userProfile.xp >= rank.threshold;
           return (
             <div key={i} className={`p-6 rounded-[28px] border flex items-center space-x-5 transition-all duration-500 ${isReached ? (userProfile.rpgMode ? 'rpg-card' : 'bg-indigo-50 bento-border shadow-sm') : 'opacity-60 bg-slate-50 bento-border grayscale'}`}>
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0">
-                <TreeIcon stage={i} size={48} rpgMode={userProfile.rpgMode} />
-              </div>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={i} size={48} rpgMode={userProfile.rpgMode} /></div>
               <div className="flex-1 ml-2">
                 <h3 className={`font-bold text-lg ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{rank.title}</h3>
                 <p className={`text-xs font-bold uppercase tracking-widest ${isReached ? (userProfile.rpgMode ? 'text-red-800' : 'text-indigo-600') : 'text-slate-400'}`}>{rank.threshold} XP</p>
                 <p className={`text-sm mt-1 leading-tight ${isReached ? 'text-slate-600' : 'text-slate-400'}`}>{rank.desc}</p>
               </div>
-              <div className="shrink-0">
-                {isReached ? <Check size={20} className="text-emerald-500" strokeWidth={3} /> : <Lock size={18} className="text-slate-300" />}
-              </div>
+              <div className="shrink-0">{isReached ? <Check size={20} className="text-emerald-500" strokeWidth={3} /> : <Lock size={18} className="text-slate-300" />}</div>
             </div>
           );
         })}
@@ -1112,7 +1046,14 @@ const App: React.FC = () => {
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
-    return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleGiftSub} onResetStats={handleResetSub} />;
+    return <AdminInterface 
+      stats={appStats} 
+      config={config} 
+      onSave={(newCfg) => console.log('Saving config', newCfg)} 
+      onBack={() => setCurrentView('PROFILE')} 
+      onGift={handleGiftSub} 
+      onReset={handleResetSub} // FIXED: removed targetId mismatch
+    />;
   };
 
   const renderArchetypeResult = () => {
