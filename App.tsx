@@ -72,12 +72,12 @@ const ArtifactBase = ({ children, rpgMode, colorStart, colorEnd, size, idPrefix 
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="overflow-visible">
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={rpgMode ? "#991B1B" : colorStart} />
-          <stop offset="100%" stopColor={rpgMode ? "#450A0A" : colorEnd} />
+          <stop offset="0%" stopColor={rpgMode ? "#B91C1C" : colorStart} />
+          <stop offset="100%" stopColor={rpgMode ? "#7F1D1D" : colorEnd} />
         </linearGradient>
       </defs>
       <circle cx="50" cy="50" r="48" fill={rpgMode ? "#991B1B" : colorStart} fillOpacity={isOutline ? "0.03" : "0.05"} />
-      <circle cx="50" cy="50" r="40" fill={rpgMode ? "#991B1B" : colorStart} fillOpacity={isOutline ? "0.05" : "0.08"} />
+      <circle cx="50" cy="50" r="40" fill={rpgMode ? "#991B1B" : colorStart} fillOpacity={isOutline ? "0.1" : "0.08"} />
       <g transform="translate(10, 10) scale(0.8)">
         {children}
       </g>
@@ -110,38 +110,42 @@ const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?:
     { start: "#818CF8", end: "#4338CA", label: "wisdom" },
   ];
   const cfg = treeConfigs[stage] || treeConfigs[0];
+  const strokeColor = rpgMode ? "#FFFBEB" : `url(#tree-${cfg.start.replace('#','')})`;
+  const fillColor = rpgMode ? "#FFFBEB" : `url(#tree-${cfg.start.replace('#','')})`;
+
   const renderTreeContent = () => {
     switch(stage) {
-      case 0: return <circle cx="50" cy="60" r="15" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
-      case 1: return <path d="M50 80V50C50 50 50 30 70 30" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="8" strokeLinecap="round" />;
+      case 0: return <circle cx="50" cy="60" r="15" fill={fillColor} />;
+      case 1: return <path d="M50 80V50C50 50 50 30 70 30" stroke={strokeColor} strokeWidth="8" strokeLinecap="round" />;
       case 2: return (
           <g>
-            <path d="M50 80V40" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="8" strokeLinecap="round" />
-            <path d="M50 55C50 55 70 50 75 35" stroke={`url(#tree-${cfg.start.replace('#','')})`} strokeWidth="6" strokeLinecap="round" />
+            <path d="M50 80V35" stroke={strokeColor} strokeWidth="8" strokeLinecap="round" />
+            <path d="M50 55C50 55 70 50 72 38" stroke={strokeColor} strokeWidth="6" strokeLinecap="round" />
+            <circle cx="72" cy="38" r="4" fill={fillColor} />
           </g>
         );
-      case 3: return <circle cx="50" cy="45" r="25" fill={`url(#tree-${cfg.start.replace('#','')})`} />;
+      case 3: return <circle cx="50" cy="45" r="25" fill={fillColor} />;
       case 4: return (
           <g>
-            <rect x="44" y="50" width="12" height="35" rx="4" fill="#78350F" />
-            <circle cx="50" cy="40" r="28" fill={`url(#tree-${cfg.start.replace('#','')})`} />
+            <rect x="44" y="50" width="12" height="35" rx="4" fill={rpgMode ? "#451A03" : "#78350F"} />
+            <circle cx="50" cy="40" r="28" fill={fillColor} />
           </g>
         );
       case 5: return (
           <g>
-            <path d="M50 85V60" stroke="#78350F" strokeWidth="14" strokeLinecap="round" />
-            <circle cx="50" cy="40" r="35" fill={`url(#tree-${cfg.start.replace('#','')})`} />
+            <path d="M50 85V60" stroke={rpgMode ? "#451A03" : "#78350F"} strokeWidth="14" strokeLinecap="round" />
+            <circle cx="50" cy="40" r="35" fill={fillColor} />
           </g>
         );
       case 6: return (
           <g>
-            <path d="M50 85V65L30 45M50 65L70 45" stroke="#451A03" strokeWidth="10" strokeLinecap="round" />
-            <circle cx="50" cy="35" r="30" fill={`url(#tree-${cfg.start.replace('#','')})`} />
+            <path d="M50 85V65L30 45M50 65L70 45" stroke={rpgMode ? "#2D0A00" : "#451A03"} strokeWidth="10" strokeLinecap="round" />
+            <circle cx="50" cy="35" r="30" fill={fillColor} />
           </g>
         );
       case 7: return (
           <g>
-            <circle cx="50" cy="45" r="38" fill="#065F46" />
+            <circle cx="50" cy="45" r="38" fill={rpgMode ? "#064E3B" : "#065F46"} />
             <circle cx="35" cy="35" r="6" fill="#FB7185" />
             <circle cx="65" cy="40" r="6" fill="#FB7185" />
             <circle cx="50" cy="25" r="6" fill="#FB7185" />
@@ -149,7 +153,7 @@ const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?:
         );
       case 8: return (
           <g>
-            <circle cx="50" cy="45" r="38" fill="#063B2B" />
+            <circle cx="50" cy="45" r="38" fill={rpgMode ? "#052E16" : "#063B2B"} />
             <circle cx="40" cy="30" r="7" fill="#F59E0B" />
             <circle cx="60" cy="55" r="7" fill="#F59E0B" />
             <circle cx="30" cy="50" r="7" fill="#F59E0B" />
@@ -157,7 +161,7 @@ const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number, size?:
         );
       case 9: return (
           <g>
-            <circle cx="50" cy="50" r="45" fill="#064E3B" />
+            <circle cx="50" cy="50" r="45" fill={rpgMode ? "#022C22" : "#064E3B"} />
             <circle cx="50" cy="50" r="30" fill="#10B981" opacity="0.4" />
             <path d="M50 25L55 40H45L50 25Z" fill="#FDE68A" />
             <circle cx="50" cy="50" r="8" fill="#FDE68A" />
@@ -177,7 +181,7 @@ const DecisionIllustration = ({ rpgMode, size = 32, opacity = 1 }: { rpgMode: bo
   <ArtifactBase rpgMode={rpgMode} colorStart="#F59E0B" colorEnd="#D97706" size={size} idPrefix="dec">
     <path 
       d="M50 10L20 55H45L30 90L80 40H55L70 10H50Z" 
-      fill={`url(#dec-F59E0B)`} 
+      fill={rpgMode ? "white" : `url(#dec-F59E0B)`} 
       fillOpacity={opacity}
       className={opacity === 1 ? "animate-pulse" : ""}
     />
@@ -188,11 +192,11 @@ const EmotionsIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: bo
   <ArtifactBase rpgMode={rpgMode} colorStart="#FB7185" colorEnd="#E11D48" size={size} idPrefix="emo" isOutline={opacity < 1}>
     <path 
       d="M50 82C30 72 12 55 12 35C12 22 25 15 40 22C45 25 50 30 50 30C50 30 55 25 60 22C75 15 88 22 88 35C88 55 70 72 50 82Z" 
-      stroke={`url(#emo-FB7185)`} 
+      stroke={rpgMode ? "white" : `url(#emo-FB7185)`} 
       strokeWidth="6"
       strokeLinecap="round"
       strokeLinejoin="round"
-      fill={rpgMode ? "#991B1B" : "#FB7185"}
+      fill={rpgMode ? "white" : "#FB7185"}
       fillOpacity={opacity < 1 ? 0.1 : 0.05}
       opacity={opacity}
     />
@@ -204,12 +208,12 @@ const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: 
     <g opacity={opacity}>
       <rect 
         x="22" y="18" width="56" height="64" rx="6" 
-        stroke={`url(#ref-34D399)`} 
+        stroke={rpgMode ? "white" : `url(#ref-34D399)`} 
         strokeWidth="6"
-        fill={rpgMode ? "#064E3B" : "#34D399"}
+        fill={rpgMode ? "white" : "#34D399"}
         fillOpacity="0.05"
       />
-      <path d="M35 35H65M35 50H65M35 65H55" stroke={`url(#ref-34D399)`} strokeWidth="4" strokeLinecap="round" opacity="0.4" />
+      <path d="M35 35H65M35 50H65M35 65H55" stroke={rpgMode ? "white" : `url(#ref-34D399)`} strokeWidth="4" strokeLinecap="round" opacity="0.4" />
       <path d="M60 18V45L68 38L76 45V18H60Z" fill={rpgMode ? "#FDE68A" : "#059669"} fillOpacity="0.6" />
     </g>
   </ArtifactBase>
@@ -689,7 +693,7 @@ const App: React.FC = () => {
     const questActive = isQuestAvailable();
 
     return (
-      <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
+      <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
         <div className="px-6 pt-6 mb-8 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className={`w-11 h-11 rounded-full overflow-hidden bg-white shadow-sm border-2 ${userProfile.rpgMode ? 'border-red-800' : 'border-white'} cursor-pointer`} onClick={() => setCurrentView('PROFILE')}>
@@ -702,7 +706,7 @@ const App: React.FC = () => {
           </div>
         </div>
         <div className="px-6 mb-6 relative z-20">
-          <button onClick={() => handleModeSelection('DECISION')} className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${userProfile.rpgMode ? 'rpg-card border-amber-500 shadow-xl shadow-red-900/10' : 'bg-white border-white shadow-2xl shadow-slate-300/40'}`}>
+          <button onClick={() => handleModeSelection('DECISION')} className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${userProfile.rpgMode ? 'rpg-card border-red-800/30 shadow-xl shadow-red-900/10' : 'bg-white border-white shadow-2xl shadow-slate-300/40'}`}>
             <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10 pointer-events-none scale-150 transform rotate-12"><DecisionIllustration rpgMode={userProfile.rpgMode} size={180} /></div>
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div className="flex justify-between items-start mb-12">
@@ -727,7 +731,7 @@ const App: React.FC = () => {
               <button 
                 key={m.id} 
                 onClick={() => handleModeSelection(m.id as JournalMode)} 
-                className={`w-full h-20 rounded-[16px] border relative overflow-hidden active:scale-95 transition-all duration-300 text-left p-4 flex items-center ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white shadow-sm shadow-slate-200/20'}`}
+                className={`w-full h-20 rounded-[16px] border relative overflow-hidden active:scale-95 transition-all duration-300 text-left p-4 flex items-center ${userProfile.rpgMode ? 'rpg-card border-red-800/20' : 'bg-white border-white shadow-sm shadow-slate-200/20'}`}
               >
                 <div className="flex items-center space-x-3">
                   <div className={`p-2.5 rounded-xl flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-50'}`}>
@@ -744,7 +748,7 @@ const App: React.FC = () => {
         
         {/* Progress Bar Bento Box (Rank Info) */}
         <div className="px-6 mb-4">
-           <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-white'}`}>
+           <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 shadow-sm border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card border-red-800/10' : 'bg-white border-white'}`}>
               <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
               <div className="flex items-center space-x-4 mb-6">
                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={RANKS.indexOf(currentRank)} size={48} rpgMode={userProfile.rpgMode} /></div>
@@ -816,7 +820,7 @@ const App: React.FC = () => {
                 </div>
               ) : (
                 <div 
-                  className={`w-full p-6 rounded-[32px] border flex items-center justify-between active:scale-[0.98] transition-all duration-300 relative overflow-hidden text-left cursor-pointer ${userProfile.rpgMode ? 'rpg-card border-amber-500 shadow-xl' : 'bg-white border-white shadow-sm shadow-slate-200/20'} ${!questActive ? 'grayscale opacity-70 cursor-default' : ''}`}
+                  className={`w-full p-6 rounded-[32px] border flex items-center justify-between active:scale-[0.98] transition-all duration-300 relative overflow-hidden text-left cursor-pointer ${userProfile.rpgMode ? 'rpg-card border-red-800/30 shadow-xl shadow-red-900/10' : 'bg-white border-white shadow-sm shadow-slate-200/20'} ${!questActive ? 'grayscale opacity-70 cursor-default' : ''}`}
                   onClick={handleStartQuest}
                 >
                   <div className="flex items-center space-x-5 relative z-10">
@@ -850,7 +854,7 @@ const App: React.FC = () => {
     const isOwner = getTelegramUserId() === ADMIN_ID;
     const arc = userProfile.archetype;
     return (
-      <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
+      <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
         <header className="mb-10 flex items-center justify-between"><h1 className={`text-3xl font-bold italic uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Профиль</h1></header>
         <div className="flex items-center space-x-6 mb-10">
            <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-sm ${userProfile.rpgMode ? 'border-red-800' : 'border-white'}`}>{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={40} className="m-6 text-slate-200" />}</div>
@@ -925,7 +929,7 @@ const App: React.FC = () => {
   );
 
   const renderRanksInfo = () => (
-    <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
+    <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
       <header className="mb-10 flex items-center space-x-4">
         <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button>
         <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Ранги Сознания</h1>
@@ -1005,19 +1009,19 @@ const App: React.FC = () => {
         )}
         {currentView === 'ARCHETYPE_RESULT' && renderArchetypeResult()}
         {currentView === 'ARCHETYPE_GLOSSARY' && (
-           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
+           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
              <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full text-slate-400"><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Глоссарий</h1></header>
-             <div className="space-y-6">{ARCHETYPES.map(arc => (<div key={arc.id} className={`p-6 rounded-[28px] border ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-100 shadow-sm'}`}><h3 className="text-xl font-bold mb-1">{arc.name}</h3><p className="text-xs uppercase font-bold text-indigo-500 mb-4">{arc.role}</p><p className="text-sm italic mb-4 opacity-70">"{arc.motto}"</p><p className="text-xs leading-relaxed opacity-80">{arc.description}</p></div>))}</div>
+             <div className="space-y-6">{ARCHETYPES.map(arc => (<div key={arc.id} className={`p-6 rounded-[28px] border ${userProfile.rpgMode ? 'rpg-card border-red-800/10' : 'bg-white border-slate-100 shadow-sm'}`}><h3 className="text-xl font-bold mb-1">{arc.name}</h3><p className="text-xs uppercase font-bold text-indigo-500 mb-4">{arc.role}</p><p className="text-sm italic mb-4 opacity-70">"{arc.motto}"</p><p className="text-xs leading-relaxed opacity-80">{arc.description}</p></div>))}</div>
            </div>
         )}
         {currentView === 'PROFILE' && renderProfile()}
         {currentView === 'ADMIN' && renderAdmin()}
         {currentRank && currentView === 'RANKS_INFO' && renderRanksInfo()}
         {currentView === 'HISTORY' && (
-           <div className={`p-8 h-full overflow-y-auto pb-32 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
+           <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
              <h1 className={`text-3xl font-bold italic uppercase tracking-tighter mb-8 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>История</h1>
              {history.length === 0 ? (<div className="h-[50vh] flex flex-col items-center justify-center text-slate-300"><HistoryIcon size={48} className="mb-4 opacity-20" /><p className="text-xs uppercase font-bold tracking-widest">История пуста</p></div>) : (
-               <div className="space-y-4">{history.map(s => (<button key={s.id} onClick={() => { setViewingHistorySession(s); setSelectedMode(s.mode); setCurrentView('CHAT'); }} className={`w-full text-left p-6 rounded-[28px] border shadow-sm flex items-center space-x-4 active:scale-98 transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white border-slate-50'}`}><div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${s.mode === 'DECISION' ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-500 shadow-none border-none') : (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-rose-50 text-rose-500 shadow-none border-none')}`}>{s.mode === 'DECISION' ? <Zap size={20} fill="currentColor" className="text-amber-400"/> : <Heart size={20}/>}</div><div className="flex-1 overflow-hidden"><p className={`font-bold truncate ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>{s.preview || 'Сессия'}</p><p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">{new Date(s.date).toLocaleDateString('ru-RU')}</p></div></button>))}</div>
+               <div className="space-y-4">{history.map(s => (<button key={s.id} onClick={() => { setViewingHistorySession(s); setSelectedMode(s.mode); setCurrentView('CHAT'); }} className={`w-full text-left p-6 rounded-[28px] border shadow-sm flex items-center space-x-4 active:scale-98 transition-all ${userProfile.rpgMode ? 'rpg-card border-red-800/10' : 'bg-white border-slate-50'}`}><div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${s.mode === 'DECISION' ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-500 shadow-none border-none') : (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-rose-50 text-rose-500 shadow-none border-none')}`}>{s.mode === 'DECISION' ? <Zap size={20} fill="currentColor" className="text-amber-400"/> : <Heart size={20}/>}</div><div className="flex-1 overflow-hidden"><p className={`font-bold truncate ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>{s.preview || 'Сессия'}</p><p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-wider">{new Date(s.date).toLocaleDateString('ru-RU')}</p></div></button>))}</div>
              )}
            </div>
         )}

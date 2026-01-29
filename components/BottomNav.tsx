@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Home, History, User } from 'lucide-react';
 import { ViewState } from '../types';
@@ -22,16 +21,16 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChangeView,
     }`;
 
   return (
-    <div className="fixed bottom-8 left-0 w-full px-8 z-50 pointer-events-none">
-      <div className={`pointer-events-auto flex justify-between items-center h-[72px] max-w-xs mx-auto border rounded-[28px] px-2 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)] transition-all duration-500 ${
+    <div className="fixed bottom-6 left-0 w-full px-8 z-50 pointer-events-none">
+      <div className={`pointer-events-auto flex justify-between items-center h-[72px] max-w-xs mx-auto border rounded-[36px] px-2 transition-all duration-500 ${
         rpgMode 
-          ? 'bg-[#fffdfa] border-red-800/50 shadow-[4px_4px_0px_#b91c1c]' 
-          : 'bg-white border-white'
+          ? 'bg-[#fffdfa] border-red-800/30 shadow-[0_15px_35px_-5px_rgba(185,28,28,0.15)]' 
+          : 'bg-white border-white shadow-[0_20px_40px_-10px_rgba(0,0,0,0.15)]'
       }`}>
         <button className={navItemClass(isHomeActive)} onClick={() => onChangeView('HOME')}>
-          <div className={`p-3 rounded-2xl transition-all ${
+          <div className={`p-3 rounded-full transition-all ${
             isHomeActive 
-              ? (rpgMode ? 'bg-red-800 text-white shadow-md' : 'bg-indigo-50 shadow-sm') 
+              ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 shadow-sm') 
               : 'bg-transparent'
           }`}>
             <Home size={22} strokeWidth={isHomeActive ? 2.5 : 2} />
@@ -39,9 +38,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChangeView,
         </button>
         
         <button className={navItemClass(isHistoryActive)} onClick={() => onChangeView('HISTORY')}>
-           <div className={`p-3 rounded-2xl transition-all ${
+           <div className={`p-3 rounded-full transition-all ${
              isHistoryActive 
-              ? (rpgMode ? 'bg-red-800 text-white shadow-md' : 'bg-indigo-50 shadow-sm') 
+              ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 shadow-sm') 
               : 'bg-transparent'
            }`}>
             <History size={22} strokeWidth={isHistoryActive ? 2.5 : 2} />
@@ -49,9 +48,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChangeView,
         </button>
         
         <button className={navItemClass(isProfileActive)} onClick={() => onChangeView('PROFILE')}>
-          <div className={`p-3 rounded-2xl transition-all ${
+          <div className={`p-3 rounded-full transition-all ${
             isProfileActive 
-              ? (rpgMode ? 'bg-red-800 text-white shadow-md' : 'bg-indigo-50 shadow-sm') 
+              ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 shadow-sm') 
               : 'bg-transparent'
           }`}>
             <User size={22} strokeWidth={isProfileActive ? 2.5 : 2} />
