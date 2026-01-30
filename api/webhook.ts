@@ -23,26 +23,42 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const message = body.message;
   if (message?.successful_payment) {
     const userId = message.from.id;
+    const payload = message.successful_payment.invoice_payload;
     
     if (kvUrl && kvToken) {
-      // Ставим флаг подписки
-      await fetch(`${kvUrl}/set/user_sub_${userId}/true/EX/2592000`, {
-        headers: { Authorization: `Bearer ${kvToken}` }
-      });
-      // Добавляем в список премиум-пользователей
-      await fetch(`${kvUrl}/sadd/premium_users/${userId}`, {
-        headers: { Authorization: `Bearer ${kvToken}` }
-      });
+      if (payload.startsWith('energy_')) {
+        // Зачисляем энергию (накапливаем бонус для клиента)
+        await fetch(`${kvUrl}/incrby/user_energy_bonus_${userId}/10`, {
+          headers: { Authorization: `Bearer ${kvToken}` }
+        });
+        
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: userId,
+            text: "⚡️ Заряды получены! +10 Решений добавлено в ваш профиль."
+          })
+        });
+      } else {
+        // Обычная подписка Premium
+        await fetch(`${kvUrl}/set/user_sub_${userId}/true/EX/2592000`, {
+          headers: { Authorization: `Bearer ${kvToken}` }
+        });
+        await fetch(`${kvUrl}/sadd/premium_users/${userId}`, {
+          headers: { Authorization: `Bearer ${kvToken}` }
+        });
+        
+        await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: userId,
+            text: "✨ Оплата прошла успешно! Ваш Premium статус активирован."
+          })
+        });
+      }
     }
-
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: userId,
-        text: "✨ Оплата прошла успешно! Ваш Premium статус активирован."
-      })
-    });
   }
 
   return res.status(200).send('OK');

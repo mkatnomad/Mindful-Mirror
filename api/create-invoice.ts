@@ -1,8 +1,8 @@
+
 // api/create-invoice.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Обрабатываем только POST запросы
   if (req.method !== 'POST') {
     return res.status(405).send('Method Not Allowed');
   }
@@ -13,24 +13,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: "TELEGRAM_BOT_TOKEN is not configured in Vercel" });
     }
 
-    // Vercel может автоматически парсить body, если заголовок Content-Type: application/json
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    const { userId } = body;
+    const { userId, type } = body;
 
     if (!userId) {
       return res.status(400).json({ error: "Missing userId" });
     }
 
+    const itemType = type === 'energy' ? 'energy' : 'premium';
+    const invoiceConfig = itemType === 'energy' ? {
+      title: "10 Зарядов Решений",
+      description: "Дополнительная энергия для глубокого анализа ситуаций",
+      payload: `energy_${userId}`,
+      amount: 2 // 2 звезды за пак энергии
+    } : {
+      title: "Premium статус",
+      description: "Безлимитный доступ ко всем функциям на 30 дней",
+      payload: `user_${userId}`,
+      amount: 1 // 1 звезда за премиум (тестовая цена)
+    };
+
     const response = await fetch(`https://api.telegram.org/bot${token}/createInvoiceLink`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title: "Premium статус",
-        description: "Доступ ко всем ИИ-функциям на 30 дней",
-        payload: `user_${userId}`, 
+        title: invoiceConfig.title,
+        description: invoiceConfig.description,
+        payload: invoiceConfig.payload, 
         provider_token: "", 
         currency: "XTR", 
-        prices: [{ label: "Premium", amount: 1 }] // 1 звезда для теста
+        prices: [{ label: invoiceConfig.title, amount: invoiceConfig.amount }]
       })
     });
 

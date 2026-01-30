@@ -8,7 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { userId } = req.query;
 
   if (!userId || !kvUrl || !kvToken) {
-    return res.status(400).json({ isSubscribed: false });
+    return res.status(400).json({ isSubscribed: false, energyBonus: 0 });
   }
 
   try {
@@ -19,13 +19,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const subData = await subResp.json();
     const isSubscribed = subData.result === "true";
 
-    // 2. Регистрируем пользователя в общем списке (для статистики)
+    // 2. Проверяем наличие бонусов энергии (купленных зарядов)
+    const energyResp = await fetch(`${kvUrl}/get/user_energy_bonus_${userId}`, {
+      headers: { Authorization: `Bearer ${kvToken}` }
+    });
+    const energyData = await energyResp.json();
+    const energyBonus = parseInt(energyData.result) || 0;
+
+    // 3. Если бонус есть, забираем его и удаляем из KV, чтобы не зачислить дважды
+    if (energyBonus > 0) {
+      await fetch(`${kvUrl}/del/user_energy_bonus_${userId}`, {
+        headers: { Authorization: `Bearer ${kvToken}` }
+      });
+    }
+
+    // 4. Регистрируем пользователя в общем списке
     await fetch(`${kvUrl}/sadd/all_users/${userId}`, {
       headers: { Authorization: `Bearer ${kvToken}` }
     });
 
-    return res.status(200).json({ isSubscribed });
+    return res.status(200).json({ isSubscribed, energyBonus });
   } catch (e) {
-    return res.status(500).json({ isSubscribed: false });
+    return res.status(500).json({ isSubscribed: false, energyBonus: 0 });
   }
 }

@@ -8,7 +8,7 @@ import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package, Plus } from 'lucide-react';
 
 const WELCOME_ENERGY_DECISIONS = 5;
 const WELCOME_ENERGY_EMOTIONS = 3;
@@ -287,6 +287,7 @@ const QUESTIONS = [
 const App: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const [isPaying, setIsPaying] = useState(false);
+  const [isBuyingEnergy, setIsBuyingEnergy] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [appStats, setAppStats] = useState<any>({ total: 0, premium: 0, sessions: 0, minutes: 0, archetypes: {} });
   
@@ -334,9 +335,18 @@ const App: React.FC = () => {
       const resp = await fetch(`/api/check-sub?userId=${userId}`);
       if (!resp.ok) return;
       const data = await resp.json();
-      if (data.isSubscribed) {
-        setUserProfile(prev => ({ ...prev, isSubscribed: true }));
-      }
+      
+      setUserProfile(prev => {
+        let updatedProfile = { ...prev };
+        if (data.isSubscribed) updatedProfile.isSubscribed = true;
+        
+        // Handle purchased energy bonus if any
+        if (data.energyBonus && data.energyBonus > 0) {
+           updatedProfile.energyDecisions += data.energyBonus;
+        }
+        
+        return updatedProfile;
+      });
     } catch (e) {
       console.error("Sub check error", e);
     }
@@ -391,6 +401,7 @@ const App: React.FC = () => {
             setCurrentView('ONBOARDING');
         }
 
+        if (localHist.length > 0) setHistory(localHist);
         if (localHist.length > 0) setHistory(localHist);
         if (localEntries.length > 0) setJournalEntries(localEntries);
 
@@ -488,7 +499,7 @@ const App: React.FC = () => {
       const response = await fetch('/api/create-invoice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId, type: 'premium' })
       });
       const data = await response.json();
       if (!data.ok || !data.result) throw new Error(data.description || "Ошибка");
@@ -504,6 +515,35 @@ const App: React.FC = () => {
       alert("Ошибка: " + e.message);
     } finally {
       setIsPaying(false);
+    }
+  };
+
+  const handleBuyEnergy = async () => {
+    if (isBuyingEnergy) return;
+    const tg = window.Telegram?.WebApp;
+    const userId = getTelegramUserId();
+    if (!userId) return;
+    setIsBuyingEnergy(true);
+    try {
+      const response = await fetch('/api/create-invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, type: 'energy' })
+      });
+      const data = await response.json();
+      if (!data.ok || !data.result) throw new Error(data.description || "Ошибка");
+      tg.openInvoice(data.result, (status: string) => {
+        if (status === 'paid') {
+          // Local update will happen via polling or on next reload, 
+          // but we can optimisticly update or just wait for check-sub sync
+          syncSubscription(userId);
+          if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }
+      });
+    } catch (e: any) {
+      alert("Ошибка: " + e.message);
+    } finally {
+      setIsBuyingEnergy(false);
     }
   };
 
@@ -875,6 +915,32 @@ const App: React.FC = () => {
               </div>
            </div>
         </div>
+
+        {/* --- ENERGY COUNTER BENTO BLOCK --- */}
+        <div className={`p-5 rounded-[32px] mb-4 border flex items-center justify-between transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border bento-shadow'}`}>
+          <div className="flex items-center space-x-4">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-amber-50 text-amber-500'}`}>
+               <Zap size={24} fill="currentColor" />
+            </div>
+            <div>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Заряды решений</p>
+              <p className={`text-xl font-black ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>
+                {userProfile.isSubscribed ? '∞' : `${userProfile.energyDecisions}`}
+              </p>
+            </div>
+          </div>
+          {!userProfile.isSubscribed && (
+            <button 
+              onClick={handleBuyEnergy}
+              disabled={isBuyingEnergy}
+              className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center space-x-2 active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-amber-500 text-white shadow-md shadow-amber-500/20'}`}
+            >
+              {isBuyingEnergy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} strokeWidth={3} />}
+              <span>+10</span>
+            </button>
+          )}
+        </div>
+
         {arc && <ArchetypeCard archetype={arc} expanded={arcExpanded} onToggle={() => setArcExpanded(!arcExpanded)} showReset={true} isProfile={true} />}
         {!isSubscribed && (
           <div className={`p-6 rounded-[32px] mb-6 shadow-sm border transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-blue-600 text-white border-blue-700'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
