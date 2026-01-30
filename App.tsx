@@ -686,7 +686,7 @@ const App: React.FC = () => {
             {expanded ? <ChevronUp size={16} className="text-slate-300 ml-2" /> : <ChevronDown size={16} className="text-slate-300 ml-2" />}
          </div>
          <h2 className={`text-4xl font-black italic uppercase tracking-tighter mb-2 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>{archetype.name}</h2>
-         <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-500'}`}>{archetype.role}</p>
+         <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-6 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-50'}`}>{archetype.role}</p>
          
          {expanded && userProfile.secondaryArchetypes && userProfile.secondaryArchetypes.length > 0 && (
            <div className="mb-6 flex flex-wrap gap-2">
@@ -936,7 +936,7 @@ const App: React.FC = () => {
               className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center space-x-2 active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-amber-500 text-white shadow-md shadow-amber-500/20'}`}
             >
               {isBuyingEnergy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} strokeWidth={3} />}
-              <span>+10</span>
+              <span>10</span>
             </button>
           )}
         </div>
