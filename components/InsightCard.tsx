@@ -62,10 +62,13 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         `⚔️ Избранная тропа: **${winnerTitle}** (${winnerPercent}% шанса на успех)`,
         ``,
         `🔮 **Тайное знание:** ${analysis.hiddenFactor}`,
+        ``,
         `🐉 **Уровень угрозы:** ${analysis.riskLevel}/10 (${analysis.riskDescription})`,
+        ``,
         `🛡 **Мое задание:** ${analysis.actionStep}`,
         ``,
-        `Начни свое приключение в [Mindful Mirror](${appLink}) ✨`
+        `Начни свое приключение в Mindful Mirror:`,
+        `${appLink} ✨`
       ].join('\n');
     } else {
       textToShare = [
@@ -75,10 +78,13 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         `🎯 Рекомендация: **${winnerTitle}** (${winnerPercent}%)`,
         ``,
         `🔍 **Скрытый инсайт:** ${analysis.hiddenFactor}`,
+        ``,
         `⚠️ **Уровень риска:** ${analysis.riskLevel}/10 (${analysis.riskDescription})`,
+        ``,
         `🚀 **Мой первый шаг:** ${analysis.actionStep}`,
         ``,
-        `Проанализируй свою ситуацию в [Mindful Mirror](${appLink}) 🔮`
+        `Проанализируй свою ситуацию в Mindful Mirror:`,
+        `${appLink} 🔮`
       ].join('\n');
     }
 
