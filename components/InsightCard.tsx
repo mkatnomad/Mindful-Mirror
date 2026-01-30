@@ -59,6 +59,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         `📜 Мой путь определен: «${data.topic}»`,
         ``,
         `Мастер Игры вынес вердикт — **${analysis.verdict}**`,
+        ``,
         `⚔️ Избранная тропа: **${winnerTitle}** (${winnerPercent}% шанса на успех)`,
         ``,
         `🔮 **Тайное знание:** ${analysis.hiddenFactor}`,
@@ -75,6 +76,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         `Я только что взвесил решение: «${data.topic}» ⚖️`,
         ``,
         `Мой результат — **${analysis.verdict}**`,
+        ``,
         `🎯 Рекомендация: **${winnerTitle}** (${winnerPercent}%)`,
         ``,
         `🔍 **Скрытый инсайт:** ${analysis.hiddenFactor}`,
@@ -198,7 +200,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
       <div className="grid grid-cols-2 gap-4">
         {/* RISK METER */}
         <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 flex flex-col items-center justify-center ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
-           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">{rpgMode ? 'Угроза' : 'Опасность'}</p>
+           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">{rpgMode ? 'Угроза' : 'Опасность'}</p>
            <div className="relative mb-3">
               <div className={`w-14 h-14 rounded-full border-4 flex items-center justify-center text-lg font-black ${
                 analysis.riskLevel > 7 ? 'text-rose-600 border-rose-100' : 
@@ -215,7 +217,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
                 }`}
               />
            </div>
-           <p className={`text-[10px] font-bold leading-tight text-center ${rpgMode ? 'text-red-900/60' : 'text-slate-500'}`}>
+           <p className={`text-[13px] font-bold leading-snug text-center ${rpgMode ? 'text-red-900/80 font-serif-fantasy italic' : 'text-slate-700'}`}>
              {analysis.riskDescription}
            </p>
         </motion.div>
@@ -225,8 +227,8 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
            <div className={`mb-3 p-2 rounded-xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
              {rpgMode ? <Compass size={18} /> : <Search size={18} />}
            </div>
-           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">{rpgMode ? 'Тайное знание' : 'Инсайт'}</p>
-           <p className={`text-[11px] font-bold leading-tight ${rpgMode ? 'text-red-950 italic' : 'text-slate-700'}`}>
+           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">{rpgMode ? 'Тайное знание' : 'Инсайт'}</p>
+           <p className={`text-[13px] font-bold leading-tight ${rpgMode ? 'text-red-950 italic' : 'text-slate-800'}`}>
              {analysis.hiddenFactor}
            </p>
         </motion.div>
@@ -244,14 +246,14 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white ${rpgMode ? 'bg-red-800' : 'bg-slate-900'}`}>
                  {rpgMode ? <Activity size={20} strokeWidth={2.5} /> : <Zap size={20} fill="currentColor" />}
                </div>
-               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{rpgMode ? 'Ваше задание' : 'Первый шаг'}</span>
+               <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">{rpgMode ? 'Ваше задание' : 'Первый шаг'}</span>
             </div>
             
             <h5 className={`text-xl font-black mb-4 leading-tight ${rpgMode ? 'text-red-950' : 'text-slate-900'}`}>
               {analysis.actionStep}
             </h5>
             
-            <div className={`flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest transition-all ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>
+            <div className={`flex items-center space-x-2 text-[11px] font-black uppercase tracking-widest transition-all ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>
                <span>{rpgMode ? 'Принимаю вызов' : 'Я сделаю это'}</span>
                <ArrowRight size={14} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
             </div>

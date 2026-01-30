@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, Sparkles, Plus, Zap, X, ChevronRight, Target, LayoutGrid, Wand2, MessageSquare, Lightbulb, Compass, Rocket, CheckCircle2, ArrowRightLeft, MessageCircle } from 'lucide-react';
 import { JournalMode, Message, DecisionData, Archetype } from '../types';
@@ -203,7 +204,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 key={i} 
                 initial={{ opacity: 0, x: side === 'A' ? -20 : 20 }} 
                 animate={{ opacity: 1, x: 0 }}
-                className={`group relative p-3 rounded-2xl text-[11px] font-bold border ${rpgMode ? 'bg-white border-red-800/10 text-red-950' : 'bg-white bento-border text-slate-700 shadow-sm'}`}
+                className={`group relative p-3 rounded-2xl text-[11px] font-bold border break-words overflow-hidden ${rpgMode ? 'bg-white border-red-800/10 text-red-950' : 'bg-white bento-border text-slate-700 shadow-sm'}`}
               >
                 {text}
                 <button 
@@ -374,7 +375,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                  <div className="flex-1 flex flex-col min-h-0">
                    <div className="flex-1 flex space-x-3 items-stretch min-h-0 py-2 relative">
-                      <div className="flex-1">{renderArgumentCard('A')}</div>
+                      <div className="flex-1 min-w-0">{renderArgumentCard('A')}</div>
                       
                       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
                          <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-sm border-4 transition-all duration-300 ${rpgMode ? 'bg-red-800 text-white border-red-950 shadow-lg' : 'bg-white text-slate-300 border-slate-100 shadow-xl'}`}>
@@ -382,7 +383,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                          </div>
                       </div>
 
-                      <div className="flex-1">{renderArgumentCard('B')}</div>
+                      <div className="flex-1 min-w-0">{renderArgumentCard('B')}</div>
                    </div>
                  </div>
 
