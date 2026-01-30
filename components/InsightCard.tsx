@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Share2, Check, Sparkles, Search, AlertTriangle, Activity, Compass, ShieldAlert, Trophy, ArrowRight, Zap, Target } from 'lucide-react';
 import { DecisionData } from '../types';
@@ -50,13 +51,62 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
   const winnerColor = winner === 'A' ? 'indigo' : 'rose';
 
   const handleShare = async () => {
-    let textToShare = `✨ АНАЛИЗ РЕШЕНИЯ: ${data.topic}\n\n💡 ВЕРДИКТ: ${analysis.verdict}\n⚖️ БАЛАНС: ${analysis.balanceA}% / ${analysis.balanceB}%\n🚀 ПЕРВЫЙ ШАГ: ${analysis.actionStep}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Мой анализ', text: textToShare }); } catch (e) {}
+    const appLink = "http://t.me/mindfulmirror_bot/mmapp";
+    let textToShare = "";
+
+    if (rpgMode) {
+      textToShare = [
+        `📜 Мой путь определен: «${data.topic}»`,
+        ``,
+        `Мастер Игры вынес вердикт — **${analysis.verdict}**`,
+        `⚔️ Избранная тропа: **${winnerTitle}** (${winnerPercent}% шанса на успех)`,
+        ``,
+        `🔮 **Тайное знание:** ${analysis.hiddenFactor}`,
+        `🐉 **Уровень угрозы:** ${analysis.riskLevel}/10 (${analysis.riskDescription})`,
+        `🛡 **Мое задание:** ${analysis.actionStep}`,
+        ``,
+        `Начни свое приключение в [Mindful Mirror](${appLink}) ✨`
+      ].join('\n');
     } else {
-      await navigator.clipboard.writeText(textToShare);
+      textToShare = [
+        `Я только что взвесил решение: «${data.topic}» ⚖️`,
+        ``,
+        `Мой результат — **${analysis.verdict}**`,
+        `🎯 Рекомендация: **${winnerTitle}** (${winnerPercent}%)`,
+        ``,
+        `🔍 **Скрытый инсайт:** ${analysis.hiddenFactor}`,
+        `⚠️ **Уровень риска:** ${analysis.riskLevel}/10 (${analysis.riskDescription})`,
+        `🚀 **Мой первый шаг:** ${analysis.actionStep}`,
+        ``,
+        `Проанализируй свою ситуацию в [Mindful Mirror](${appLink}) 🔮`
+      ].join('\n');
+    }
+
+    if (navigator.share) {
+      try { 
+        await navigator.share({ 
+          title: rpgMode ? 'Свиток Судьбы' : 'Анализ Решения', 
+          text: textToShare 
+        }); 
+      } catch (e) {
+        // Fallback to clipboard if share fails
+        await copyToClipboard(textToShare);
+      }
+    } else {
+      await copyToClipboard(textToShare);
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
       setIsCopied(true);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
       setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
     }
   };
 
@@ -142,7 +192,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
       <div className="grid grid-cols-2 gap-4">
         {/* RISK METER */}
         <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 flex flex-col items-center justify-center ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
-           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">Опасность</p>
+           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">{rpgMode ? 'Угроза' : 'Опасность'}</p>
            <div className="relative mb-3">
               <div className={`w-14 h-14 rounded-full border-4 flex items-center justify-center text-lg font-black ${
                 analysis.riskLevel > 7 ? 'text-rose-600 border-rose-100' : 
@@ -167,9 +217,9 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         {/* HIDDEN FACTOR CARD */}
         <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 relative overflow-hidden flex flex-col items-center justify-center text-center ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
            <div className={`mb-3 p-2 rounded-xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-             <Search size={18} />
+             {rpgMode ? <Compass size={18} /> : <Search size={18} />}
            </div>
-           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Инсайт</p>
+           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">{rpgMode ? 'Тайное знание' : 'Инсайт'}</p>
            <p className={`text-[11px] font-bold leading-tight ${rpgMode ? 'text-red-950 italic' : 'text-slate-700'}`}>
              {analysis.hiddenFactor}
            </p>
@@ -186,9 +236,9 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
          }`}>
             <div className="flex items-center space-x-3 mb-6">
                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white ${rpgMode ? 'bg-red-800' : 'bg-slate-900'}`}>
-                 <Zap size={20} fill="currentColor" />
+                 {rpgMode ? <Activity size={20} strokeWidth={2.5} /> : <Zap size={20} fill="currentColor" />}
                </div>
-               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Ваше задание</span>
+               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">{rpgMode ? 'Ваше задание' : 'Первый шаг'}</span>
             </div>
             
             <h5 className={`text-xl font-black mb-4 leading-tight ${rpgMode ? 'text-red-950' : 'text-slate-900'}`}>
@@ -196,7 +246,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
             </h5>
             
             <div className={`flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest transition-all ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>
-               <span>Я сделаю это</span>
+               <span>{rpgMode ? 'Принимаю вызов' : 'Я сделаю это'}</span>
                <ArrowRight size={14} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
             </div>
          </div>
@@ -213,7 +263,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         }`}
       >
         {isCopied ? <Check size={18} strokeWidth={3} /> : <Share2 size={18} />}
-        <span>{isCopied ? 'Сохранено' : 'Поделиться'}</span>
+        <span>{isCopied ? 'Текст скопирован' : 'Поделиться результатом'}</span>
       </motion.button>
     </motion.div>
   );
