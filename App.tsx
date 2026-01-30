@@ -1027,7 +1027,7 @@ const App: React.FC = () => {
 
         <div className="w-full space-y-4 mb-10 relative z-10">
            {[
-             { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы без лимитов.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
+             { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы, анализируйте свой выбор.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
              { id: '2', label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Проходите сессии, разбирайте свои чувства с помощником столько раз, сколько нужно.', icon: Heart, color: isRpg ? 'bg-red-800' : 'bg-rose-500', textColor: isRpg ? 'text-red-800' : 'text-rose-600' },
              { id: '3', label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.', icon: Sword, color: isRpg ? 'bg-red-800' : 'bg-indigo-500', textColor: isRpg ? 'text-red-800' : 'text-indigo-600' }
            ].map((benefit, idx) => (

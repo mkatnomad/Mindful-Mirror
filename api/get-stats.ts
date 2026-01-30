@@ -15,7 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return r.json();
     };
 
-    const [all, prem, sess, secs, archs, segSess, segSecs, jTypes, tStarts, tFinished] = await Promise.all([
+    const [all, prem, sess, secs, archs, segSess, segSecs, jTypes, tStarts, tFinished, tPremEver, tEnergySales, eBuyers] = await Promise.all([
       fetchKV('scard/all_users'),
       fetchKV('scard/premium_users'),
       fetchKV('get/global_sessions'),
@@ -25,7 +25,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       fetchKV('hgetall/stats:seconds_total'),
       fetchKV('hgetall/stats:journal_types'),
       fetchKV('get/stats:test_starts'),
-      fetchKV('get/stats:test_finished')
+      fetchKV('get/stats:test_finished'),
+      fetchKV('get/stats:total_premium_ever'),
+      fetchKV('get/stats:total_energy_sales'),
+      fetchKV('scard/set:energy_buyers')
     ]);
 
     const parseHash = (raw: any) => {
@@ -46,6 +49,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ 
       total: all.result || 0, 
       premium: prem.result || 0,
+      premiumEver: parseInt(tPremEver.result) || 0,
+      energySales: parseInt(tEnergySales.result) || 0,
+      energyBuyers: eBuyers.result || 0,
       sessions: parseInt(sess.result) || 0,
       totalSeconds: parseInt(secs.result) || 0,
       archetypes: parseHash(archs),

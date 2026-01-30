@@ -26,10 +26,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const payload = message.successful_payment.invoice_payload;
     
     if (kvUrl && kvToken) {
+      const pipeline: any[] = [];
+
       if (payload.startsWith('energy_')) {
-        // Зачисляем энергию (накапливаем бонус для клиента)
-        await fetch(`${kvUrl}/incrby/user_energy_bonus_${userId}/10`, {
-          headers: { Authorization: `Bearer ${kvToken}` }
+        // 1. Зачисляем энергию пользователю
+        pipeline.push(['incrby', `user_energy_bonus_${userId}`, 10]);
+        // 2. Общая статистика продаж энергии
+        pipeline.push(['incr', 'stats:total_energy_sales']);
+        // 3. Список уникальных покупателей энергии
+        pipeline.push(['sadd', 'set:energy_buyers', userId.toString()]);
+        
+        await fetch(`${kvUrl}/pipeline`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${kvToken}` },
+          body: JSON.stringify(pipeline)
         });
         
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
@@ -41,12 +51,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           })
         });
       } else {
-        // Обычная подписка Premium
-        await fetch(`${kvUrl}/set/user_sub_${userId}/true/EX/2592000`, {
-          headers: { Authorization: `Bearer ${kvToken}` }
-        });
-        await fetch(`${kvUrl}/sadd/premium_users/${userId}`, {
-          headers: { Authorization: `Bearer ${kvToken}` }
+        // 1. Обычная подписка Premium на 30 дней
+        pipeline.push(['set', `user_sub_${userId}`, 'true', 'EX', 2592000]);
+        // 2. Список активных Premium
+        pipeline.push(['sadd', 'premium_users', userId.toString()]);
+        // 3. Общая статистика Premium за все время
+        pipeline.push(['incr', 'stats:total_premium_ever']);
+        
+        await fetch(`${kvUrl}/pipeline`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${kvToken}` },
+          body: JSON.stringify(pipeline)
         });
         
         await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {

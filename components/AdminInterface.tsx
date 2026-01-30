@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, ImageIcon as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star, PieChart, TrendingUp, Sparkles, BookOpen } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, ImageIcon as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star, PieChart, TrendingUp, Sparkles, BookOpen, Zap, ShoppingCart } from 'lucide-react';
 import { SiteConfig } from '../types';
 
 interface AdminInterfaceProps {
@@ -138,16 +139,32 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
       <div className="flex-1 overflow-y-auto p-6 space-y-8 pb-32">
         {activeTab === 'STATS' && (
           <div className="space-y-6 animate-fade-in">
+             {/* Основные показатели */}
              <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                    <Users className="text-indigo-500 mb-3" size={24} />
-                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Всего</p>
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Всего юзеров</p>
                    <p className="text-3xl font-black text-slate-800">{stats.total}</p>
                 </div>
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+                   <Star className="text-amber-500 mb-3 relative z-10" size={24} fill="currentColor" />
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest relative z-10">Premium (Акт.)</p>
+                   <p className="text-3xl font-black text-slate-800 relative z-10">{stats.premium}</p>
+                   <div className="absolute top-2 right-4 text-[10px] font-black text-slate-300">всего: {stats.premiumEver || 0}</div>
+                </div>
+             </div>
+
+             {/* Монетизация */}
+             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                   <Star className="text-amber-500 mb-3" size={24} fill="currentColor" />
-                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Premium</p>
-                   <p className="text-3xl font-black text-slate-800">{stats.premium}</p>
+                   <Zap className="text-amber-600 mb-3" size={24} fill="currentColor" />
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Продано паков</p>
+                   <p className="text-3xl font-black text-slate-800">{stats.energySales || 0}</p>
+                </div>
+                <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                   <ShoppingCart className="text-emerald-500 mb-3" size={24} />
+                   <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">Покупатели</p>
+                   <p className="text-3xl font-black text-slate-800">{stats.energyBuyers || 0}</p>
                 </div>
              </div>
 
