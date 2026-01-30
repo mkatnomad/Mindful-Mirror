@@ -132,59 +132,114 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
   const cfg = treeConfigs[stage] || treeConfigs[0];
   const strokeColor = rpgMode ? "#FFFBEB" : `url(#tree-${cfg.start.replace('#','')})`;
   const fillColor = rpgMode ? "#FFFBEB" : `url(#tree-${cfg.start.replace('#','')})`;
+  const trunkColor = rpgMode ? "#451A03" : "#78350F";
 
   const renderTreeContent = () => {
     switch(stage) {
-      case 0: return <circle cx="50" cy="60" r="15" fill={fillColor} />;
-      case 1: return <path d="M50 80V50C50 50 50 30 70 30" stroke={strokeColor} strokeWidth="8" strokeLinecap="round" />;
-      case 2: return (
+      case 0: // Зерно (Seed): Компактное, в земле
+        return (
           <g>
-            <path d="M50 80V35" stroke={strokeColor} strokeWidth="8" strokeLinecap="round" />
-            <path d="M50 55C50 55 70 50 72 38" stroke={strokeColor} strokeWidth="6" strokeLinecap="round" />
-            <circle cx="72" cy="38" r="4" fill={fillColor} />
+            <path d="M50 78C56 78 60 72 60 65C60 58 50 48 50 48C50 48 40 58 40 65C40 72 44 78 50 78Z" fill={fillColor} />
+            <path d="M35 82H65" stroke={fillColor} strokeWidth="3" strokeLinecap="round" opacity="0.3" />
           </g>
         );
-      case 3: return <circle cx="50" cy="45" r="25" fill={fillColor} />;
-      case 4: return (
+      case 1: // Росток (Sprout): Маленький крючок
+        return (
           <g>
-            <rect x="44" y="50" width="12" height="35" rx="4" fill={rpgMode ? "#451A03" : "#78350F"} />
-            <circle cx="50" cy="40" r="28" fill={fillColor} />
+            <path d="M50 82V75C50 75 50 68 58 64" stroke={strokeColor} strokeWidth="6" strokeLinecap="round" fill="none" />
+            <ellipse cx="58" cy="64" rx="5" ry="3" transform="rotate(-25 58 64)" fill={fillColor} />
           </g>
         );
-      case 5: return (
+      case 2: // Побег (Shoot): Заметно ВЫШЕ и ШИРЕ ростка
+        return (
           <g>
-            <path d="M50 85V60" stroke={rpgMode ? "#451A03" : "#78350F"} strokeWidth="14" strokeLinecap="round" />
-            <circle cx="50" cy="40" r="35" fill={fillColor} />
+            <path d="M50 82V55" stroke={strokeColor} strokeWidth="7" strokeLinecap="round" />
+            <path d="M50 68C50 68 38 64 32 58" stroke={strokeColor} strokeWidth="5" strokeLinecap="round" fill="none" />
+            <path d="M50 62C50 62 62 58 68 52" stroke={strokeColor} strokeWidth="5" strokeLinecap="round" fill="none" />
+            <ellipse cx="32" cy="58" rx="6" ry="3.5" transform="rotate(20 32 58)" fill={fillColor} />
+            <ellipse cx="68" cy="52" rx="6" ry="3.5" transform="rotate(-20 68 52)" fill={fillColor} />
           </g>
         );
-      case 6: return (
+      case 3: // Саженец (Sapling): Тонкий ствол + шарообразная крона
+        return (
           <g>
-            <path d="M50 85V65L30 45M50 65L70 45" stroke={rpgMode ? "#2D0A00" : "#451A03"} strokeWidth="10" strokeLinecap="round" />
-            <circle cx="50" cy="35" r="30" fill={fillColor} />
+            <path d="M50 82V62" stroke={trunkColor} strokeWidth="8" strokeLinecap="round" />
+            <circle cx="50" cy="48" r="22" fill={fillColor} />
           </g>
         );
-      case 7: return (
+      case 4: // Молодое Дерево (Young Tree): Выше, ствол крепче
+        return (
           <g>
-            <circle cx="50" cy="45" r="38" fill={rpgMode ? "#064E3B" : "#065F46"} />
-            <circle cx="35" cy="35" r="6" fill="#FB7185" />
-            <circle cx="65" cy="40" r="6" fill="#FB7185" />
-            <circle cx="50" cy="25" r="6" fill="#FB7185" />
+            <path d="M50 82V58" stroke={trunkColor} strokeWidth="11" strokeLinecap="round" />
+            <circle cx="50" cy="42" r="30" fill={fillColor} />
+            <circle cx="35" cy="48" r="12" fill={fillColor} opacity="0.8" />
+            <circle cx="65" cy="48" r="12" fill={fillColor} opacity="0.8" />
           </g>
         );
-      case 8: return (
+      case 5: // Крепкое Дерево (Strong Tree): Мощное основание
+        return (
           <g>
-            <circle cx="50" cy="45" r="38" fill={rpgMode ? "#052E16" : "#063B2B"} />
-            <circle cx="40" cy="30" r="7" fill="#F59E0B" />
-            <circle cx="60" cy="55" r="7" fill="#F59E0B" />
-            <circle cx="30" cy="50" r="7" fill="#F59E0B" />
+            <path d="M50 85L50 60M42 85L50 65M58 85L50 65" stroke={trunkColor} strokeWidth="12" strokeLinecap="round" />
+            <circle cx="50" cy="40" r="36" fill={fillColor} />
           </g>
         );
-      case 9: return (
+      case 6: // Ветвистое Древо (Branchy): ЗАМЕТНО ШИРЕ И СЛОЖНЕЕ 5-го
+        return (
           <g>
-            <circle cx="50" cy="50" r="45" fill={rpgMode ? "#022C22" : "#064E3B"} />
-            <circle cx="50" cy="50" r="30" fill="#10B981" opacity="0.4" />
-            <path d="M50 25L55 40H45L50 25Z" fill="#FDE68A" />
-            <circle cx="50" cy="50" r="8" fill="#FDE68A" />
+            <path d="M50 85V60L25 40M50 60L75 40M50 70L65 55" stroke={trunkColor} strokeWidth="10" strokeLinecap="round" />
+            <circle cx="50" cy="35" r="32" fill={fillColor} />
+            <circle cx="25" cy="40" r="24" fill={fillColor} opacity="0.9" />
+            <circle cx="75" cy="40" r="24" fill={fillColor} opacity="0.9" />
+          </g>
+        );
+      case 7: // Цветущее Древо (Blooming): Пышное облако с цветами
+        return (
+          <g>
+            <path d="M50 85V60" stroke={trunkColor} strokeWidth="12" strokeLinecap="round" />
+            <circle cx="50" cy="40" r="38" fill={fillColor} />
+            <circle cx="30" cy="45" r="26" fill={fillColor} opacity="0.9" />
+            <circle cx="70" cy="45" r="26" fill={fillColor} opacity="0.9" />
+            {/* Цветы */}
+            <circle cx="50" cy="25" r="4" fill="#FB7185" />
+            <circle cx="35" cy="38" r="4" fill="#FB7185" />
+            <circle cx="65" cy="38" r="4" fill="#FB7185" />
+            <circle cx="42" cy="52" r="4" fill="#FB7185" />
+            <circle cx="58" cy="52" r="4" fill="#FB7185" />
+          </g>
+        );
+      case 8: // Плодоносящее (Fruiting): Огромное, с плодами
+        return (
+          <g>
+            <path d="M50 85V55L15 45M50 55L85 45" stroke={trunkColor} strokeWidth="14" strokeLinecap="round" />
+            <circle cx="50" cy="35" r="40" fill={fillColor} />
+            <circle cx="20" cy="45" r="28" fill={fillColor} />
+            <circle cx="80" cy="45" r="28" fill={fillColor} />
+            {/* Плоды */}
+            <circle cx="30" cy="30" r="5" fill="#F59E0B" />
+            <circle cx="70" cy="30" r="5" fill="#F59E0B" />
+            <circle cx="50" cy="45" r="5" fill="#F59E0B" />
+            <circle cx="15" cy="50" r="5" fill="#F59E0B" />
+            <circle cx="85" cy="50" r="5" fill="#F59E0B" />
+          </g>
+        );
+      case 9: // Древо Мудрости (Wisdom): Венец с нимбом и сложной структурой
+        return (
+          <g>
+            {/* Нимб/Аура */}
+            <circle cx="50" cy="45" r="48" stroke={fillColor} strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
+            <circle cx="50" cy="45" r="42" fill={fillColor} opacity="0.1" />
+            
+            <path d="M50 85V50L20 30M50 50L80 30M50 65L70 45M50 65L30 45" stroke={trunkColor} strokeWidth="10" strokeLinecap="round" />
+            
+            <circle cx="50" cy="35" r="35" fill={fillColor} />
+            <circle cx="20" cy="35" r="25" fill={fillColor} opacity="0.9" />
+            <circle cx="80" cy="35" r="25" fill={fillColor} opacity="0.9" />
+            
+            {/* Магические искры */}
+            <path d="M50 15L54 24H46L50 15Z" fill="#FDE68A" />
+            <circle cx="50" cy="40" r="10" fill="#FDE68A" opacity="0.6" />
+            <circle cx="20" cy="30" r="4" fill="#FDE68A" />
+            <circle cx="80" cy="30" r="4" fill="#FDE68A" />
           </g>
         );
       default: return <circle cx="50" cy="50" r="20" fill="gray" />;
@@ -946,7 +1001,7 @@ const App: React.FC = () => {
           <div className={`p-6 rounded-[32px] mb-6 shadow-sm border transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-blue-600 text-white border-blue-700'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
             <div className="flex items-center space-x-3 mb-2"><Star size={18} fill="currentColor" className="text-amber-400" /><p className={`text-[9px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-blue-100'}`}>Статус: Странник</p></div>
             <h4 className={`text-xl font-black mb-1 leading-tight uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : ''}`}>Открой все функции</h4>
-            <p className={`text-[11px] opacity-80 mb-6 leading-relaxed ${userProfile.rpgMode ? 'text-red-900/70' : 'text-blue-50'}`}>Безлимитные сессии, ежедневные квесты и полное самопознание.</p>
+            <p className={`text-[11px] opacity-80 mb-6 leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium' : 'text-blue-50'}`}>Безлимитные сессии, ежедневные квесты и полное самопознание.</p>
             <button className={`w-full py-3.5 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-blue-600 shadow-md active:scale-95'}`}><Sparkles size={14} fill="currentColor" /><span>Подробнее о Premium</span></button>
           </div>
         )}
