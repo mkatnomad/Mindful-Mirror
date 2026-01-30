@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, Archetype, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
 import { ChatInterface } from './components/ChatInterface';
@@ -1021,7 +1021,6 @@ const App: React.FC = () => {
 
   const renderLimitReached = () => {
     const isRpg = userProfile.rpgMode;
-    const mentorStage = Math.max(0, RANKS.indexOf(currentRank));
     const isSubscribed = userProfile.isSubscribed;
 
     const t = isRpg ? SUBSCRIPTION_TEXTS.rpg : SUBSCRIPTION_TEXTS.normal;
@@ -1030,13 +1029,70 @@ const App: React.FC = () => {
       <div className={`h-full overflow-y-auto flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
         <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-red-800' : 'bg-indigo-500'}`} />
 
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-4 mb-4 relative">
-          <div className={`absolute inset-0 blur-3xl rounded-full scale-150 opacity-20 ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} />
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }} 
+          animate={{ scale: 1, opacity: 1 }} 
+          className="mt-2 mb-4 relative w-full flex flex-col items-center"
+        >
+          {/* Main Pulsing Glow */}
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.15, 1],
+              opacity: [0.15, 0.25, 0.15]
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-64 h-64 blur-[80px] rounded-full ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} 
+          />
+
+          {/* Floating Particles */}
+          <div className="absolute inset-0 pointer-events-none">
+            {[...Array(8)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 0, x: 0 }}
+                animate={{ 
+                  opacity: [0, 1, 0],
+                  y: -120 - Math.random() * 60,
+                  x: (Math.random() - 0.5) * 80
+                }}
+                transition={{ 
+                  duration: 3 + Math.random() * 2, 
+                  repeat: Infinity, 
+                  delay: i * 0.4 
+                }}
+                className={`absolute left-1/2 bottom-1/2 w-1.5 h-1.5 rounded-full ${isRpg ? 'bg-amber-400 shadow-[0_0_8px_#FDE68A]' : 'bg-indigo-300 shadow-[0_0_8px_#818CF8]'}`}
+              />
+            ))}
+          </div>
+
           <div className="relative z-10 flex flex-col items-center">
-             <TreeIcon stage={mentorStage} size={80} rpgMode={isRpg} />
-             <div className={`mt-4 px-5 py-3 rounded-3xl rounded-tl-none border shadow-sm max-w-[240px] ${isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'}`}>
-                <p className="text-[13px] font-bold leading-tight">{t.mentorSpeech}</p>
+             <div className="relative group">
+                <motion.div 
+                  animate={{ scale: [1, 1.3], opacity: [0.4, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className={`absolute inset-0 rounded-full border-2 ${isRpg ? 'border-red-800/30' : 'border-indigo-400/30'}`}
+                />
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  <TreeIcon stage={9} size={160} rpgMode={isRpg} />
+                </motion.div>
              </div>
+             
+             <motion.div 
+               initial={{ y: 20, opacity: 0 }}
+               animate={{ y: 0, opacity: 1 }}
+               transition={{ delay: 0.5 }}
+               className={`mt-4 px-6 py-4 rounded-3xl rounded-tl-none border shadow-2xl max-w-[280px] relative ${
+                 isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'
+               }`}
+             >
+                <p className="text-[14px] font-bold leading-snug">{t.mentorSpeech}</p>
+                <div className={`absolute -bottom-2 -right-2 p-1.5 rounded-lg text-white shadow-lg ${isRpg ? 'bg-red-800' : 'bg-indigo-600'}`}>
+                   <Sparkles size={12} />
+                </div>
+             </motion.div>
           </div>
         </motion.div>
 
