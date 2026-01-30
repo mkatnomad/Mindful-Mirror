@@ -72,6 +72,10 @@ export interface UserProfile {
   firstRunDate: number | null;
   isSubscribed: boolean;
   subscriptionExpiry: number | null;
+  // Energy (Welcome Bonuses / Consumables)
+  energyDecisions: number;
+  energyEmotions: number;
+  energyQuests: number;
   // Limit tracking
   lastUsageDate: string | null; // YYYY-MM-DD
   dailyDecisionCount: number;

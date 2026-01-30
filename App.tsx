@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, Archetype, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
@@ -7,13 +8,11 @@ import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package } from 'lucide-react';
 
-const FREE_DECISIONS_PER_DAY = 2;
-const FREE_EMOTIONS_PER_DAY = 2;
-const WELCOME_BONUS_LIMIT = 5;
-const PREMIUM_MAX_PER_DAY = 25; 
-const FREE_QUESTS_TOTAL = 3;
+const WELCOME_ENERGY_DECISIONS = 5;
+const WELCOME_ENERGY_EMOTIONS = 3;
+const WELCOME_ENERGY_QUESTS = 3;
 
 const ADMIN_ID = 379881747; 
 
@@ -22,20 +21,18 @@ const SUBSCRIPTION_TEXTS = {
   // Обычный режим
   normal: {
     title: 'Расширь границы',
-    subTitle: 'Mindful Mirror остается бесплатным для вас',
-    description: 'Вы можете продолжить путь завтра или снять ограничения и открыть ежедневные квесты прямо сейчас.',
+    subTitle: '',
+    description: 'Premium открывает безлимитный доступ на 30 дней.',
     mentorSpeech: 'Твой путь осознанности требует больше пространства для маневра.',
-    counterTitle: 'Дневная энергия',
-    resetInfo: 'Восстановление в полночь по вашему времени'
+    balanceTitle: 'Ваш текущий баланс',
   },
   // RPG режим
   rpg: {
     title: 'Пробудить полную силу',
     subTitle: 'Станьте Мастером своей судьбы',
-    description: 'Ваши силы восстановятся завтра. Premium открывает ежедневные квесты и убирает все лимиты.',
+    description: 'Энергия артефактов на исходе. Premium открывает источники силы и убирает все преграды на 30 дней.',
     mentorSpeech: 'Ваше древо упирается в свод... Чтобы расти дальше, нужны Звездные Ключи.',
-    counterTitle: 'Энергия исчерпана',
-    resetInfo: 'Восстановление в полночь по вашему времени'
+    balanceTitle: 'Запас магической энергии',
   }
 };
 
@@ -297,7 +294,10 @@ const App: React.FC = () => {
     name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingDone: false, archetype: null, xp: 0, 
     lastQuestDate: null, artifacts: [], totalSessions: 0, totalMinutes: 0, totalDecisions: 0, rpgMode: false,
     firstRunDate: null, isSubscribed: false, subscriptionExpiry: null,
-    lastUsageDate: null, dailyDecisionCount: 0, dailyEmotionsCount: 0, totalQuestsDone: 0
+    lastUsageDate: null, dailyDecisionCount: 0, dailyEmotionsCount: 0, totalQuestsDone: 0,
+    energyDecisions: WELCOME_ENERGY_DECISIONS,
+    energyEmotions: WELCOME_ENERGY_EMOTIONS,
+    energyQuests: WELCOME_ENERGY_QUESTS
   });
 
   const [history, setHistory] = useState<ChatSession[]>([]);
@@ -316,22 +316,6 @@ const App: React.FC = () => {
   const randomQuestCall = useMemo(() => QUEST_CALLS[Math.floor(Math.random() * QUEST_CALLS.length)], []);
 
   const getTelegramUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-
-  // FIXED: Midnight reset in local time
-  useEffect(() => {
-    // Construct local YYYY-MM-DD date using local timezone
-    const now = new Date();
-    const localDate = now.toLocaleDateString('en-CA'); // en-CA gives YYYY-MM-DD format
-    
-    if (userProfile.lastUsageDate !== localDate) {
-      setUserProfile(prev => ({
-        ...prev,
-        lastUsageDate: localDate,
-        dailyDecisionCount: 0,
-        dailyEmotionsCount: 0
-      }));
-    }
-  }, [userProfile.lastUsageDate]);
 
   const reportEvent = async (type: string, value: any) => {
     try {
@@ -384,13 +368,26 @@ const App: React.FC = () => {
         try { if (localEntriesRaw) localEntries = JSON.parse(localEntriesRaw); } catch(e) { console.error("Entries parse fail"); }
 
         if (profile) {
-            setUserProfile(prev => ({ ...prev, ...profile }));
+            setUserProfile(prev => ({ 
+              ...prev, 
+              ...profile,
+              // Initialization of new fields for existing users
+              energyDecisions: profile.energyDecisions ?? WELCOME_ENERGY_DECISIONS,
+              energyEmotions: profile.energyEmotions ?? WELCOME_ENERGY_EMOTIONS,
+              energyQuests: profile.energyQuests ?? WELCOME_ENERGY_QUESTS
+            }));
             if (!profile.onboardingDone) {
               setCurrentView('ONBOARDING');
             }
         } else {
             const now = Date.now();
-            setUserProfile(prev => ({ ...prev, firstRunDate: now }));
+            setUserProfile(prev => ({ 
+              ...prev, 
+              firstRunDate: now,
+              energyDecisions: WELCOME_ENERGY_DECISIONS,
+              energyEmotions: WELCOME_ENERGY_EMOTIONS,
+              energyQuests: WELCOME_ENERGY_QUESTS
+            }));
             setCurrentView('ONBOARDING');
         }
 
@@ -456,14 +453,7 @@ const App: React.FC = () => {
 
   const handleModeSelection = (mode: JournalMode) => {
     if (!checkModeLimit(mode)) {
-      if (userProfile.isSubscribed) {
-        const tg = window.Telegram?.WebApp;
-        const msg = "Дневной лимит сессий достигнут. Приходите завтра!";
-        if (tg && tg.showAlert) tg.showAlert(msg);
-        else alert(msg);
-      } else {
-        setCurrentView('SUBSCRIPTION');
-      }
+      setCurrentView('SUBSCRIPTION');
       return;
     }
     setSelectedMode(mode); 
@@ -472,16 +462,15 @@ const App: React.FC = () => {
   };
 
   const checkModeLimit = (mode: JournalMode): boolean => {
-    if (userProfile.isSubscribed) {
-        if (mode === 'DECISION') return userProfile.dailyDecisionCount < PREMIUM_MAX_PER_DAY;
-        if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < PREMIUM_MAX_PER_DAY;
-        return true;
+    if (userProfile.isSubscribed) return true;
+    
+    // Check only welcome bonus energy as daily limits are removed
+    if (mode === 'DECISION') {
+      return (userProfile.energyDecisions > 0);
     }
-    const iWelcomePeriod = userProfile.firstRunDate && (Date.now() - userProfile.firstRunDate < 24 * 60 * 60 * 1000);
-    const freeLimitDecisions = iWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_DECISIONS_PER_DAY;
-    const freeLimitEmotions = iWelcomePeriod ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
-    if (mode === 'DECISION') return userProfile.dailyDecisionCount < freeLimitDecisions;
-    if (mode === 'EMOTIONS') return userProfile.dailyEmotionsCount < freeLimitEmotions;
+    if (mode === 'EMOTIONS') {
+      return (userProfile.energyEmotions > 0);
+    }
     return true; 
   };
 
@@ -605,22 +594,13 @@ const App: React.FC = () => {
   };
 
   const isQuestAvailable = () => {
-    if (!userProfile.isSubscribed) return userProfile.totalQuestsDone < 3;
-    if (!userProfile.lastQuestDate) return true;
-    const lastDate = new Date(userProfile.lastQuestDate).toDateString();
-    const today = new Date().toDateString();
-    return lastDate !== today;
+    if (userProfile.isSubscribed) return true;
+    return userProfile.energyQuests > 0;
   };
 
   const handleStartQuest = async () => {
     if (!isQuestAvailable()) {
-        if (!userProfile.isSubscribed) setCurrentView('SUBSCRIPTION');
-        else {
-          const tg = window.Telegram?.WebApp;
-          const msg = "Вы уже прошли сегодняшний квест. Возвращайтесь завтра за новым испытанием!";
-          if (tg && tg.showAlert) tg.showAlert(msg);
-          else alert(msg);
-        }
+        setCurrentView('SUBSCRIPTION');
         return;
     }
     if (!userProfile.archetype) return;
@@ -644,7 +624,9 @@ const App: React.FC = () => {
       xp: prev.xp + 50,
       artifacts: [questOutcome!.artifact, ...prev.artifacts],
       lastQuestDate: Date.now(),
-      totalQuestsDone: prev.totalQuestsDone + 1
+      totalQuestsDone: prev.totalQuestsDone + 1,
+      // Deduct quest energy if not subscribed
+      energyQuests: prev.isSubscribed ? prev.energyQuests : Math.max(0, prev.energyQuests - 1)
     }));
     setGameStatus('IDLE');
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
@@ -919,12 +901,8 @@ const App: React.FC = () => {
   const renderLimitReached = () => {
     const isRpg = userProfile.rpgMode;
     const mentorStage = Math.max(0, RANKS.indexOf(currentRank));
-    const isWelcome = userProfile.firstRunDate && (Date.now() - userProfile.firstRunDate < 24 * 60 * 60 * 1000);
-    const limitDecisions = isWelcome ? WELCOME_BONUS_LIMIT : FREE_DECISIONS_PER_DAY;
-    const limitEmotions = isWelcome ? WELCOME_BONUS_LIMIT : FREE_EMOTIONS_PER_DAY;
     const isSubscribed = userProfile.isSubscribed;
 
-    // Использование константы для текстов
     const t = isRpg ? SUBSCRIPTION_TEXTS.rpg : SUBSCRIPTION_TEXTS.normal;
 
     return (
@@ -941,34 +919,39 @@ const App: React.FC = () => {
           </div>
         </motion.div>
 
-        <div className={`w-full p-6 rounded-[32px] mb-8 relative z-10 border transition-all ${isRpg ? 'bg-white/60 border-red-800/20' : 'bg-white bento-border shadow-sm'}`}>
-           <p className={`text-[10px] font-black uppercase tracking-[0.2em] mb-4 ${isRpg ? 'text-red-800' : 'text-slate-400'}`}>{t.counterTitle}</p>
-           <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className={`p-4 rounded-2xl border flex flex-col items-center ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
-                 <div className="flex items-center space-x-2 mb-1"><Zap size={14} className={isRpg ? 'text-red-800' : 'text-amber-500'} /><span className="text-[10px] font-black uppercase tracking-tighter">Решения</span></div>
-                 <p className="text-xl font-black">{userProfile.dailyDecisionCount} / {isSubscribed ? PREMIUM_MAX_PER_DAY : limitDecisions}</p>
-              </div>
-              <div className={`p-4 rounded-2xl border flex flex-col items-center ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
-                 <div className="flex items-center space-x-2 mb-1"><Heart size={14} className={isRpg ? 'text-red-800' : 'text-rose-500'} /><span className="text-[10px] font-black uppercase tracking-tighter">Состояния</span></div>
-                 <p className="text-xl font-black">{userProfile.dailyEmotionsCount} / {isSubscribed ? PREMIUM_MAX_PER_DAY : limitEmotions}</p>
-              </div>
-           </div>
-           
-           <div className={`w-full p-4 rounded-2xl border flex items-center justify-between ${isRpg ? 'bg-red-50/50 border-red-800/10' : 'bg-slate-50 border-slate-100'}`}>
-              <div className="flex items-center space-x-3">
-                 <Compass size={18} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
-                 <span className="text-[11px] font-black uppercase tracking-widest">Квесты</span>
-              </div>
-              <p className="text-lg font-black">
-                {isSubscribed ? "1 / 1 сегодня" : `${userProfile.totalQuestsDone} / ${FREE_QUESTS_TOTAL} всего`}
-              </p>
-           </div>
-
-           <div className="flex items-center justify-center space-x-2 text-[10px] font-bold text-slate-400 mt-4">
-              <RefreshCcw size={12} />
-              <span>{t.resetInfo}</span>
-           </div>
-        </div>
+        {/* --- ВАШ ЗАПАС (TRIAL COUNTER) --- */}
+        {!isSubscribed && (
+          <div className={`w-full p-8 rounded-[40px] mb-8 relative z-10 border-2 transition-all ${isRpg ? 'bg-white/60 border-red-800/30' : 'bg-white bento-border shadow-xl shadow-slate-200/40'}`}>
+            <div className="flex items-center justify-center space-x-3 mb-8">
+              <Package size={20} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
+              <p className={`text-[12px] font-black uppercase tracking-[0.3em] ${isRpg ? 'text-red-900' : 'text-indigo-600'}`}>{t.balanceTitle}</p>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-amber-50 text-amber-500'}`}>
+                    <Zap size={20} fill="currentColor" />
+                  </div>
+                  <span className="text-xl font-black mb-1 leading-none">{userProfile.energyDecisions}</span>
+                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest">Решения</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-rose-50 text-rose-500'}`}>
+                    <Heart size={20} fill="currentColor" />
+                  </div>
+                  <span className="text-xl font-black mb-1 leading-none">{userProfile.energyEmotions}</span>
+                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest">Эмоции</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}>
+                    <Compass size={20} fill="currentColor" />
+                  </div>
+                  <span className="text-xl font-black mb-1 leading-none">{userProfile.energyQuests}</span>
+                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest">Квесты</span>
+                </div>
+            </div>
+          </div>
+        )}
 
         <div className="mb-10 space-y-2 relative z-10">
            <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>{t.title}</h2>
@@ -978,8 +961,8 @@ const App: React.FC = () => {
 
         <div className="w-full space-y-4 mb-10 relative z-10">
            {[
-             { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы без дневных лимитов.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
-             { id: '2', label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Записывайте свои чувства столько раз, сколько нужно.', icon: Heart, color: isRpg ? 'bg-red-800' : 'bg-rose-500', textColor: isRpg ? 'text-red-800' : 'text-rose-600' },
+             { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы без лимитов.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
+             { id: '2', label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Проходите сессии, разбирайте свои чувства с помощником столько раз, сколько нужно.', icon: Heart, color: isRpg ? 'bg-red-800' : 'bg-rose-500', textColor: isRpg ? 'text-red-800' : 'text-rose-600' },
              { id: '3', label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.', icon: Sword, color: isRpg ? 'bg-red-800' : 'bg-indigo-500', textColor: isRpg ? 'text-red-800' : 'text-indigo-600' }
            ].map((benefit, idx) => (
              <motion.div key={benefit.id} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 * idx }} className={`flex items-center space-x-4 p-5 rounded-[32px] border-2 border-b-4 text-left transition-all ${isRpg ? 'bg-white border-red-800 shadow-[0_4px_0_#7f1d1d]' : 'bg-white bento-border shadow-sm shadow-slate-200/50'}`}>
@@ -997,7 +980,7 @@ const App: React.FC = () => {
            
            <div className="flex flex-col items-center space-y-6">
               <div className="flex items-center space-x-2 text-slate-400"><ShieldCheck size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Безопасно через Telegram Stars</span></div>
-              <button onClick={() => setCurrentView('HOME')} className={`w-full py-4 rounded-[32px] font-black uppercase tracking-[0.2em] transition-all text-xs border-2 ${isRpg ? 'bg-white border-red-800/20 text-red-800' : 'bg-slate-50 border-slate-100 text-slate-500 hover:text-slate-800'}`}>Понятно, подожду завтра</button>
+              <button onClick={() => setCurrentView('HOME')} className={`w-full py-4 rounded-[32px] font-black uppercase tracking-[0.2em] transition-all text-xs border-2 ${isRpg ? 'bg-white border-red-800/20 text-red-800' : 'bg-slate-50 border-slate-100 text-slate-500 hover:text-slate-800'}`}>Вернуться назад</button>
            </div>
         </div>
       </div>
@@ -1093,7 +1076,34 @@ const App: React.FC = () => {
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { 
             setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); 
             const xpGain = Math.max(1, Math.ceil(dur / 60)); 
-            setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: selectedMode === 'DECISION' ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), dailyDecisionCount: selectedMode === 'DECISION' ? p.dailyDecisionCount + 1 : p.dailyDecisionCount, dailyEmotionsCount: selectedMode === 'EMOTIONS' ? p.dailyEmotionsCount + 1 : p.dailyEmotionsCount })); 
+            
+            setUserProfile(p => {
+              const isDecision = selectedMode === 'DECISION';
+              const isEmotions = selectedMode === 'EMOTIONS';
+              
+              let newEnergyDecisions = p.energyDecisions;
+              let newEnergyEmotions = p.energyEmotions;
+
+              if (!p.isSubscribed) {
+                if (isDecision) {
+                  newEnergyDecisions = Math.max(0, p.energyDecisions - 1);
+                }
+                if (isEmotions) {
+                  newEnergyEmotions = Math.max(0, p.energyEmotions - 1);
+                }
+              }
+
+              return {
+                ...p,
+                xp: p.xp + xpGain,
+                totalSessions: p.totalSessions + 1,
+                totalMinutes: p.totalMinutes + xpGain,
+                totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0),
+                energyDecisions: newEnergyDecisions,
+                energyEmotions: newEnergyEmotions
+              };
+            });
+
             reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); 
         }} />}
         {currentView === 'ARCHETYPE_TEST' && (
