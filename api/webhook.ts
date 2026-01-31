@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         chat_id: userId,
-        text: "Добро пожаловать в Mindful Mirror! ✨\n\nВаше персональное зеркало осознанности готово к работе. Нажмите кнопку ниже, чтобы начать свой путь самопознания.",
+        text: "Ваше персональное зеркало осознанности готово к работе. Нажмите кнопку ниже, чтобы начать свой путь самопознания.",
         reply_markup: {
           inline_keyboard: [
             [
