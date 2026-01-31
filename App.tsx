@@ -285,7 +285,7 @@ const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: 
 );
 
 const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
-  <div className="relative w-full flex flex-col items-center justify-center mb-6 mt-2 overflow-visible">
+  <div className="relative w-full flex flex-col items-center justify-center mb-4 mt-1 overflow-visible">
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-visible">
        {[...Array(6)].map((_, i) => (
          <motion.div
@@ -1279,7 +1279,7 @@ const App: React.FC = () => {
              </div>
 
              {/* 2. UI HEADER LAYER */}
-             <header className="relative z-30 pt-10 px-6 mb-2 flex items-center justify-between pointer-events-none">
+             <header className="relative z-30 pt-6 px-6 mb-1 flex items-center justify-between pointer-events-none">
                 <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full active:bg-black/5 transition-all pointer-events-auto ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
                   <X size={24}/>
                 </button>
@@ -1291,30 +1291,30 @@ const App: React.FC = () => {
                 <span className="text-[11px] font-black tracking-widest opacity-40">{testQuestionIdx + 1}/{QUESTIONS.length}</span>
              </header>
              
-             {/* 3. SCROLLABLE CONTENT - PADDED TOP TO PREVENT CRYSTAL CLIPPING */}
-             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-10 z-20 overflow-x-hidden w-full">
-               <div className="flex flex-col items-center pt-8 overflow-visible">
+             {/* 3. SCROLLABLE CONTENT - OPTIMIZED HEIGHT TO PREVENT CRYSTAL CLIPPING */}
+             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-6 z-20 overflow-x-hidden w-full">
+               <div className="flex flex-col items-center pt-2 overflow-visible">
                  <PrismAnimation rpgMode={userProfile.rpgMode} />
                  
-                 <div className="relative mt-2 mb-12 text-center px-10 w-full max-w-lg mx-auto">
+                 <div className="relative mt-1 mb-6 text-center px-10 w-full max-w-lg mx-auto">
                     <div className={`absolute inset-0 blur-3xl opacity-[0.15] -z-10 rounded-full scale-y-[0.4] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-indigo-300'}`} />
-                    <h2 className={`text-2xl font-black italic leading-[1.3] ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-800'}`}>
+                    <h2 className={`text-[22px] font-black italic leading-snug ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-800'}`}>
                       {QUESTIONS[testQuestionIdx].q}
                     </h2>
                  </div>
 
-                 <div className="w-full px-6 space-y-4 max-w-md">
+                 <div className="w-full px-6 space-y-3 max-w-md">
                    {QUESTIONS[testQuestionIdx].options.map((opt, idx) => (
                      <button 
                       key={idx} 
                       onClick={() => handleTestAnswer(idx)} 
-                      className={`w-full text-left p-6 rounded-[28px] border-2 transition-all duration-300 transform active:scale-[0.98] ${
+                      className={`w-full text-left p-4 py-4.5 rounded-[24px] border-2 transition-all duration-300 transform active:scale-[0.98] ${
                         localSelectedIdx === idx 
                           ? (userProfile.rpgMode ? 'bg-red-800 text-white border-red-950 shadow-xl' : 'bg-slate-900 text-white border-slate-950 shadow-2xl scale-[1.01]') 
                           : (userProfile.rpgMode ? 'bg-white/70 border-red-800/5 hover:border-red-800/20' : 'bg-white/90 backdrop-blur-md bento-border bento-shadow hover:border-indigo-100')
                       }`}
                      >
-                       <span className="text-[15px] font-bold leading-tight">{opt}</span>
+                       <span className="text-[14px] font-bold leading-tight">{opt}</span>
                      </button>
                    ))}
                  </div>
