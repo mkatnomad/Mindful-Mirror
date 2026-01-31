@@ -295,41 +295,128 @@ const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: 
 );
 
 const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
-  <div className="relative w-full flex flex-col items-center justify-center mb-10 mt-2">
-    {/* Пульсирующая аура за призмой */}
+  <div className="relative w-full flex flex-col items-center justify-center mb-8 mt-2">
+    {/* Background Glow Rays */}
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-visible">
+       {[...Array(6)].map((_, i) => (
+         <motion.div
+           key={i}
+           animate={{ rotate: 360 }}
+           transition={{ duration: 30 + i * 5, repeat: Infinity, ease: "linear" }}
+           className="absolute w-[400px] h-[400px] opacity-[0.03]"
+           style={{
+             background: `conic-gradient(from 0deg, transparent 0deg, ${rpgMode ? '#F59E0B' : '#818CF8'} 30deg, transparent 60deg)`
+           }}
+         />
+       ))}
+    </div>
+
+    {/* Floating Ethereal Particles */}
+    <div className="absolute inset-0 pointer-events-none">
+      {[...Array(15)].map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ 
+            opacity: [0, 0.6, 0],
+            scale: [0, 1.2, 0],
+            x: [(Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300],
+            y: [(Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300],
+          }}
+          transition={{ 
+            duration: 4 + Math.random() * 3, 
+            repeat: Infinity, 
+            delay: i * 0.5 
+          }}
+          className={`absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full blur-[1px] ${rpgMode ? 'bg-amber-200' : 'bg-blue-200'}`}
+        />
+      ))}
+    </div>
+
     <motion.div
       animate={{ 
-        scale: [1, 1.25, 1],
-        opacity: [0.15, 0.35, 0.15]
+        y: [0, -10, 0],
       }}
-      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-      className={`absolute w-32 h-32 rounded-full blur-[45px] ${rpgMode ? 'bg-red-500' : 'bg-indigo-400'}`}
-    />
-    {/* Парящая и вращающаяся призма */}
-    <motion.div
-      animate={{ 
-        y: [0, -15, 0],
-        rotateY: [0, 360]
-      }}
-      transition={{ 
-        y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
-        rotateY: { duration: 10, repeat: Infinity, ease: "linear" }
-      }}
-      style={{ perspective: 1000 }}
-      className="relative z-10"
+      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      className="relative z-10 flex items-center justify-center"
     >
-      <svg width="50" height="75" viewBox="0 0 50 75" fill="none">
-        {/* Грани призмы */}
-        <path d="M25 0L50 37.5L25 75L0 37.5L25 0Z" fill={rpgMode ? "#991B1B" : "#4F46E5"} fillOpacity="0.85" />
-        <path d="M25 0L25 75" stroke="white" strokeOpacity="0.3" strokeWidth="1" />
-        <path d="M0 37.5L50 37.5" stroke="white" strokeOpacity="0.2" strokeWidth="1" />
-        {/* Блик */}
-        <path d="M25 0L50 37.5L25 37.5L25 0Z" fill="white" fillOpacity="0.15" />
-        {/* Тень */}
-        <path d="M25 37.5L50 37.5L25 75L25 37.5Z" fill="black" fillOpacity="0.1" />
-        {/* Контур */}
-        <path d="M25 0L50 37.5L25 75L0 37.5L25 0Z" stroke={rpgMode ? "#FDE68A" : "#C7D2FE"} strokeWidth="2.5" />
-      </svg>
+      {/* Outer Sacred Rings */}
+      <motion.div
+        animate={{ rotate: -360 }}
+        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
+        className={`absolute w-44 h-44 rounded-full border-[0.5px] border-dashed opacity-10 ${rpgMode ? 'border-amber-400' : 'border-blue-400'}`}
+      />
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        className={`absolute w-36 h-36 rounded-full border-[1px] opacity-[0.15] ${rpgMode ? 'border-amber-500' : 'border-blue-500'}`}
+      />
+
+      {/* The Core Crystal */}
+      <div className="relative w-32 h-32 flex items-center justify-center">
+        <svg width="120" height="120" viewBox="0 0 100 100" className="overflow-visible">
+          <defs>
+            <radialGradient id="highKeyGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#FFFFFF" />
+              <stop offset="40%" stopColor={rpgMode ? "#FFFBEB" : "#F0F9FF"} />
+              <stop offset="100%" stopColor={rpgMode ? "#FCD34D" : "#BAE6FD"} />
+            </radialGradient>
+            
+            <linearGradient id="facetShimmer" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="white" stopOpacity="0.8" />
+              <stop offset="50%" stopColor="white" stopOpacity="0" />
+              <stop offset="100%" stopColor="white" stopOpacity="0.4" />
+            </linearGradient>
+
+            <filter id="bloomSpread">
+              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+          
+          {/* Main Astral Shape */}
+          <motion.path
+            animate={{ 
+              scale: [1, 1.05, 1],
+              filter: ["drop-shadow(0 0 10px rgba(255,255,255,0.4))", "drop-shadow(0 0 25px rgba(255,255,255,0.8))", "drop-shadow(0 0 10px rgba(255,255,255,0.4))"]
+            }}
+            transition={{ duration: 4, repeat: Infinity }}
+            d="M50 5 L85 20 L95 50 L85 80 L50 95 L15 80 L5 50 L15 20 Z" 
+            fill="url(#highKeyGrad)" 
+            stroke="white"
+            strokeWidth="1"
+            strokeOpacity="0.7"
+          />
+
+          {/* Facets & Internal Reflections */}
+          <g opacity="0.4" stroke="white" strokeWidth="0.5">
+            <path d="M50 5 L50 95" />
+            <path d="M5 50 L95 50" />
+            <path d="M15 20 L85 80" />
+            <path d="M15 80 L85 20" />
+          </g>
+
+          {/* Shimmering Overlay */}
+          <motion.path 
+            animate={{ opacity: [0.1, 0.4, 0.1] }}
+            transition={{ duration: 3, repeat: Infinity }}
+            d="M50 5 L85 20 L95 50 L85 80 L50 95 L15 80 L5 50 L15 20 Z" 
+            fill="url(#facetShimmer)"
+          />
+
+          {/* Intense Light Core */}
+          <motion.circle 
+            animate={{ 
+              r: [10, 16, 10],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            cx="50" cy="50" r="12" 
+            fill="white" 
+            filter="url(#bloomSpread)"
+          />
+        </svg>
+      </div>
     </motion.div>
   </div>
 );
@@ -1202,6 +1289,7 @@ const App: React.FC = () => {
         <div className="w-full space-y-4 mb-10 relative z-10">
            {[
              { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы, анализируйте свой выбор.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
+             // Fixed: Typo iRpg to isRpg
              { id: '2', label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Проходите сессии, разбирайте свои чувства с помощником столько раз, сколько нужно.', icon: Heart, color: isRpg ? 'bg-red-800' : 'bg-rose-500', textColor: isRpg ? 'text-red-800' : 'text-rose-600' },
              { id: '3', label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.', icon: Sword, color: isRpg ? 'bg-red-800' : 'bg-indigo-500', textColor: isRpg ? 'text-red-800' : 'text-indigo-600' }
            ].map((benefit, idx) => (
@@ -1347,12 +1435,48 @@ const App: React.FC = () => {
             reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); 
         }} />}
         {currentView === 'ARCHETYPE_TEST' && (
-           <div className={`h-full p-8 flex flex-col animate-fade-in transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
-             <header className="mb-12 flex items-center justify-between"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><X size={24}/></button><div className="flex-1 px-8"><div className={`h-1 rounded-full ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-100'}`}><div className={`h-full rounded-full transition-all ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-50'}`} style={{ width: `${((testQuestionIdx + 1) / QUESTIONS.length) * 100}%` }}></div></div></div><span className="text-[10px] font-bold">{testQuestionIdx + 1}/{QUESTIONS.length}</span></header>
-             <div className="flex-1 flex flex-col justify-center">
-               <PrismAnimation rpgMode={userProfile.rpgMode} />
-               <h2 className={`text-3xl font-black mb-12 italic text-center ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2>
-               <div className="space-y-3">{QUESTIONS[testQuestionIdx].options.map((opt, idx) => (<button key={idx} onClick={() => handleTestAnswer(idx)} className={`w-full text-left p-6 rounded-[28px] border-2 transition-all ${localSelectedIdx === idx ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white') : (userProfile.rpgMode ? 'bg-white/60 border-red-800/20' : 'bg-white bento-border bento-shadow')}`}><span className="text-lg font-bold">{opt}</span></button>))}</div>
+           <div className={`h-full p-6 flex flex-col animate-fade-in transition-colors duration-500 overflow-hidden relative ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
+             {/* Background Watermark (Flower of Life) */}
+             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] z-0 scale-150">
+                <svg width="400" height="400" viewBox="0 0 100 100">
+                  <path d="M50 50 m-20 0 a20 20 0 1 0 40 0 a20 20 0 1 0 -40 0" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <circle cx="50" cy="30" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <circle cx="50" cy="70" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <circle cx="32" cy="40" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <circle cx="68" cy="40" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <circle cx="32" cy="60" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                  <circle cx="68" cy="60" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
+                </svg>
+             </div>
+
+             <header className="mb-8 flex items-center justify-between z-10"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><X size={24}/></button><div className="flex-1 px-4"><div className={`h-1 rounded-full ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-100'}`}><div className={`h-full rounded-full transition-all ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-50'}`} style={{ width: `${((testQuestionIdx + 1) / QUESTIONS.length) * 100}%` }}></div></div></div><span className="text-[10px] font-bold">{testQuestionIdx + 1}/{QUESTIONS.length}</span></header>
+             
+             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-6 z-10">
+               <div className="pt-4">
+                 <PrismAnimation rpgMode={userProfile.rpgMode} />
+               </div>
+               
+               <div className="relative mb-8 text-center px-4">
+                  {/* Subtle cloud background for question */}
+                  <div className={`absolute inset-0 blur-3xl opacity-[0.15] -z-10 rounded-full scale-y-[0.4] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-blue-400'}`} />
+                  <h2 className={`text-2xl font-black italic leading-snug ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2>
+               </div>
+
+               <div className="space-y-3 px-1">
+                 {QUESTIONS[testQuestionIdx].options.map((opt, idx) => (
+                   <button 
+                    key={idx} 
+                    onClick={() => handleTestAnswer(idx)} 
+                    className={`w-full text-left p-5 rounded-[24px] border-2 transition-all duration-300 transform active:scale-[0.97] ${
+                      localSelectedIdx === idx 
+                        ? (userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg scale-[1.01]' : 'bg-slate-900 text-white shadow-xl scale-[1.01]') 
+                        : (userProfile.rpgMode ? 'bg-white/60 border-red-800/10 hover:border-red-800/30' : 'bg-white/80 backdrop-blur-sm bento-border bento-shadow shadow-slate-200/40 hover:border-indigo-200')
+                    }`}
+                   >
+                     <span className="text-base font-bold leading-tight">{opt}</span>
+                   </button>
+                 ))}
+               </div>
              </div>
            </div>
         )}
