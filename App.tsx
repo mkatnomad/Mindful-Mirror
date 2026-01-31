@@ -285,14 +285,14 @@ const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: 
 );
 
 const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
-  <div className="relative w-full flex flex-col items-center justify-center mb-10 mt-6 overflow-visible">
+  <div className="relative w-full flex flex-col items-center justify-center mb-6 mt-2 overflow-visible">
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-visible">
        {[...Array(6)].map((_, i) => (
          <motion.div
            key={i}
            animate={{ rotate: 360 }}
            transition={{ duration: 30 + i * 5, repeat: Infinity, ease: "linear" }}
-           className="absolute w-[600px] h-[600px] opacity-[0.03]"
+           className="absolute w-[400px] h-[400px] opacity-[0.03]"
            style={{
              background: `conic-gradient(from 0deg, transparent 0deg, ${rpgMode ? '#F59E0B' : '#818CF8'} 45deg, transparent 90deg)`
            }}
@@ -302,10 +302,10 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
 
     <motion.div
       animate={{ 
-        y: [0, -12, 0],
+        y: [0, -15, 0],
       }}
       transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-      className="relative z-10 flex items-center justify-center"
+      className="relative z-10 flex items-center justify-center overflow-visible"
     >
       <motion.div
         animate={{ rotate: -360 }}
@@ -318,8 +318,8 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
         className={`absolute w-40 h-40 rounded-full border-[1px] opacity-[0.12] ${rpgMode ? 'border-amber-500' : 'border-blue-500'}`}
       />
 
-      <div className="relative w-36 h-36 flex items-center justify-center">
-        <svg width="140" height="140" viewBox="0 0 100 100" className="overflow-visible">
+      <div className="relative w-32 h-32 flex items-center justify-center overflow-visible">
+        <svg width="120" height="120" viewBox="0 0 100 100" className="overflow-visible">
           <defs>
             <radialGradient id="highKeyGrad" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#FFFFFF" />
@@ -334,7 +334,7 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
             </linearGradient>
 
             <filter id="bloomSpread">
-              <feGaussianBlur stdDeviation="5" result="blur"/>
+              <feGaussianBlur stdDeviation="8" result="blur"/>
               <feComposite in="SourceGraphic" in2="blur" operator="over"/>
             </filter>
           </defs>
@@ -342,7 +342,7 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
           <motion.path
             animate={{ 
               scale: [1, 1.03, 1],
-              filter: ["drop-shadow(0 0 12px rgba(255,255,255,0.4))", "drop-shadow(0 0 30px rgba(255,255,255,0.7))", "drop-shadow(0 0 12px rgba(255,255,255,0.4))"]
+              filter: ["drop-shadow(0 0 12px rgba(255,255,255,0.4))", "drop-shadow(0 0 35px rgba(255,255,255,0.8))", "drop-shadow(0 0 12px rgba(255,255,255,0.4))"]
             }}
             transition={{ duration: 5, repeat: Infinity }}
             d="M50 5 L85 20 L95 50 L85 80 L50 95 L15 80 L5 50 L15 20 Z" 
@@ -368,7 +368,7 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
 
           <motion.circle 
             animate={{ 
-              r: [12, 18, 12],
+              r: [12, 20, 12],
               opacity: [0.7, 1, 0.7],
             }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
@@ -982,7 +982,7 @@ const App: React.FC = () => {
                 <div className={`rounded-[32px] p-8 shadow-2xl animate-fade-in text-center border relative overflow-hidden ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border shadow-xl shadow-slate-200/20'}`}>
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-emerald-50 text-emerald-600'}`}><Trophy size={28} /></motion.div>
                   <h4 className={`text-3xl font-black mb-2 tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>+50 XP</h4>
-                  <p className={`text-xs mb-8 leading-relaxed italic px-2 ${userProfile.rpgMode ? 'text-red-900/70 font-serif-fantasy' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
+                  <p className={`text-xs mb-8 leading-relaxed italic px-2 ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
                   <div className={`p-4 rounded-2xl mb-8 border relative ${userProfile.rpgMode ? 'bg-white border-amber-500 shadow-xl shadow-amber-900/5' : 'bg-slate-50 border-slate-100'}`}>
                      <p className={`text-xl font-black tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-indigo-400'}`}>{questOutcome.artifact}</p>
                   </div>
@@ -1133,7 +1133,7 @@ const App: React.FC = () => {
         {!isSubscribed && (
           <div className={`w-full p-8 rounded-[40px] mb-8 relative z-10 border-2 transition-all ${isRpg ? 'bg-white/60 border-red-800/30' : 'bg-white bento-border shadow-xl shadow-slate-200/40'}`}>
             <div className="flex items-center justify-center space-x-3 mb-8">
-              <Package size={20} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
+              <Package size={20} className={isRpg ? 'text-red-800' : 'text-indigo-50'} />
               <p className={`text-[12px] font-black uppercase tracking-[0.3em] ${isRpg ? 'text-red-900' : 'text-indigo-600'}`}>{t.balanceTitle}</p>
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -1258,11 +1258,11 @@ const App: React.FC = () => {
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); const xpGain = Math.max(1, Math.ceil(d / 60)); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); reportEvent('session', { seconds: d, mode: 'REFLECTION' }); if (i) reportEvent('journal_entry', { entryType: e.type }); }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={(e) => setJournalEntries(e)} onBack={(totalSec) => { const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0; if (totalSec > 10) { reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' }); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain})); } setCurrentView('HOME'); }} />}
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); setUserProfile(p => { const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; let newEnergyDecisions = p.energyDecisions; let newEnergyEmotions = p.energyEmotions; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEnergyEmotions = Math.max(0, p.energyEmotions - 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), energyDecisions: newEnergyDecisions, energyEmotions: newEnergyEmotions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
         {currentView === 'ARCHETYPE_TEST' && (
-           <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
-             {/* 1. IMMERSIVE BACKGROUND LAYER (Full Screen, no padding) */}
-             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-                {/* Sacred Geometry Watermark - Absolute Center, Edge to Edge */}
-                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] scale-[2.2] transform">
+           <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative overflow-hidden ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
+             {/* 1. IMMERSIVE BACKGROUND LAYER (FIXED TO AVOID SCROLLING ISSUES) */}
+             <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+                {/* Sacred Geometry - Global Absolute Center */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.04] scale-[2.5] transform">
                     <svg width="400" height="400" viewBox="0 0 100 100" className={userProfile.rpgMode ? 'text-amber-900' : 'text-blue-900'}>
                       <path d="M50 50 m-20 0 a20 20 0 1 0 40 0 a20 20 0 1 0 -40 0" fill="none" stroke="currentColor" strokeWidth="0.3" />
                       <circle cx="50" cy="30" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
@@ -1274,13 +1274,13 @@ const App: React.FC = () => {
                     </svg>
                 </div>
                 
-                {/* God Rays / Central Glow Background */}
-                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[65%] w-full h-[60%] blur-[120px] opacity-[0.08] rounded-full scale-150 ${userProfile.rpgMode ? 'bg-amber-500' : 'bg-blue-400'}`} />
+                {/* Central Atmosphere Glow - Fills the physical screen */}
+                <div className={`absolute top-[-20%] left-[-20%] right-[-20%] bottom-[-20%] blur-[120px] opacity-[0.1] rounded-full ${userProfile.rpgMode ? 'bg-amber-500' : 'bg-blue-400'}`} />
              </div>
 
-             {/* 2. UI LAYER (Padding for interaction) */}
-             <header className="relative z-20 pt-6 px-6 mb-2 flex items-center justify-between">
-                <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full active:bg-black/5 transition-all ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
+             {/* 2. UI HEADER LAYER */}
+             <header className="relative z-30 pt-10 px-6 mb-2 flex items-center justify-between pointer-events-none">
+                <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full active:bg-black/5 transition-all pointer-events-auto ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
                   <X size={24}/>
                 </button>
                 <div className="flex-1 px-8">
@@ -1291,20 +1291,19 @@ const App: React.FC = () => {
                 <span className="text-[11px] font-black tracking-widest opacity-40">{testQuestionIdx + 1}/{QUESTIONS.length}</span>
              </header>
              
-             {/* 3. SCROLLABLE CONTENT AREA */}
-             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-10 z-10">
-               <div className="flex flex-col items-center">
+             {/* 3. SCROLLABLE CONTENT - PADDED TOP TO PREVENT CRYSTAL CLIPPING */}
+             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-10 z-20 overflow-x-hidden w-full">
+               <div className="flex flex-col items-center pt-8 overflow-visible">
                  <PrismAnimation rpgMode={userProfile.rpgMode} />
                  
-                 <div className="relative mb-10 text-center px-10 w-full max-w-lg mx-auto">
-                    {/* Soft "thought cloud" separator */}
-                    <div className={`absolute inset-0 blur-3xl opacity-[0.12] -z-10 rounded-full scale-y-[0.35] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-indigo-300'}`} />
+                 <div className="relative mt-2 mb-12 text-center px-10 w-full max-w-lg mx-auto">
+                    <div className={`absolute inset-0 blur-3xl opacity-[0.15] -z-10 rounded-full scale-y-[0.4] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-indigo-300'}`} />
                     <h2 className={`text-2xl font-black italic leading-[1.3] ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-800'}`}>
                       {QUESTIONS[testQuestionIdx].q}
                     </h2>
                  </div>
 
-                 <div className="w-full px-6 space-y-3.5 max-w-md">
+                 <div className="w-full px-6 space-y-4 max-w-md">
                    {QUESTIONS[testQuestionIdx].options.map((opt, idx) => (
                      <button 
                       key={idx} 
