@@ -16,9 +16,7 @@ const WELCOME_ENERGY_QUESTS = 3;
 
 const ADMIN_ID = 379881747; 
 
-// --- РЕДАКТИРОВАНИЕ ТЕКСТОВ ЭКРАНА ПОДПИСКИ ---
 const SUBSCRIPTION_TEXTS = {
-  // Обычный режим
   normal: {
     title: 'Расширь границы',
     subTitle: '',
@@ -26,7 +24,6 @@ const SUBSCRIPTION_TEXTS = {
     mentorSpeech: 'Твой путь осознанности требует больше пространства для маневра.',
     balanceTitle: 'Ваш текущий баланс',
   },
-  // RPG режим
   rpg: {
     title: 'Пробудить полную силу',
     subTitle: 'Станьте Мастером своей судьбы',
@@ -136,21 +133,21 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
 
   const renderTreeContent = () => {
     switch(stage) {
-      case 0: // Зерно (Seed): Компактное, в земле
+      case 0:
         return (
           <g>
             <path d="M50 78C56 78 60 72 60 65C60 58 50 48 50 48C50 48 40 58 40 65C40 72 44 78 50 78Z" fill={fillColor} />
             <path d="M35 82H65" stroke={fillColor} strokeWidth="3" strokeLinecap="round" opacity="0.3" />
           </g>
         );
-      case 1: // Росток (Sprout): Маленький крючок
+      case 1:
         return (
           <g>
             <path d="M50 82V75C50 75 50 68 58 64" stroke={strokeColor} strokeWidth="6" strokeLinecap="round" fill="none" />
             <ellipse cx="58" cy="64" rx="5" ry="3" transform="rotate(-25 58 64)" fill={fillColor} />
           </g>
         );
-      case 2: // Побег (Shoot): Заметно ВЫШЕ и ШИРЕ ростка
+      case 2:
         return (
           <g>
             <path d="M50 82V55" stroke={strokeColor} strokeWidth="7" strokeLinecap="round" />
@@ -160,14 +157,14 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
             <ellipse cx="68" cy="52" rx="6" ry="3.5" transform="rotate(-20 68 52)" fill={fillColor} />
           </g>
         );
-      case 3: // Саженец (Sapling): Тонкий ствол + шарообразная крона
+      case 3:
         return (
           <g>
             <path d="M50 82V62" stroke={trunkColor} strokeWidth="8" strokeLinecap="round" />
             <circle cx="50" cy="48" r="22" fill={fillColor} />
           </g>
         );
-      case 4: // Молодое Дерево (Young Tree): Выше, ствол крепче
+      case 4:
         return (
           <g>
             <path d="M50 82V58" stroke={trunkColor} strokeWidth="11" strokeLinecap="round" />
@@ -176,14 +173,14 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
             <circle cx="65" cy="48" r="12" fill={fillColor} opacity="0.8" />
           </g>
         );
-      case 5: // Крепкое Дерево (Strong Tree): Мощное основание
+      case 5:
         return (
           <g>
             <path d="M50 85L50 60M42 85L50 65M58 85L50 65" stroke={trunkColor} strokeWidth="12" strokeLinecap="round" />
             <circle cx="50" cy="40" r="36" fill={fillColor} />
           </g>
         );
-      case 6: // Ветвистое Древо (Branchy): ЗАМЕТНО ШИРЕ И СЛОЖНЕЕ 5-го
+      case 6:
         return (
           <g>
             <path d="M50 85V60L25 40M50 60L75 40M50 70L65 55" stroke={trunkColor} strokeWidth="10" strokeLinecap="round" />
@@ -192,14 +189,13 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
             <circle cx="75" cy="40" r="24" fill={fillColor} opacity="0.9" />
           </g>
         );
-      case 7: // Цветущее Древо (Blooming): Пышное облако с цветами
+      case 7:
         return (
           <g>
             <path d="M50 85V60" stroke={trunkColor} strokeWidth="12" strokeLinecap="round" />
             <circle cx="50" cy="40" r="38" fill={fillColor} />
             <circle cx="30" cy="45" r="26" fill={fillColor} opacity="0.9" />
             <circle cx="70" cy="45" r="26" fill={fillColor} opacity="0.9" />
-            {/* Цветы */}
             <circle cx="50" cy="25" r="4" fill="#FB7185" />
             <circle cx="35" cy="38" r="4" fill="#FB7185" />
             <circle cx="65" cy="38" r="4" fill="#FB7185" />
@@ -207,14 +203,13 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
             <circle cx="58" cy="52" r="4" fill="#FB7185" />
           </g>
         );
-      case 8: // Плодоносящее (Fruiting): Огромное, с плодами
+      case 8:
         return (
           <g>
             <path d="M50 85V55L15 45M50 55L85 45" stroke={trunkColor} strokeWidth="14" strokeLinecap="round" />
             <circle cx="50" cy="35" r="40" fill={fillColor} />
             <circle cx="20" cy="45" r="28" fill={fillColor} />
             <circle cx="80" cy="45" r="28" fill={fillColor} />
-            {/* Плоды */}
             <circle cx="30" cy="30" r="5" fill="#F59E0B" />
             <circle cx="70" cy="30" r="5" fill="#F59E0B" />
             <circle cx="50" cy="45" r="5" fill="#F59E0B" />
@@ -222,20 +217,15 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
             <circle cx="85" cy="50" r="5" fill="#F59E0B" />
           </g>
         );
-      case 9: // Древо Мудрости (Wisdom): Венец с нимбом и сложной структурой
+      case 9:
         return (
           <g>
-            {/* Нимб/Аура */}
             <circle cx="50" cy="45" r="48" stroke={fillColor} strokeWidth="1" strokeDasharray="4 4" opacity="0.3" />
             <circle cx="50" cy="45" r="42" fill={fillColor} opacity="0.1" />
-            
             <path d="M50 85V50L20 30M50 50L80 30M50 65L70 45M50 65L30 45" stroke={trunkColor} strokeWidth="10" strokeLinecap="round" />
-            
             <circle cx="50" cy="35" r="35" fill={fillColor} />
             <circle cx="20" cy="35" r="25" fill={fillColor} opacity="0.9" />
             <circle cx="80" cy="35" r="25" fill={fillColor} opacity="0.9" />
-            
-            {/* Магические искры */}
             <path d="M50 15L54 24H46L50 15Z" fill="#FDE68A" />
             <circle cx="50" cy="40" r="10" fill="#FDE68A" opacity="0.6" />
             <circle cx="20" cy="30" r="4" fill="#FDE68A" />
@@ -295,66 +285,41 @@ const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: 
 );
 
 const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
-  <div className="relative w-full flex flex-col items-center justify-center mb-8 mt-2">
-    {/* Background Glow Rays */}
+  <div className="relative w-full flex flex-col items-center justify-center mb-10 mt-6 overflow-visible">
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-visible">
        {[...Array(6)].map((_, i) => (
          <motion.div
            key={i}
            animate={{ rotate: 360 }}
            transition={{ duration: 30 + i * 5, repeat: Infinity, ease: "linear" }}
-           className="absolute w-[400px] h-[400px] opacity-[0.03]"
+           className="absolute w-[600px] h-[600px] opacity-[0.03]"
            style={{
-             background: `conic-gradient(from 0deg, transparent 0deg, ${rpgMode ? '#F59E0B' : '#818CF8'} 30deg, transparent 60deg)`
+             background: `conic-gradient(from 0deg, transparent 0deg, ${rpgMode ? '#F59E0B' : '#818CF8'} 45deg, transparent 90deg)`
            }}
          />
        ))}
     </div>
 
-    {/* Floating Ethereal Particles */}
-    <div className="absolute inset-0 pointer-events-none">
-      {[...Array(15)].map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ 
-            opacity: [0, 0.6, 0],
-            scale: [0, 1.2, 0],
-            x: [(Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300],
-            y: [(Math.random() - 0.5) * 200, (Math.random() - 0.5) * 300],
-          }}
-          transition={{ 
-            duration: 4 + Math.random() * 3, 
-            repeat: Infinity, 
-            delay: i * 0.5 
-          }}
-          className={`absolute left-1/2 top-1/2 w-1.5 h-1.5 rounded-full blur-[1px] ${rpgMode ? 'bg-amber-200' : 'bg-blue-200'}`}
-        />
-      ))}
-    </div>
-
     <motion.div
       animate={{ 
-        y: [0, -10, 0],
+        y: [0, -12, 0],
       }}
-      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
       className="relative z-10 flex items-center justify-center"
     >
-      {/* Outer Sacred Rings */}
       <motion.div
         animate={{ rotate: -360 }}
-        transition={{ duration: 40, repeat: Infinity, ease: "linear" }}
-        className={`absolute w-44 h-44 rounded-full border-[0.5px] border-dashed opacity-10 ${rpgMode ? 'border-amber-400' : 'border-blue-400'}`}
+        transition={{ duration: 50, repeat: Infinity, ease: "linear" }}
+        className={`absolute w-48 h-48 rounded-full border-[0.5px] border-dashed opacity-[0.08] ${rpgMode ? 'border-amber-400' : 'border-blue-400'}`}
       />
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className={`absolute w-36 h-36 rounded-full border-[1px] opacity-[0.15] ${rpgMode ? 'border-amber-500' : 'border-blue-500'}`}
+        transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
+        className={`absolute w-40 h-40 rounded-full border-[1px] opacity-[0.12] ${rpgMode ? 'border-amber-500' : 'border-blue-500'}`}
       />
 
-      {/* The Core Crystal */}
-      <div className="relative w-32 h-32 flex items-center justify-center">
-        <svg width="120" height="120" viewBox="0 0 100 100" className="overflow-visible">
+      <div className="relative w-36 h-36 flex items-center justify-center">
+        <svg width="140" height="140" viewBox="0 0 100 100" className="overflow-visible">
           <defs>
             <radialGradient id="highKeyGrad" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#FFFFFF" />
@@ -369,49 +334,45 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
             </linearGradient>
 
             <filter id="bloomSpread">
-              <feGaussianBlur stdDeviation="4" result="blur"/>
+              <feGaussianBlur stdDeviation="5" result="blur"/>
               <feComposite in="SourceGraphic" in2="blur" operator="over"/>
             </filter>
           </defs>
           
-          {/* Main Astral Shape */}
           <motion.path
             animate={{ 
-              scale: [1, 1.05, 1],
-              filter: ["drop-shadow(0 0 10px rgba(255,255,255,0.4))", "drop-shadow(0 0 25px rgba(255,255,255,0.8))", "drop-shadow(0 0 10px rgba(255,255,255,0.4))"]
+              scale: [1, 1.03, 1],
+              filter: ["drop-shadow(0 0 12px rgba(255,255,255,0.4))", "drop-shadow(0 0 30px rgba(255,255,255,0.7))", "drop-shadow(0 0 12px rgba(255,255,255,0.4))"]
             }}
-            transition={{ duration: 4, repeat: Infinity }}
+            transition={{ duration: 5, repeat: Infinity }}
             d="M50 5 L85 20 L95 50 L85 80 L50 95 L15 80 L5 50 L15 20 Z" 
             fill="url(#highKeyGrad)" 
             stroke="white"
-            strokeWidth="1"
-            strokeOpacity="0.7"
+            strokeWidth="0.8"
+            strokeOpacity="0.6"
           />
 
-          {/* Facets & Internal Reflections */}
-          <g opacity="0.4" stroke="white" strokeWidth="0.5">
+          <g opacity="0.35" stroke="white" strokeWidth="0.4">
             <path d="M50 5 L50 95" />
             <path d="M5 50 L95 50" />
             <path d="M15 20 L85 80" />
             <path d="M15 80 L85 20" />
           </g>
 
-          {/* Shimmering Overlay */}
           <motion.path 
             animate={{ opacity: [0.1, 0.4, 0.1] }}
-            transition={{ duration: 3, repeat: Infinity }}
+            transition={{ duration: 4, repeat: Infinity }}
             d="M50 5 L85 20 L95 50 L85 80 L50 95 L15 80 L5 50 L15 20 Z" 
             fill="url(#facetShimmer)"
           />
 
-          {/* Intense Light Core */}
           <motion.circle 
             animate={{ 
-              r: [10, 16, 10],
-              opacity: [0.8, 1, 0.8],
+              r: [12, 18, 12],
+              opacity: [0.7, 1, 0.7],
             }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            cx="50" cy="50" r="12" 
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            cx="50" cy="50" r="14" 
             fill="white" 
             filter="url(#bloomSpread)"
           />
@@ -496,8 +457,6 @@ const App: React.FC = () => {
   const [questOutcome, setQuestOutcome] = useState<{ outcome: string; artifact: string } | null>(null);
   const [arcExpanded, setArcExpanded] = useState(false);
 
-  const randomQuestCall = useMemo(() => QUEST_CALLS[Math.floor(Math.random() * QUEST_CALLS.length)], []);
-
   const getTelegramUserId = () => window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
   const reportEvent = async (type: string, value: any) => {
@@ -521,12 +480,9 @@ const App: React.FC = () => {
       setUserProfile(prev => {
         let updatedProfile = { ...prev };
         if (data.isSubscribed) updatedProfile.isSubscribed = true;
-        
-        // Handle purchased energy bonus if any
         if (data.energyBonus && data.energyBonus > 0) {
            updatedProfile.energyDecisions += data.energyBonus;
         }
-        
         return updatedProfile;
       });
     } catch (e) {
@@ -563,7 +519,6 @@ const App: React.FC = () => {
             setUserProfile(prev => ({ 
               ...prev, 
               ...profile,
-              // Initialization of new fields for existing users
               energyDecisions: profile.energyDecisions ?? WELCOME_ENERGY_DECISIONS,
               energyEmotions: profile.energyEmotions ?? WELCOME_ENERGY_EMOTIONS,
               energyQuests: profile.energyQuests ?? WELCOME_ENERGY_QUESTS
@@ -583,7 +538,6 @@ const App: React.FC = () => {
             setCurrentView('ONBOARDING');
         }
 
-        if (localHist.length > 0) setHistory(localHist);
         if (localHist.length > 0) setHistory(localHist);
         if (localEntries.length > 0) setJournalEntries(localEntries);
 
@@ -656,19 +610,9 @@ const App: React.FC = () => {
 
   const checkModeLimit = (mode: JournalMode): boolean => {
     if (userProfile.isSubscribed) return true;
-    
-    // Check only welcome bonus energy as daily limits are removed
-    if (mode === 'DECISION') {
-      return (userProfile.energyDecisions > 0);
-    }
-    if (mode === 'EMOTIONS') {
-      return (userProfile.energyEmotions > 0);
-    }
+    if (mode === 'DECISION') return (userProfile.energyDecisions > 0);
+    if (mode === 'EMOTIONS') return (userProfile.energyEmotions > 0);
     return true; 
-  };
-
-  const handleUpdateOrder = (newEntries: JournalEntry[]) => {
-    setJournalEntries(newEntries);
   };
 
   const handlePay = async () => {
@@ -716,8 +660,6 @@ const App: React.FC = () => {
       if (!data.ok || !data.result) throw new Error(data.description || "Ошибка");
       tg.openInvoice(data.result, (status: string) => {
         if (status === 'paid') {
-          // Local update will happen via polling or on next reload, 
-          // but we can optimisticly update or just wait for check-sub sync
           syncSubscription(userId);
           if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
@@ -847,7 +789,6 @@ const App: React.FC = () => {
       artifacts: [questOutcome!.artifact, ...prev.artifacts],
       lastQuestDate: Date.now(),
       totalQuestsDone: prev.totalQuestsDone + 1,
-      // Deduct quest energy if not subscribed
       energyQuests: prev.isSubscribed ? prev.energyQuests : Math.max(0, prev.energyQuests - 1)
     }));
     setGameStatus('IDLE');
@@ -944,7 +885,7 @@ const App: React.FC = () => {
                  <div className={`w-20 h-20 rounded-[30px] flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-xl' : 'bg-amber-50 text-amber-500'}`}><DecisionIllustration rpgMode={userProfile.rpgMode} size={50} /></div>
                  <div className="text-right">
                     <span className={`block text-5xl font-black tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-900'}`}>{userProfile.totalDecisions || 0}</span>
-                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-500'}`}>решений</span>
+                    <span className={`text-[10px] font-black uppercase tracking-[0.3em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-50'}`}>решений</span>
                  </div>
               </div>
               <div>
@@ -977,7 +918,6 @@ const App: React.FC = () => {
           </div>
         </div>
         
-        {/* Progress Bar Bento Box (Rank Info) */}
         <div className="px-6 mb-4">
            <button onClick={() => setCurrentView('RANKS_INFO')} className={`w-full text-left rounded-[32px] p-6 bento-shadow border active:scale-[0.98] transition-all relative ${userProfile.rpgMode ? 'rpg-card border-red-800/10' : 'bg-white bento-border'}`}>
               <div className="absolute top-6 right-6"><ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} /></div>
@@ -1008,7 +948,6 @@ const App: React.FC = () => {
            </button>
         </div>
 
-        {/* Quest Section Bento Box */}
         <div className="px-6 mb-10">
           {!userProfile.archetype ? (
             <div className={`rounded-[32px] p-8 bento-shadow border active:scale-[0.98] transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border'}`} onClick={() => { setTestQuestionIdx(0); setTestAnswers([]); reportEvent('test_started', {}); setCurrentView('ARCHETYPE_TEST'); }}>
@@ -1067,7 +1006,6 @@ const App: React.FC = () => {
                        </p>
                      </div>
                   </div>
-                  
                   <div className={`p-2 rounded-xl transition-all ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>
                      <ChevronRight size={20} strokeWidth={2.5} />
                   </div>
@@ -1098,7 +1036,6 @@ const App: React.FC = () => {
            </div>
         </div>
 
-        {/* --- ENERGY COUNTER BENTO BLOCK --- */}
         <div className={`p-5 rounded-[32px] mb-4 border flex items-center justify-between transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border bento-shadow'}`}>
           <div className="flex items-center space-x-4">
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-amber-50 text-amber-500'}`}>
@@ -1138,7 +1075,6 @@ const App: React.FC = () => {
            <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between bento-shadow transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий</span></div><ChevronRight size={18} /></button>
         </div>
 
-        {/* Telegram Channel Link */}
         <div 
           onClick={() => {
             if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
@@ -1172,72 +1108,21 @@ const App: React.FC = () => {
   const renderLimitReached = () => {
     const isRpg = userProfile.rpgMode;
     const isSubscribed = userProfile.isSubscribed;
-
     const t = isRpg ? SUBSCRIPTION_TEXTS.rpg : SUBSCRIPTION_TEXTS.normal;
 
     return (
       <div className={`h-full overflow-y-auto flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
         <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-red-800' : 'bg-indigo-500'}`} />
-
-        <motion.div 
-          initial={{ scale: 0.8, opacity: 0 }} 
-          animate={{ scale: 1, opacity: 1 }} 
-          className="mt-2 mb-4 relative w-full flex flex-col items-center"
-        >
-          {/* Main Pulsing Glow */}
-          <motion.div 
-            animate={{ 
-              scale: [1, 1.15, 1],
-              opacity: [0.15, 0.25, 0.15]
-            }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-64 h-64 blur-[80px] rounded-full ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} 
-          />
-
-          {/* Floating Particles */}
-          <div className="absolute inset-0 pointer-events-none">
-            {[...Array(8)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 0, x: 0 }}
-                animate={{ 
-                  opacity: [0, 1, 0],
-                  y: -120 - Math.random() * 60,
-                  x: (Math.random() - 0.5) * 80
-                }}
-                transition={{ 
-                  duration: 3 + Math.random() * 2, 
-                  repeat: Infinity, 
-                  delay: i * 0.4 
-                }}
-                className={`absolute left-1/2 bottom-1/2 w-1.5 h-1.5 rounded-full ${isRpg ? 'bg-amber-400 shadow-[0_0_8px_#FDE68A]' : 'bg-indigo-300 shadow-[0_0_8px_#818CF8]'}`}
-              />
-            ))}
-          </div>
-
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-2 mb-4 relative w-full flex flex-col items-center">
+          <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-64 h-64 blur-[80px] rounded-full ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} />
           <div className="relative z-10 flex flex-col items-center">
              <div className="relative group">
-                <motion.div 
-                  animate={{ scale: [1, 1.3], opacity: [0.4, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  className={`absolute inset-0 rounded-full border-2 ${isRpg ? 'border-red-800/30' : 'border-indigo-400/30'}`}
-                />
-                <motion.div
-                  animate={{ y: [0, -5, 0] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <motion.div animate={{ scale: [1, 1.3], opacity: [0.4, 0] }} transition={{ duration: 3, repeat: Infinity }} className={`absolute inset-0 rounded-full border-2 ${isRpg ? 'border-red-800/30' : 'border-indigo-400/30'}`} />
+                <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}>
                   <TreeIcon stage={9} size={160} rpgMode={isRpg} />
                 </motion.div>
              </div>
-             
-             <motion.div 
-               initial={{ y: 20, opacity: 0 }}
-               animate={{ y: 0, opacity: 1 }}
-               transition={{ delay: 0.5 }}
-               className={`mt-4 px-6 py-4 rounded-3xl rounded-tl-none border shadow-2xl max-w-[280px] relative ${
-                 isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'
-               }`}
-             >
+             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className={`mt-4 px-6 py-4 rounded-3xl rounded-tl-none border shadow-2xl max-w-[280px] relative ${isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'}`}>
                 <p className="text-[14px] font-bold leading-snug">{t.mentorSpeech}</p>
                 <div className={`absolute -bottom-2 -right-2 p-1.5 rounded-lg text-white shadow-lg ${isRpg ? 'bg-red-800' : 'bg-indigo-600'}`}>
                    <Sparkles size={12} />
@@ -1245,15 +1130,12 @@ const App: React.FC = () => {
              </motion.div>
           </div>
         </motion.div>
-
-        {/* --- ВАШ ЗАПАС (TRIAL COUNTER) --- */}
         {!isSubscribed && (
           <div className={`w-full p-8 rounded-[40px] mb-8 relative z-10 border-2 transition-all ${isRpg ? 'bg-white/60 border-red-800/30' : 'bg-white bento-border shadow-xl shadow-slate-200/40'}`}>
             <div className="flex items-center justify-center space-x-3 mb-8">
               <Package size={20} className={isRpg ? 'text-red-800' : 'text-indigo-500'} />
               <p className={`text-[12px] font-black uppercase tracking-[0.3em] ${isRpg ? 'text-red-900' : 'text-indigo-600'}`}>{t.balanceTitle}</p>
             </div>
-            
             <div className="grid grid-cols-3 gap-4">
                 <div className="flex flex-col items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-amber-50 text-amber-500'}`}>
@@ -1279,17 +1161,14 @@ const App: React.FC = () => {
             </div>
           </div>
         )}
-
         <div className="mb-10 space-y-2 relative z-10">
            <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>{t.title}</h2>
            <p className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-50 ${isRpg ? 'text-red-800' : 'text-slate-500'}`}>{t.subTitle}</p>
            <p className={`text-[12px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-slate-600'}`}>{t.description}</p>
         </div>
-
         <div className="w-full space-y-4 mb-10 relative z-10">
            {[
              { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквозь туман сомнений без границ.' : 'Анализируйте любые дилеммы, анализируйте свой выбор.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
-             // Fixed: Typo iRpg to isRpg
              { id: '2', label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Проходите сессии, разбирайте свои чувства с помощником столько раз, сколько нужно.', icon: Heart, color: isRpg ? 'bg-red-800' : 'bg-rose-500', textColor: isRpg ? 'text-red-800' : 'text-rose-600' },
              { id: '3', label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.', icon: Sword, color: isRpg ? 'bg-red-800' : 'bg-indigo-500', textColor: isRpg ? 'text-red-800' : 'text-indigo-600' }
            ].map((benefit, idx) => (
@@ -1299,13 +1178,11 @@ const App: React.FC = () => {
              </motion.div>
            ))}
         </div>
-
         <div className="w-full space-y-6 mb-24 relative z-10">
            <button onClick={handlePay} disabled={isPaying} className={`group w-full py-6 rounded-[40px] font-black text-lg flex items-center justify-center space-x-4 transition-all transform duration-300 border-b-[8px] active:scale-95 ${isPaying ? 'opacity-70 grayscale' : 'shadow-2xl'} ${isRpg ? 'rpg-button border-[#7f1d1d]' : 'bg-slate-900 text-white border-slate-950'}`}>
               {isPaying ? <Loader2 size={24} className="animate-spin" /> : <Sparkles size={24} className="group-hover:rotate-12 transition-transform" />}
               <span className="tracking-tight uppercase">{isPaying ? 'Соединение...' : 'Пробудить Силу'}</span>
            </button>
-           
            <div className="flex flex-col items-center space-y-6">
               <div className="flex items-center space-x-2 text-slate-400"><ShieldCheck size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Безопасно через Telegram Stars</span></div>
               <button onClick={() => setCurrentView('HOME')} className={`w-full py-4 rounded-[32px] font-black uppercase tracking-[0.2em] transition-all text-xs border-2 ${isRpg ? 'bg-white border-red-800/20 text-red-800' : 'bg-slate-50 border-slate-100 text-slate-500 hover:text-slate-800'}`}>Вернуться назад</button>
@@ -1321,7 +1198,6 @@ const App: React.FC = () => {
         <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><ArrowLeft size={24}/></button>
         <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>Ранги Сознания</h1>
       </header>
-      
       <div className={`mb-10 p-6 rounded-[32px] border ${userProfile.rpgMode ? 'bg-white/40 border-red-800/10 shadow-none' : 'bg-white bento-border shadow-sm shadow-slate-200/40'}`}>
          <div className="flex justify-between items-center mb-4">
             <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Ваш статус</p>
@@ -1329,7 +1205,6 @@ const App: React.FC = () => {
          </div>
          <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium italic' : 'text-slate-500'}`}>Каждая сессия рефлексии и принятое решение — это шаг к трансформации вашего внутреннего состояния.</p>
       </div>
-
       <div className="space-y-6">
         {RANKS.map((rank, i) => {
           const isReached = userProfile.xp >= rank.threshold;
@@ -1357,14 +1232,7 @@ const App: React.FC = () => {
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
-    return <AdminInterface 
-      stats={appStats} 
-      config={config} 
-      onSave={(newCfg) => console.log('Saving config', newCfg)} 
-      onBack={() => setCurrentView('PROFILE')} 
-      onGift={handleGiftSub} 
-      onReset={handleResetSub} // FIXED: removed targetId mismatch
-    />;
+    return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleResetSub} />;
   };
 
   const renderArchetypeResult = () => {
@@ -1387,95 +1255,70 @@ const App: React.FC = () => {
       <main className="flex-1 relative overflow-hidden z-10">
         {currentView === 'ONBOARDING' && <Onboarding rpgMode={userProfile.rpgMode} onComplete={handleOnboardingComplete} />}
         {currentView === 'HOME' && renderHome()}
-        {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { 
-            setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); 
-            const xpGain = Math.max(1, Math.ceil(d / 60)); 
-            setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); 
-            reportEvent('session', { seconds: d, mode: 'REFLECTION' }); 
-            if (i) reportEvent('journal_entry', { entryType: e.type });
-        }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={(e) => setJournalEntries(e)} onBack={(totalSec) => {
-            const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0;
-            if (totalSec > 10) {
-              reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' });
-              setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain}));
-            }
-            setCurrentView('HOME');
-        }} />}
-        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { 
-            setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); 
-            const xpGain = Math.max(1, Math.ceil(dur / 60)); 
-            
-            setUserProfile(p => {
-              const isDecision = selectedMode === 'DECISION';
-              const isEmotions = selectedMode === 'EMOTIONS';
-              
-              let newEnergyDecisions = p.energyDecisions;
-              let newEnergyEmotions = p.energyEmotions;
-
-              if (!p.isSubscribed) {
-                if (isDecision) {
-                  newEnergyDecisions = Math.max(0, p.energyDecisions - 1);
-                }
-                if (isEmotions) {
-                  newEnergyEmotions = Math.max(0, p.energyEmotions - 1);
-                }
-              }
-
-              return {
-                ...p,
-                xp: p.xp + xpGain,
-                totalSessions: p.totalSessions + 1,
-                totalMinutes: p.totalMinutes + xpGain,
-                totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0),
-                energyDecisions: newEnergyDecisions,
-                energyEmotions: newEnergyEmotions
-              };
-            });
-
-            reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); 
-        }} />}
+        {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); const xpGain = Math.max(1, Math.ceil(d / 60)); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); reportEvent('session', { seconds: d, mode: 'REFLECTION' }); if (i) reportEvent('journal_entry', { entryType: e.type }); }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={(e) => setJournalEntries(e)} onBack={(totalSec) => { const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0; if (totalSec > 10) { reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' }); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain})); } setCurrentView('HOME'); }} />}
+        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); setUserProfile(p => { const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; let newEnergyDecisions = p.energyDecisions; let newEnergyEmotions = p.energyEmotions; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEnergyEmotions = Math.max(0, p.energyEmotions - 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), energyDecisions: newEnergyDecisions, energyEmotions: newEnergyEmotions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
         {currentView === 'ARCHETYPE_TEST' && (
-           <div className={`h-full p-6 flex flex-col animate-fade-in transition-colors duration-500 overflow-hidden relative ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
-             {/* Background Watermark (Flower of Life) */}
-             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] z-0 scale-150">
-                <svg width="400" height="400" viewBox="0 0 100 100">
-                  <path d="M50 50 m-20 0 a20 20 0 1 0 40 0 a20 20 0 1 0 -40 0" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                  <circle cx="50" cy="30" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                  <circle cx="50" cy="70" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                  <circle cx="32" cy="40" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                  <circle cx="68" cy="40" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                  <circle cx="32" cy="60" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                  <circle cx="68" cy="60" r="20" fill="none" stroke="currentColor" strokeWidth="0.5" />
-                </svg>
+           <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
+             {/* 1. IMMERSIVE BACKGROUND LAYER (Full Screen, no padding) */}
+             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                {/* Sacred Geometry Watermark - Absolute Center, Edge to Edge */}
+                <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] scale-[2.2] transform">
+                    <svg width="400" height="400" viewBox="0 0 100 100" className={userProfile.rpgMode ? 'text-amber-900' : 'text-blue-900'}>
+                      <path d="M50 50 m-20 0 a20 20 0 1 0 40 0 a20 20 0 1 0 -40 0" fill="none" stroke="currentColor" strokeWidth="0.3" />
+                      <circle cx="50" cy="30" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
+                      <circle cx="50" cy="70" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
+                      <circle cx="32" cy="40" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
+                      <circle cx="68" cy="40" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
+                      <circle cx="32" cy="60" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
+                      <circle cx="68" cy="60" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
+                    </svg>
+                </div>
+                
+                {/* God Rays / Central Glow Background */}
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[65%] w-full h-[60%] blur-[120px] opacity-[0.08] rounded-full scale-150 ${userProfile.rpgMode ? 'bg-amber-500' : 'bg-blue-400'}`} />
              </div>
 
-             <header className="mb-8 flex items-center justify-between z-10"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><X size={24}/></button><div className="flex-1 px-4"><div className={`h-1 rounded-full ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-100'}`}><div className={`h-full rounded-full transition-all ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-50'}`} style={{ width: `${((testQuestionIdx + 1) / QUESTIONS.length) * 100}%` }}></div></div></div><span className="text-[10px] font-bold">{testQuestionIdx + 1}/{QUESTIONS.length}</span></header>
+             {/* 2. UI LAYER (Padding for interaction) */}
+             <header className="relative z-20 pt-6 px-6 mb-2 flex items-center justify-between">
+                <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full active:bg-black/5 transition-all ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
+                  <X size={24}/>
+                </button>
+                <div className="flex-1 px-8">
+                  <div className={`h-1.5 rounded-full overflow-hidden ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-200'}`}>
+                    <div className={`h-full transition-all duration-700 ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-500'}`} style={{ width: `${((testQuestionIdx + 1) / QUESTIONS.length) * 100}%` }} />
+                  </div>
+                </div>
+                <span className="text-[11px] font-black tracking-widest opacity-40">{testQuestionIdx + 1}/{QUESTIONS.length}</span>
+             </header>
              
-             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-6 z-10">
-               <div className="pt-4">
+             {/* 3. SCROLLABLE CONTENT AREA */}
+             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-10 z-10">
+               <div className="flex flex-col items-center">
                  <PrismAnimation rpgMode={userProfile.rpgMode} />
-               </div>
-               
-               <div className="relative mb-8 text-center px-4">
-                  {/* Subtle cloud background for question */}
-                  <div className={`absolute inset-0 blur-3xl opacity-[0.15] -z-10 rounded-full scale-y-[0.4] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-blue-400'}`} />
-                  <h2 className={`text-2xl font-black italic leading-snug ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2>
-               </div>
+                 
+                 <div className="relative mb-10 text-center px-10 w-full max-w-lg mx-auto">
+                    {/* Soft "thought cloud" separator */}
+                    <div className={`absolute inset-0 blur-3xl opacity-[0.12] -z-10 rounded-full scale-y-[0.35] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-indigo-300'}`} />
+                    <h2 className={`text-2xl font-black italic leading-[1.3] ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-800'}`}>
+                      {QUESTIONS[testQuestionIdx].q}
+                    </h2>
+                 </div>
 
-               <div className="space-y-3 px-1">
-                 {QUESTIONS[testQuestionIdx].options.map((opt, idx) => (
-                   <button 
-                    key={idx} 
-                    onClick={() => handleTestAnswer(idx)} 
-                    className={`w-full text-left p-5 rounded-[24px] border-2 transition-all duration-300 transform active:scale-[0.97] ${
-                      localSelectedIdx === idx 
-                        ? (userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg scale-[1.01]' : 'bg-slate-900 text-white shadow-xl scale-[1.01]') 
-                        : (userProfile.rpgMode ? 'bg-white/60 border-red-800/10 hover:border-red-800/30' : 'bg-white/80 backdrop-blur-sm bento-border bento-shadow shadow-slate-200/40 hover:border-indigo-200')
-                    }`}
-                   >
-                     <span className="text-base font-bold leading-tight">{opt}</span>
-                   </button>
-                 ))}
+                 <div className="w-full px-6 space-y-3.5 max-w-md">
+                   {QUESTIONS[testQuestionIdx].options.map((opt, idx) => (
+                     <button 
+                      key={idx} 
+                      onClick={() => handleTestAnswer(idx)} 
+                      className={`w-full text-left p-6 rounded-[28px] border-2 transition-all duration-300 transform active:scale-[0.98] ${
+                        localSelectedIdx === idx 
+                          ? (userProfile.rpgMode ? 'bg-red-800 text-white border-red-950 shadow-xl' : 'bg-slate-900 text-white border-slate-950 shadow-2xl scale-[1.01]') 
+                          : (userProfile.rpgMode ? 'bg-white/70 border-red-800/5 hover:border-red-800/20' : 'bg-white/90 backdrop-blur-md bento-border bento-shadow hover:border-indigo-100')
+                      }`}
+                     >
+                       <span className="text-[15px] font-bold leading-tight">{opt}</span>
+                     </button>
+                   ))}
+                 </div>
                </div>
              </div>
            </div>
