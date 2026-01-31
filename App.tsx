@@ -8,7 +8,7 @@ import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package, Plus } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package, Plus, Send } from 'lucide-react';
 
 const WELCOME_ENERGY_DECISIONS = 5;
 const WELCOME_ENERGY_EMOTIONS = 3;
@@ -294,6 +294,46 @@ const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: 
   </ArtifactBase>
 );
 
+const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
+  <div className="relative w-full flex flex-col items-center justify-center mb-10 mt-2">
+    {/* Пульсирующая аура за призмой */}
+    <motion.div
+      animate={{ 
+        scale: [1, 1.25, 1],
+        opacity: [0.15, 0.35, 0.15]
+      }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      className={`absolute w-32 h-32 rounded-full blur-[45px] ${rpgMode ? 'bg-red-500' : 'bg-indigo-400'}`}
+    />
+    {/* Парящая и вращающаяся призма */}
+    <motion.div
+      animate={{ 
+        y: [0, -15, 0],
+        rotateY: [0, 360]
+      }}
+      transition={{ 
+        y: { duration: 5, repeat: Infinity, ease: "easeInOut" },
+        rotateY: { duration: 10, repeat: Infinity, ease: "linear" }
+      }}
+      style={{ perspective: 1000 }}
+      className="relative z-10"
+    >
+      <svg width="50" height="75" viewBox="0 0 50 75" fill="none">
+        {/* Грани призмы */}
+        <path d="M25 0L50 37.5L25 75L0 37.5L25 0Z" fill={rpgMode ? "#991B1B" : "#4F46E5"} fillOpacity="0.85" />
+        <path d="M25 0L25 75" stroke="white" strokeOpacity="0.3" strokeWidth="1" />
+        <path d="M0 37.5L50 37.5" stroke="white" strokeOpacity="0.2" strokeWidth="1" />
+        {/* Блик */}
+        <path d="M25 0L50 37.5L25 37.5L25 0Z" fill="white" fillOpacity="0.15" />
+        {/* Тень */}
+        <path d="M25 37.5L50 37.5L25 75L25 37.5Z" fill="black" fillOpacity="0.1" />
+        {/* Контур */}
+        <path d="M25 0L50 37.5L25 75L0 37.5L25 0Z" stroke={rpgMode ? "#FDE68A" : "#C7D2FE"} strokeWidth="2.5" />
+      </svg>
+    </motion.div>
+  </div>
+);
+
 const ARCHETYPES: Archetype[] = [
   { id: '1', name: 'Шут', role: 'Мастер игры', motto: 'Живи моментом!', strength: 'Юмор и игривость', weakness: 'Легкомыслие', quote: 'Смех — это кратчайшее расстояние между двумя людьми.', description: 'Вы умеете находить радость в любой ситуации и превращать скуку в праздник.', meaning: 'Учит не принимать жизнь слишком серьезно и видеть абсурдность проблем.' },
   { id: '2', name: 'Славный малый', role: 'Союзник', motto: 'Мы все равны.', strength: 'Эмпатия и реализм', weakness: 'Потеря индивидуальности', quote: 'Быть собой — величайшее достижение в мире, который пытается сделать вас кем-то другим.', description: 'Вы цените честность, приземленность и глубокую связь с обычными людьми.', meaning: 'Символизирует потребность в принадлежности и принятии себя таким, какой ты есть.' },
@@ -325,7 +365,7 @@ export const RANKS = [
 const QUESTIONS = [
   { q: 'Что для вас важнее всего в жизни?', options: ['Порядок и успех', 'Свобода и приключения', 'Любовь и близость', 'Знания и мудрость'] },
   { q: 'Как вы обычно реагируете на трудности?', options: ['Беру ответственность', 'Ищу новый путь', 'Помогаю другим', 'Анализирую причины'] },
-  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с family', 'Чтение и размышления'] },
+  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с семьей', 'Чтение и размышления'] },
   { q: 'Чего вы боитесь больше всего?', options: ['Хаоса и слабости', 'Ограничений и скуки', 'Одиночества и предательства', 'Невежества и обмана'] },
   { q: 'Ваша главная цель...', options: ['Оставить след в истории', 'Найти свое истинное Я', 'Сделать мир добрее', 'Понять суть вещей'] },
   { q: 'Как вы ведете себя в компании?', options: ['Беру роль лидера', 'Делюсь открытиями', 'Забочусь о комфорте', 'Наблюдаю за всеми'] },
@@ -1010,6 +1050,29 @@ const App: React.FC = () => {
            <button onClick={() => setUserProfile(p => ({...p, rpgMode: !p.rpgMode}))} className={`w-full p-6 rounded-[32px] border flex items-center justify-between bento-shadow transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><Settings2 size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>RPG Режим</span></div><div className={`w-12 h-6 rounded-full transition-all relative ${userProfile.rpgMode ? 'bg-red-800' : 'bg-slate-200'}`}><div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${userProfile.rpgMode ? 'left-7' : 'left-1'}`}></div></div></button>
            <button onClick={() => setCurrentView('ARCHETYPE_GLOSSARY')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between bento-shadow transition-all ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}><BookOpen size={20} /></div><span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Глоссарий</span></div><ChevronRight size={18} /></button>
         </div>
+
+        {/* Telegram Channel Link */}
+        <div 
+          onClick={() => {
+            if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+            window.open('https://t.me/mindfulmirror', '_blank');
+          }}
+          className={`p-5 rounded-[32px] mt-6 border flex items-center justify-between cursor-pointer transition-all active:scale-[0.98] ${
+            userProfile.rpgMode ? 'rpg-card bg-red-800/5' : 'bg-white bento-border bento-shadow'
+          }`}
+        >
+          <div className="flex items-center space-x-4">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-blue-50 text-blue-500'}`}>
+              <Send size={18} />
+            </div>
+            <div>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Сообщество</p>
+              <span className={`font-bold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Наш Telegram канал</span>
+            </div>
+          </div>
+          <ChevronRight size={18} className={userProfile.rpgMode ? 'text-red-800' : 'text-slate-300'} />
+        </div>
+
         {isOwner && (
           <div className="mt-8 pt-8 border-t border-slate-100">
              <button onClick={() => setCurrentView('ADMIN')} className={`w-full p-6 rounded-[32px] border flex items-center justify-between bento-shadow transition-all ${userProfile.rpgMode ? 'rpg-card border-amber-500' : 'bg-amber-50 bento-border text-amber-900'}`}><div className="flex items-center space-x-4"><div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userProfile.rpgMode ? 'bg-amber-600 text-white shadow-lg' : 'bg-amber-200 text-amber-700'}`}><ShieldAlert size={20} /></div><span className="font-bold">Админ-панель</span></div><ChevronRight size={18} /></button>
@@ -1286,7 +1349,11 @@ const App: React.FC = () => {
         {currentView === 'ARCHETYPE_TEST' && (
            <div className={`h-full p-8 flex flex-col animate-fade-in transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
              <header className="mb-12 flex items-center justify-between"><button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}><X size={24}/></button><div className="flex-1 px-8"><div className={`h-1 rounded-full ${userProfile.rpgMode ? 'bg-red-800/10' : 'bg-slate-100'}`}><div className={`h-full rounded-full transition-all ${userProfile.rpgMode ? 'bg-red-800' : 'bg-indigo-50'}`} style={{ width: `${((testQuestionIdx + 1) / QUESTIONS.length) * 100}%` }}></div></div></div><span className="text-[10px] font-bold">{testQuestionIdx + 1}/{QUESTIONS.length}</span></header>
-             <div className="flex-1 flex flex-col justify-center"><h2 className={`text-3xl font-black mb-12 italic ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2><div className="space-y-3">{QUESTIONS[testQuestionIdx].options.map((opt, idx) => (<button key={idx} onClick={() => handleTestAnswer(idx)} className={`w-full text-left p-6 rounded-[28px] border-2 transition-all ${localSelectedIdx === idx ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white') : (userProfile.rpgMode ? 'bg-white/60 border-red-800/20' : 'bg-white bento-border bento-shadow')}`}><span className="text-lg font-bold">{opt}</span></button>))}</div></div>
+             <div className="flex-1 flex flex-col justify-center">
+               <PrismAnimation rpgMode={userProfile.rpgMode} />
+               <h2 className={`text-3xl font-black mb-12 italic text-center ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-800'}`}>{QUESTIONS[testQuestionIdx].q}</h2>
+               <div className="space-y-3">{QUESTIONS[testQuestionIdx].options.map((opt, idx) => (<button key={idx} onClick={() => handleTestAnswer(idx)} className={`w-full text-left p-6 rounded-[28px] border-2 transition-all ${localSelectedIdx === idx ? (userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-900 text-white') : (userProfile.rpgMode ? 'bg-white/60 border-red-800/20' : 'bg-white bento-border bento-shadow')}`}><span className="text-lg font-bold">{opt}</span></button>))}</div>
+             </div>
            </div>
         )}
         {currentView === 'ARCHETYPE_RESULT' && renderArchetypeResult()}
