@@ -315,7 +315,7 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 35, repeat: Infinity, ease: "linear" }}
-        className={`absolute w-40 h-40 rounded-full border-[1px] opacity-[0.12] ${rpgMode ? 'border-amber-500' : 'border-blue-500'}`}
+        className={`absolute w-40 h-40 rounded-full border-[1px] opacity-[0.12] ${rpgMode ? 'border-amber-50' : 'border-blue-500'}`}
       />
 
       <div className="relative w-32 h-32 flex items-center justify-center overflow-visible">
@@ -1132,8 +1132,7 @@ const App: React.FC = () => {
         </motion.div>
         {!isSubscribed && (
           <div className={`w-full p-8 rounded-[40px] mb-8 relative z-10 border-2 transition-all ${isRpg ? 'bg-white/60 border-red-800/30' : 'bg-white bento-border shadow-xl shadow-slate-200/40'}`}>
-            <div className="flex items-center justify-center space-x-3 mb-8">
-              <Package size={20} className={isRpg ? 'text-red-800' : 'text-indigo-50'} />
+            <div className="flex justify-center mb-8">
               <p className={`text-[12px] font-black uppercase tracking-[0.3em] ${isRpg ? 'text-red-900' : 'text-indigo-600'}`}>{t.balanceTitle}</p>
             </div>
             <div className="grid grid-cols-3 gap-4">
@@ -1149,7 +1148,7 @@ const App: React.FC = () => {
                     <Heart size={20} fill="currentColor" />
                   </div>
                   <span className="text-xl font-black mb-1 leading-none">{userProfile.energyEmotions}</span>
-                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest">Эмоции</span>
+                  <span className="text-[8px] uppercase font-black opacity-40 gratification-widest">Эмоции</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}>

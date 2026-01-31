@@ -130,22 +130,47 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         <div className="relative inline-block">
           <motion.div 
             initial={{ scale: 0, rotate: -20 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ type: "spring", bounce: 0.5, delay: 0.3 }}
-            className={`w-20 h-20 mx-auto rounded-[28px] flex items-center justify-center shadow-2xl relative z-10 ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}
+            animate={{ 
+              scale: 1, 
+              rotate: 0,
+              y: [0, -8, 0] 
+            }}
+            transition={{ 
+              type: "spring", 
+              bounce: 0.5, 
+              delay: 0.3,
+              y: { repeat: Infinity, duration: 4, ease: "easeInOut" }
+            }}
+            className={`w-20 h-20 mx-auto rounded-[28px] flex items-center justify-center shadow-2xl relative overflow-hidden z-10 ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}
           >
-            <Trophy size={40} strokeWidth={2.5} />
+            <Trophy size={40} strokeWidth={2.5} className="relative z-10" />
+            <motion.div 
+              animate={{ x: ['-100%', '200%'] }}
+              transition={{ repeat: Infinity, duration: 2.5, ease: "linear", delay: 1 }}
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 z-0"
+            />
           </motion.div>
-          {/* Decorative Sparkles */}
+
           <AnimatePresence>
-            {showConfetti && [1,2,3,4,5].map(i => (
+            {showConfetti && [1,2,3,4,5,6,7].map(i => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1, x: (i-3)*40, y: -40 - Math.random()*20 }}
-                className="absolute left-1/2 top-1/2 text-amber-400"
+                initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                animate={{ 
+                  opacity: [0, 1, 0.7, 1, 0], 
+                  scale: [0, 1.2, 1, 1.1, 0], 
+                  x: (i-4) * (28 + Math.random()*20), 
+                  y: -45 - Math.random()*35,
+                  rotate: [0, 45, 90, 135, 180]
+                }}
+                transition={{ 
+                  duration: 3 + Math.random()*2, 
+                  delay: 0.2 + (i*0.08),
+                  ease: "easeOut"
+                }}
+                className="absolute left-1/2 top-1/2 text-amber-400 pointer-events-none"
               >
-                <Sparkles size={16} fill="currentColor" />
+                <Sparkles size={14 + (i%3)*4} fill="currentColor" />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -161,7 +186,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         </div>
       </motion.div>
 
-      {/* 2. THE WINNER CARD (Duolingo Style Focus) */}
+      {/* 2. THE WINNER CARD */}
       <motion.div variants={itemVariants} className={`p-8 rounded-[40px] border-2 border-b-8 relative overflow-hidden transition-all ${
         rpgMode 
           ? 'bg-white border-red-800 shadow-xl' 
@@ -196,13 +221,15 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         </p>
       </motion.div>
 
-      {/* 3. RISK & HIDDEN FACTOR (Two Columns) */}
-      <div className="grid grid-cols-2 gap-4">
+      {/* 3. RISK & HIDDEN FACTOR (BALANCED COLUMNS) */}
+      <div className="grid grid-cols-2 gap-4 items-stretch">
         {/* RISK METER */}
-        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 flex flex-col items-center justify-center ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
-           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">{rpgMode ? 'Угроза' : 'Опасность'}</p>
-           <div className="relative mb-3">
-              <div className={`w-14 h-14 rounded-full border-4 flex items-center justify-center text-lg font-black ${
+        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 flex flex-col items-center justify-start ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
+           <div className="h-6 mb-4 flex items-center justify-center">
+             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">{rpgMode ? 'Угроза' : 'Опасность'}</p>
+           </div>
+           <div className="relative mb-5">
+              <div className={`w-16 h-16 rounded-full border-4 flex items-center justify-center text-lg font-black ${
                 analysis.riskLevel > 7 ? 'text-rose-600 border-rose-100' : 
                 analysis.riskLevel > 4 ? 'text-amber-600 border-amber-100' : 'text-emerald-600 border-emerald-100'
               }`}>
@@ -222,19 +249,34 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
            </p>
         </motion.div>
 
-        {/* HIDDEN FACTOR CARD */}
-        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 relative overflow-hidden flex flex-col items-center justify-center text-center ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
-           <div className={`mb-3 p-2 rounded-xl ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-50 text-indigo-600'}`}>
-             {rpgMode ? <Compass size={18} /> : <Search size={18} />}
+        {/* HIDDEN FACTOR (INSIGHT) CARD */}
+        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 relative overflow-hidden flex flex-col items-center justify-start text-center ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
+           <div className="h-6 mb-4 flex items-center justify-center">
+             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+               {rpgMode ? 'Тайное знание' : 'Инсайт'}
+             </p>
            </div>
-           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">{rpgMode ? 'Тайное знание' : 'Инсайт'}</p>
+           
+           <div className="relative mb-5">
+              <motion.div 
+                animate={{ 
+                  y: [0, -3, 0],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                className={`w-16 h-16 rounded-full flex items-center justify-center border-4 ${rpgMode ? 'bg-red-800 text-white border-red-900/10' : 'bg-indigo-50 text-indigo-600 border-indigo-100/50'}`}
+              >
+                {rpgMode ? <Compass size={32} /> : <Search size={32} strokeWidth={2.5} />}
+              </motion.div>
+           </div>
+
            <p className={`text-[13px] font-bold leading-tight ${rpgMode ? 'text-red-950 italic' : 'text-slate-800'}`}>
              {analysis.hiddenFactor}
            </p>
         </motion.div>
       </div>
 
-      {/* 4. THE ACTION STEP - "QUEST" STYLE */}
+      {/* 4. THE ACTION STEP */}
       <motion.div variants={itemVariants} className="relative group">
          <div className={`absolute inset-0 blur-2xl opacity-20 transition-opacity group-hover:opacity-40 ${rpgMode ? 'bg-red-800' : 'bg-indigo-600'}`}></div>
          <div className={`relative p-8 rounded-[44px] border-2 border-b-[10px] overflow-hidden transition-all active:scale-[0.98] ${

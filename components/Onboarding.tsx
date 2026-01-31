@@ -92,7 +92,7 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
     <motion.div 
       animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
       transition={{ duration: 4, repeat: Infinity }}
-      className={`absolute inset-0 blur-3xl rounded-full ${rpgMode ? 'bg-amber-600/30' : 'bg-indigo-500/30'}`} 
+      className={`absolute inset-0 blur-3xl rounded-full ${rpgMode ? 'bg-amber-600/30' : 'bg-violet-500/30'}`} 
     />
     <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
       <defs>
@@ -106,12 +106,12 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
       <motion.circle 
         animate={{ rotate: 360 }}
         transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-        cx="50" cy="50" r="42" fill="none" stroke={rpgMode ? "#B91C1C" : "#818CF8"} strokeWidth="0.5" strokeDasharray="2 6" opacity="0.3" 
+        cx="50" cy="50" r="42" fill="none" stroke={rpgMode ? "#B91C1C" : "#A78BFA"} strokeWidth="0.5" strokeDasharray="2 6" opacity="0.3" 
       />
       <motion.circle 
         animate={{ rotate: -360 }}
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        cx="50" cy="50" r="35" fill="none" stroke={rpgMode ? "#B91C1C" : "#818CF8"} strokeWidth="0.5" strokeDasharray="10 5" opacity="0.2" 
+        cx="50" cy="50" r="35" fill="none" stroke={rpgMode ? "#B91C1C" : "#C084FC"} strokeWidth="0.5" strokeDasharray="10 5" opacity="0.2" 
       />
 
       {/* Main Faceted Star Body */}
@@ -121,10 +121,10 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         >
           {/* Broad Vertical/Horizontal Facets */}
-          <path d="M0 -40 L10 -10 L0 0 L-10 -10 Z" fill={rpgMode ? "#7F1D1D" : "#6366F1"} />
-          <path d="M0 40 L10 10 L0 0 L-10 10 Z" fill={rpgMode ? "#B91C1C" : "#818CF8"} opacity="0.8" />
-          <path d="M40 0 L10 10 L0 0 L10 -10 Z" fill={rpgMode ? "#7F1D1D" : "#4F46E5"} opacity="0.9" />
-          <path d="M-40 0 L-10 10 L0 0 L-10 -10 Z" fill={rpgMode ? "#B91C1C" : "#4338CA"} opacity="0.7" />
+          <path d="M0 -40 L10 -10 L0 0 L-10 -10 Z" fill={rpgMode ? "#7F1D1D" : "#8B5CF6"} />
+          <path d="M0 40 L10 10 L0 0 L-10 10 Z" fill={rpgMode ? "#B91C1C" : "#C084FC"} opacity="0.8" />
+          <path d="M40 0 L10 10 L0 0 L10 -10 Z" fill={rpgMode ? "#7F1D1D" : "#7C3AED"} opacity="0.9" />
+          <path d="M-40 0 L-10 10 L0 0 L-10 -10 Z" fill={rpgMode ? "#B91C1C" : "#6D28D9"} opacity="0.7" />
           
           {/* Diamond Center Overlay */}
           <path d="M0 -15 L15 0 L0 15 L-15 0 Z" fill="white" opacity="0.2" />
@@ -136,7 +136,7 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
           transition={{ duration: 2, repeat: Infinity }}
           r="6" fill="white" 
         />
-        <circle r="3" fill={rpgMode ? "#FDE68A" : "#C7D2FE"} />
+        <circle r="3" fill={rpgMode ? "#FDE68A" : "#DDD6FE"} />
       </g>
       
       {/* Subtle floating sparks (dots, not legs) */}
@@ -205,9 +205,9 @@ const SLIDES = [
     title: 'Ваша истинная суть',
     description: 'Узнайте свой психологический архетип. Проходите ежедневные испытания, собирайте артефакты и взрастите свое Древо Мудрости.',
     Artifact: SparkleArtifact,
-    color: 'text-indigo-500',
-    bg: 'from-indigo-500/20 to-blue-500/10',
-    iconBg: 'bg-indigo-100',
+    color: 'text-violet-600',
+    bg: 'from-violet-600/20 to-purple-500/10',
+    iconBg: 'bg-violet-50',
   },
   {
     title: 'Летопись вашей жизни',
