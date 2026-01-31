@@ -34,14 +34,22 @@ export interface DecisionAnalysis {
   actionStep: string;
 }
 
+export interface DecisionArgument {
+  text: string;
+  type: 'pro' | 'con';
+}
+
 export interface DecisionData {
   topic: string;
-  pros: string[];
-  cons: string[];
   decisionType: 'SINGLE' | 'COMPARE';
-  optionA?: string;
-  optionB?: string;
+  optionA: string;
+  optionB: string;
+  argsA: DecisionArgument[];
+  argsB: DecisionArgument[];
   analysis?: DecisionAnalysis;
+  // Поля для обратной совместимости с историей
+  pros?: string[]; 
+  cons?: string[];
 }
 
 export interface ChatSession {

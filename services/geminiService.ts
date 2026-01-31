@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, GenerateContentResponse, Type } from "@google/genai";
-import { Message, DecisionData, Archetype } from '../types';
+import { Message, DecisionData, Archetype, DecisionArgument } from '../types';
 
 const SYSTEM_INSTRUCTION_RPG_QUEST = `
 Ты — Мастер Игры в мире психологического фэнтези. 
@@ -32,6 +32,35 @@ const DECISION_ANALYSIS_SCHEMA = {
     actionStep: { type: Type.STRING, description: "Первый конкретный шаг для пользователя" }
   },
   required: ['verdict', 'balanceA', 'balanceB', 'hiddenFactor', 'riskLevel', 'riskDescription', 'actionStep']
+};
+
+export const identifyDecisionIntent = async (question: string): Promise<{ type: 'SINGLE' | 'COMPARE', optionA: string, optionB: string }> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Проанализируй вопрос пользователя и определи названия двух вариантов для колонок сравнения.
+      Вопрос: "${question}"
+      Если это выбор между А и Б (например, "Туфли или кроссовки"), верни названия вариантов.
+      Если это анализ одного действия (например, "Стоит ли мне уволиться"), верни вариант А - само действие, вариант Б - "Не делать этого".
+      Верни JSON.`,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            type: { type: Type.STRING, enum: ['SINGLE', 'COMPARE'] },
+            optionA: { type: Type.STRING },
+            optionB: { type: Type.STRING }
+          },
+          required: ['type', 'optionA', 'optionB']
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (e) {
+    return { type: 'SINGLE', optionA: 'Вариант А', optionB: 'Вариант Б' };
+  }
 };
 
 export const generateRPGQuest = async (archetype: Archetype): Promise<{ scene: string; optA: string; optB: string }> => {
@@ -81,8 +110,6 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
     ? "Ты эмпатичный психолог-собеседник. Твоя задача — поддерживать пользователя, помнить контекст беседы (имена, события) и помогать прожить эмоции. Не давай сухих советов, будь человечным." 
     : "Ты мудрый наставник для рефлексии. Помогай пользователю подводить итоги, задавай глубокие наводящие вопросы, опираясь на то, что пользователь рассказывал ранее в этой беседе.";
 
-  // Преобразуем историю сообщений в формат Gemini
-  // Ограничиваем историю последними 15 сообщениями для экономии и фокуса
   const geminiHistory = history
     .filter(m => m.role !== 'system' && m.content && m.content.trim() !== '')
     .slice(-15)
@@ -101,22 +128,25 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
   return result.text || "...";
 };
 
-// Fixed: Upgraded model to gemini-3-pro-preview for advanced reasoning
 export const analyzeDecision = async (data: DecisionData): Promise<DecisionData> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  let prompt = '';
   
-  if (data.decisionType === 'COMPARE') {
-    prompt = `Проанализируй выбор между двумя вариантами. 
-    Вариант А: ${data.optionA}. Его аргументы: ${data.pros.join(', ')}.
-    Вариант Б: ${data.optionB}. Его аргументы: ${data.cons.join(', ')}.
-    Сравни их и дай глубокий структурированный совет.`;
-  } else {
-    prompt = `Проанализируй решение: ${data.topic}. 
-    Плюсы: ${data.pros.join(', ')}. 
-    Минусы: ${data.cons.join(', ')}. 
-    Дай взвешенный структурированный совет.`;
-  }
+  const formatArgs = (args: DecisionArgument[]) => 
+    args.map(a => a.text).join('; ');
+
+  const prompt = `Проанализируй решение: "${data.topic}".
+  
+  Вариант А (${data.optionA}):
+  Аргументы: ${formatArgs(data.argsA)}
+  
+  Вариант Б (${data.optionB}):
+  Аргументы: ${formatArgs(data.argsB)}
+  
+  ЗАДАЧА:
+  1. Проанализируй каждый аргумент. Сам определи, является ли он плюсом, минусом или риском для соответствующего варианта.
+  2. Сравни варианты на основе этих данных.
+  3. Выяви скрытые психологические мотивы пользователя.
+  4. Дай четкий вердикт и первый шаг.`;
 
   const result = await ai.models.generateContent({ 
     model: 'gemini-3-pro-preview', 
@@ -134,38 +164,4 @@ export const analyzeDecision = async (data: DecisionData): Promise<DecisionData>
     console.error("Analysis Parse Error", e);
     return data;
   }
-};
-
-// Fixed: Upgraded model to gemini-3-pro-preview for advanced reasoning
-export const refineDecision = async (currentData: DecisionData, userInput: string): Promise<{ text: string; data: DecisionData }> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-  const result = await ai.models.generateContent({
-    model: 'gemini-3-pro-preview',
-    contents: `Обнови список аргументов и проведи анализ. Ввод пользователя: ${userInput}. Данные: ${JSON.stringify(currentData)}`,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          updatedData: {
-            type: Type.OBJECT,
-            properties: {
-              topic: { type: Type.STRING },
-              pros: { type: Type.ARRAY, items: { type: Type.STRING } },
-              cons: { type: Type.ARRAY, items: { type: Type.STRING } },
-              decisionType: { type: Type.STRING },
-              optionA: { type: Type.STRING },
-              optionB: { type: Type.STRING },
-              analysis: DECISION_ANALYSIS_SCHEMA
-            },
-            required: ['topic', 'pros', 'cons', 'decisionType']
-          },
-          chatResponse: { type: Type.STRING, description: "Короткая текстовая реакция для чата" }
-        },
-        required: ['updatedData', 'chatResponse']
-      }
-    }
-  });
-  const response = JSON.parse(result.text || "{}");
-  return { text: response.chatResponse, data: response.updatedData };
 };
