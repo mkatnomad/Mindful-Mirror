@@ -8,6 +8,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const body = req.body;
 
+  // Обработка предварительного запроса оплаты
   if (body.pre_checkout_query) {
     await fetch(`https://api.telegram.org/bot${token}/answerPreCheckoutQuery`, {
       method: 'POST',
@@ -21,6 +22,36 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const message = body.message;
+
+  // НОВОЕ: Обработка команды /start
+  if (message?.text === '/start') {
+    const userId = message.from.id;
+    // Определяем хост динамически, чтобы кнопка всегда вела на правильный адрес Vercel
+    const host = req.headers.host || 'mindful-mirror.vercel.app';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const appUrl = `${protocol}://${host}`;
+
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: userId,
+        text: "Добро пожаловать в Mindful Mirror! ✨\n\nВаше персональное зеркало осознанности готово к работе. Нажмите кнопку ниже, чтобы начать свой путь самопознания.",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🚀 Открыть приложение",
+                web_app: { url: appUrl }
+              }
+            ]
+          ]
+        }
+      })
+    });
+  }
+
+  // Обработка успешного платежа
   if (message?.successful_payment) {
     const userId = message.from.id;
     const payload = message.successful_payment.invoice_payload;
