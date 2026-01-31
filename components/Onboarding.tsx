@@ -46,27 +46,43 @@ const LightningArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
   </div>
 );
 
-const HeartArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
+const SphereArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
   <div className="relative w-full h-full flex items-center justify-center">
     <motion.div 
-      animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-      transition={{ duration: 3, repeat: Infinity }}
-      className={`absolute inset-0 blur-2xl rounded-full ${rpgMode ? 'bg-red-600/30' : 'bg-rose-400/40'}`} 
+      animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.5, 0.3] }}
+      transition={{ duration: 4, repeat: Infinity }}
+      className={`absolute inset-0 blur-3xl rounded-full ${rpgMode ? 'bg-red-600/30' : 'bg-indigo-500/30'}`} 
     />
     <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
-      <circle cx="50" cy="50" r="48" fill="none" stroke={rpgMode ? "#B91C1C" : "#FB7185"} strokeWidth="1" opacity="0.1" />
-      {[1, 0.7, 0.4].map((s, i) => (
-        <motion.path
-          key={i}
-          animate={{ scale: [s, s * 1.1, s], opacity: [1 - i*0.3, 0.5, 1 - i*0.3] }}
-          transition={{ duration: 3, delay: i * 0.4, repeat: Infinity }}
-          d="M50 82C30 72 12 55 12 35C12 22 25 15 40 22C45 25 50 30 50 30C50 30 55 25 60 22C75 15 88 22 88 35C88 55 70 72 50 82Z"
-          fill="none"
-          stroke={rpgMode ? (i === 0 ? "#7F1D1D" : "#B91C1C") : (i === 0 ? "#E11D48" : "#FB7185")}
-          strokeWidth={2 + i}
-          transform-origin="center"
+      <circle cx="50" cy="50" r="48" fill="none" stroke={rpgMode ? "#B91C1C" : "#6366F1"} strokeWidth="0.5" opacity="0.2" />
+      
+      {/* Mystical Lotus/Sphere of Balance */}
+      <g transform="translate(50, 50)">
+        {[0, 45, 90, 135].map((angle, i) => (
+          <motion.ellipse
+            key={angle}
+            animate={{ 
+              rx: [10, 15, 10], 
+              ry: [35, 40, 35],
+              opacity: [0.3, 0.6, 0.3]
+            }}
+            transition={{ duration: 3, delay: i * 0.5, repeat: Infinity }}
+            cx="0" cy="0" rx="12" ry="38"
+            fill="none"
+            stroke={rpgMode ? "#7F1D1D" : "#818CF8"}
+            strokeWidth="1.5"
+            transform={`rotate(${angle})`}
+          />
+        ))}
+        
+        <motion.circle 
+          animate={{ scale: [1, 1.2, 1] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          r="8" 
+          fill={rpgMode ? "#B91C1C" : "#6366F1"} 
         />
-      ))}
+        <circle r="4" fill="white" opacity="0.8" />
+      </g>
     </svg>
   </div>
 );
@@ -180,10 +196,10 @@ const SLIDES = [
   {
     title: 'Гармония чувств',
     description: 'Прислушайтесь к своему состоянию. Исследуйте природу своих эмоций через глубокий диалог и находите точку покоя внутри себя.',
-    Artifact: HeartArtifact,
-    color: 'text-rose-500',
-    bg: 'from-rose-500/20 to-pink-500/10',
-    iconBg: 'bg-rose-100',
+    Artifact: SphereArtifact,
+    color: 'text-indigo-600',
+    bg: 'from-indigo-600/20 to-violet-500/10',
+    iconBg: 'bg-indigo-50',
   },
   {
     title: 'Ваша истинная суть',
