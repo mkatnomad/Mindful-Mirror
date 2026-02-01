@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Share2, Check, Sparkles, Search, AlertTriangle, Activity, Compass, ShieldAlert, Trophy, ArrowRight, Zap, Target } from 'lucide-react';
+import { Share2, Check, Sparkles, Search, AlertTriangle, Activity, Compass, ShieldAlert, Trophy, Zap, Target } from 'lucide-react';
 import { DecisionData } from '../types';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
@@ -297,7 +297,6 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
             
             <div className={`flex items-center space-x-2 text-[11px] font-black uppercase tracking-widest transition-all ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>
                <span>{rpgMode ? 'Принимаю вызов' : 'Я сделаю это'}</span>
-               <ArrowRight size={14} strokeWidth={3} className="group-hover:translate-x-1 transition-transform" />
             </div>
          </div>
       </motion.div>

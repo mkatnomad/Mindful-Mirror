@@ -245,11 +245,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           }
         }}
       >
-        <div className="flex items-center justify-between px-1 mb-1">
-          <h4 className={`text-[9px] font-black uppercase tracking-widest truncate ${isActive ? (rpgMode ? 'text-red-900' : 'text-indigo-600') : 'text-slate-400'}`}>
+        <div className={`flex items-center justify-between px-2 py-1.5 rounded-xl transition-all duration-500 mb-1 ${
+          isActive 
+            ? (rpgMode ? 'bg-red-800/10 border border-red-800/20' : 'bg-indigo-50 border border-indigo-100/50 shadow-sm shadow-indigo-100/30') 
+            : 'bg-transparent border border-transparent'
+        }`}>
+          <h4 className={`text-[11px] font-black uppercase tracking-widest truncate ${
+            isActive ? (rpgMode ? 'text-red-900' : 'text-indigo-600') : 'text-slate-400'
+          }`}>
             {title}
           </h4>
-          <span className={`text-[8px] font-black px-1 py-0.5 rounded ${isActive ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'}`}>
+          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-lg transition-all ${
+            isActive ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'
+          }`}>
             {items.length}
           </span>
         </div>
@@ -410,7 +418,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
 
                 <div className="p-4 pb-6 shrink-0">
-                   <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim() || isIdentifying} className={`w-full py-5 rounded-[32px] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center space-x-4 transition-all shadow-xl active:scale-95 border-b-[6px] disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-red-950' : 'bg-slate-900 text-white border-slate-950'}`}>
+                   <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim() || isIdentifying} className={`w-full py-5 rounded-[32px] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center space-x-4 transition-all shadow-xl border-b-[6px] disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-red-950' : 'bg-slate-900 text-white border-slate-950'}`}>
                      <span>Взвесить факторы</span><ChevronRight size={16} strokeWidth={4} />
                    </button>
                 </div>
