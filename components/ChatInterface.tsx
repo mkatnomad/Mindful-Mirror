@@ -17,15 +17,6 @@ interface ChatInterfaceProps {
   archetype?: Archetype | null;
 }
 
-const QUICK_STARTERS = [
-  "Уволиться или остаться?",
-  "Купить это сейчас или подождать?",
-  "Сказать правду или промолчать?",
-  "Пойти на риск или стабильность?",
-  "Взять паузу или продолжать?"
-];
-
-// Иллюстрация весов для режима решений
 const DecisionIllustration = ({ rpgMode, size = 32, opacity = 1 }: { rpgMode: boolean, size?: number, opacity?: number }) => (
   <svg width={size} height={size} viewBox="0 0 100 100" fill="none" className="overflow-visible">
     <circle cx="50" cy="50" r="48" fill={rpgMode ? "#B91C1C" : "#F59E0B"} fillOpacity="0.05" />
@@ -37,7 +28,6 @@ const DecisionIllustration = ({ rpgMode, size = 32, opacity = 1 }: { rpgMode: bo
   </svg>
 );
 
-// Мини-версия анимации кристалла для загрузки
 const MiniPrism = ({ rpgMode }: { rpgMode: boolean }) => (
   <div className="relative w-24 h-24 flex items-center justify-center">
     <motion.div
@@ -55,6 +45,14 @@ const MiniPrism = ({ rpgMode }: { rpgMode: boolean }) => (
   </div>
 );
 
+const QUICK_STARTERS = [
+  "Уволиться или остаться?",
+  "Купить это сейчас или подождать?",
+  "Сказать правду или промолчать?",
+  "Пойти на риск или стабильность?",
+  "Взять паузу или продолжать?"
+];
+
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ 
   mode, 
   onBack, 
@@ -70,11 +68,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isIdentifying, setIsIdentifying] = useState(false);
   const startTimeRef = useRef<number>(Date.now());
   const isInitialized = useRef(false);
+  
+  // Рефы для авто-скролла к активной плитке
+  const activeInputRef = useRef<HTMLTextAreaElement>(null);
+  const listContainerRef = useRef<HTMLDivElement>(null);
 
   // Decision States
   const [decisionStep, setDecisionStep] = useState<number>(1); 
   const [activeSide, setActiveSide] = useState<'A' | 'B'>('A');
   const [inlineInput, setInlineInput] = useState('');
+  const [isEditingNew, setIsEditingNew] = useState(false);
   const [decisionData, setDecisionData] = useState<DecisionData>({ 
     topic: '', argsA: [], argsB: [], decisionType: 'SINGLE', optionA: 'Вариант А', optionB: 'Вариант Б' 
   });
@@ -105,6 +108,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     isInitialized.current = true;
   }, [mode, readOnly, initialMessages, rpgMode]);
 
+  // Фокус и скролл при активации плитки
+  useEffect(() => {
+    if (isEditingNew && activeInputRef.current) {
+      activeInputRef.current.focus();
+      activeInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [isEditingNew, activeSide]);
+
   const handleBack = () => {
     const hasUserInteraction = mode === 'DECISION' 
       ? (decisionStep >= 2) 
@@ -122,13 +133,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleDecisionStart = async () => {
     if (!decisionData.topic.trim()) return;
-    
-    // Ритуал прозрения
     setIsIdentifying(true);
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
 
     try {
-      // ИИ определяет интент и названия колонок
       const intent = await identifyDecisionIntent(decisionData.topic);
       setDecisionData(prev => ({
         ...prev,
@@ -136,20 +144,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         optionA: intent.optionA,
         optionB: intent.optionB
       }));
-      
-      // Искусственная пауза для "магии" и плавности
-      await new Promise(r => setTimeout(r, 1000));
-      
+      await new Promise(r => setTimeout(r, 800));
       setDecisionStep(2);
+      // Сразу активируем ввод для первой стороны
+      setIsEditingNew(true);
+      setActiveSide('A');
     } catch (e) {
       setDecisionStep(2);
+      setIsEditingNew(true);
     } finally {
       setIsIdentifying(false);
     }
   };
 
   const addArgument = () => {
-    if (!inlineInput.trim()) return;
+    if (!inlineInput.trim()) {
+      setIsEditingNew(false);
+      return;
+    }
     const newArg: DecisionArgument = { text: inlineInput.trim(), type: 'pro' };
     
     if (activeSide === 'A') {
@@ -160,6 +172,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     
     setInlineInput('');
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    
+    // Оставляем режим редактирования активным для следующей плитки
+    setTimeout(() => {
+      if (activeInputRef.current) {
+        activeInputRef.current.focus();
+        activeInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 50);
   };
 
   const removeArgument = (side: 'A' | 'B', index: number) => {
@@ -209,81 +229,118 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  const renderArgumentCard = (side: 'A' | 'B') => {
+  const renderSideColumn = (side: 'A' | 'B') => {
     const isActive = activeSide === side;
     const items = side === 'A' ? decisionData.argsA : decisionData.argsB;
     const title = side === 'A' ? decisionData.optionA : decisionData.optionB;
     
-    let cardClasses = `flex flex-col rounded-[32px] p-5 border-2 border-b-[6px] transition-all duration-300 cursor-pointer h-full relative overflow-hidden `;
-    
-    if (rpgMode) {
-      cardClasses += isActive 
-        ? "bg-white border-red-800 shadow-[0_4px_0_#7f1d1d]" 
-        : "bg-white/40 border-red-800/10 opacity-60 grayscale scale-[0.96]";
-    } else {
-      cardClasses += isActive
-        ? `bg-white border-indigo-500 shadow-[0_10px_25px_-5px_rgba(99,102,241,0.2)] scale-[1.02] z-10`
-        : `bg-slate-50 border-slate-200 opacity-50 scale-[0.96] z-0`;
-    }
-
     return (
-      <motion.div 
-        layout
+      <div 
+        className={`flex flex-col space-y-3 transition-all duration-500 ease-out ${isActive ? 'flex-[2.5]' : 'flex-[1] opacity-40 grayscale-[0.5]'}`}
         onClick={() => {
-          setActiveSide(side);
-          if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('soft');
+          if (!isActive) {
+            setActiveSide(side);
+            setIsEditingNew(true);
+            if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('soft');
+          }
         }}
-        className={cardClasses}
       >
-        <div className="flex justify-between items-start mb-4">
-           <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] ${isActive ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-400'}`}>
-             {items.length}
-           </div>
+        <div className="flex items-center justify-between px-2 mb-1">
+          <h4 className={`text-[10px] font-black uppercase tracking-[0.15em] truncate ${isActive ? (rpgMode ? 'text-red-900' : 'text-indigo-600') : 'text-slate-400'}`}>
+            {title}
+          </h4>
+          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${isActive ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'}`}>
+            {items.length}
+          </span>
         </div>
 
-        <h4 className={`text-xs font-black uppercase tracking-widest mb-4 truncate ${isActive ? (rpgMode ? 'text-red-950' : 'text-slate-800') : 'text-slate-400'}`}>
-          {title}
-        </h4>
-
-        <div className="flex-1 space-y-2 overflow-y-auto no-scrollbar pb-20">
-          <AnimatePresence>
+        <div className="space-y-3">
+          <AnimatePresence mode="popLayout">
             {items.map((arg, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, scale: 0.8 }} 
-                animate={{ opacity: 1, scale: 1 }}
-                className={`group relative p-3 rounded-2xl text-[11px] font-bold border break-words overflow-hidden flex items-start space-x-2 ${
-                  rpgMode ? 'bg-white/40 border-red-800/10 text-red-950' : 'bg-white border-slate-100 text-slate-700'
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.8, x: side === 'A' ? -20 : 20 }}
+                className={`relative p-4 rounded-[24px] border-2 border-b-4 group shadow-sm transition-all ${
+                  rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-white border-slate-100 text-slate-800'
                 }`}
               >
-                <div className="mt-0.5 shrink-0">
-                  <Sparkles size={10} className="text-indigo-400" />
-                </div>
-                <span className="flex-1">{arg.text}</span>
-                <button 
-                  onClick={(e) => { e.stopPropagation(); removeArgument(side, i); }}
-                  className="absolute -right-1 -top-1 w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X size={10} strokeWidth={4} />
-                </button>
+                <p className={`text-[14px] font-bold leading-tight break-words ${!isActive && 'line-clamp-2'}`}>
+                  {arg.text}
+                </p>
+                {isActive && (
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); removeArgument(side, i); }}
+                    className="absolute -right-2 -top-2 w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                  >
+                    <X size={12} strokeWidth={4} />
+                  </button>
+                )}
               </motion.div>
             ))}
           </AnimatePresence>
-          {items.length === 0 && isActive && (
-            <div className="h-full flex flex-col items-center justify-center py-10 opacity-20 italic text-[10px] text-center">
-               <Plus size={24} className="mb-2" />
-               <p>Запишите мысли ниже</p>
-            </div>
+
+          {/* Плитка ввода - всегда видна на активной стороне */}
+          {isActive && isEditingNew ? (
+            <motion.div
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`p-4 rounded-[24px] border-2 border-b-[6px] shadow-xl relative z-30 ${
+                rpgMode ? 'bg-white border-red-800' : 'bg-white border-indigo-500 ring-4 ring-indigo-50'
+              }`}
+            >
+              <textarea
+                ref={activeInputRef}
+                value={inlineInput}
+                onChange={(e) => setInlineInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    addArgument();
+                  }
+                }}
+                placeholder="Плюс или минус..."
+                className="w-full bg-transparent text-[16px] font-black leading-tight focus:outline-none resize-none min-h-[60px]"
+                rows={2}
+              />
+              <div className="flex justify-end mt-2">
+                <button 
+                  onClick={addArgument}
+                  className={`p-2 rounded-xl transition-all active:scale-90 ${inlineInput.trim() ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'text-slate-300'}`}
+                >
+                  <CheckCircle2 size={24} strokeWidth={3} />
+                </button>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveSide(side);
+                setIsEditingNew(true);
+              }}
+              className={`w-full py-6 rounded-[24px] border-2 border-dashed flex flex-col items-center justify-center transition-all ${
+                isActive 
+                  ? (rpgMode ? 'border-red-800 bg-red-50 text-red-800' : 'border-indigo-400 bg-indigo-50/30 text-indigo-600') 
+                  : 'border-slate-200 text-slate-300'
+              }`}
+            >
+              <Plus size={isActive ? 28 : 20} strokeWidth={3} />
+              {isActive && <span className="text-[9px] font-black uppercase tracking-widest mt-1">Добавить</span>}
+            </motion.button>
           )}
         </div>
-      </motion.div>
+      </div>
     );
   };
 
   const renderProgress = (step: number) => {
     return (
       <div className="flex space-x-1.5 px-6 pt-4 mb-4">
-        {[1, 2, 4].map((s, idx) => (
+        {[1, 2, 4].map((s) => (
           <div 
             key={s} 
             className={`h-1.5 rounded-full flex-1 transition-all duration-700 ${
@@ -299,7 +356,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
-      {/* Header logic */}
       {mode !== 'DECISION' && (
         <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
           <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>
@@ -310,7 +366,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="flex-1 overflow-y-auto no-scrollbar" ref={listContainerRef}>
         {mode === 'DECISION' ? (
           <div className="h-full flex flex-col">
             {decisionStep === 1 && !isIdentifying && (
@@ -372,60 +428,43 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             )}
 
             {decisionStep === 2 && !isIdentifying && (
-              <div className="p-6 flex-1 flex flex-col space-y-4 animate-fade-in h-full overflow-hidden">
-                 <div className="flex items-center justify-between mb-2">
+              <div className="p-4 flex-1 flex flex-col animate-fade-in h-full overflow-hidden">
+                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2 flex-1">
-                      <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800 hover:bg-red-50' : 'text-slate-400 hover:bg-white shadow-sm hover:text-slate-800'}`}>
+                      <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800' : 'text-slate-400 hover:text-slate-800'}`}>
                         <ArrowLeft size={20} />
                       </button>
                       <div className="flex-1 pr-6">{renderProgress(2)}</div>
                     </div>
                  </div>
 
-                 <div className="mb-2">
+                 <div className="mb-4">
                     <motion.div 
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`px-6 py-3 rounded-[24px] border-2 border-b-4 text-center transition-all ${rpgMode ? 'bg-red-50 border-red-800' : 'bg-indigo-600 border-indigo-900 text-white shadow-lg'}`}
+                      className={`px-5 py-3 rounded-[24px] border-2 border-b-4 text-center transition-all ${rpgMode ? 'bg-red-50 border-red-800' : 'bg-indigo-600 border-indigo-900 text-white shadow-xl shadow-indigo-200/50'}`}
                     >
                       <p className={`text-[11px] font-black uppercase tracking-widest leading-tight`}>
                         <Sparkles size={12} className="inline mr-2 -mt-0.5" />
-                        Записывай любые доводы: плюсы и минусы. Мастер сам взвесит их ценность.
+                        Напишите плюсы и минусы для каждого варианта. Мастер взвесит их ценность.
                       </p>
                     </motion.div>
                  </div>
 
-                 <div className="flex-1 flex flex-col min-h-0">
-                   <div className="flex-1 flex space-x-3 items-stretch min-h-0 py-2 relative">
-                      <div className="flex-1 min-w-0">{renderArgumentCard('A')}</div>
-                      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-                         <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-sm border-4 transition-all duration-300 ${rpgMode ? 'bg-red-800 text-white border-red-950 shadow-lg' : 'bg-white text-slate-300 border-slate-100 shadow-xl'}`}>VS</div>
-                      </div>
-                      <div className="flex-1 min-w-0">{renderArgumentCard('B')}</div>
+                 <div className="flex-1 flex space-x-3 items-stretch min-h-0 py-2 relative">
+                   {renderSideColumn('A')}
+                   
+                   {/* Разделитель VS - стал меньше и компактнее */}
+                   <div className="flex flex-col items-center justify-center px-1">
+                      <div className={`w-[1px] flex-1 ${rpgMode ? 'bg-red-800/10' : 'bg-slate-200'}`}></div>
+                      <div className={`my-2 w-7 h-7 rounded-full flex items-center justify-center font-black text-[9px] border-2 transition-all duration-500 ${activeSide === 'A' ? '-rotate-12' : 'rotate-12'} ${rpgMode ? 'bg-white border-red-800 text-red-800' : 'bg-white border-slate-200 text-slate-400'}`}>VS</div>
+                      <div className={`w-[1px] flex-1 ${rpgMode ? 'bg-red-800/10' : 'bg-slate-200'}`}></div>
                    </div>
+
+                   {renderSideColumn('B')}
                  </div>
 
-                 <div className="space-y-4 pb-6 mt-4">
-                    <div className={`p-2 rounded-[28px] border-2 border-b-4 flex items-center space-x-2 transition-all ${rpgMode ? 'bg-white border-red-800' : 'bg-white border-indigo-500 ring-4 ring-indigo-50'}`}>
-                      <div className={`p-3 rounded-full ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>
-                        <MessageCircle size={20} />
-                      </div>
-                      <input 
-                        value={inlineInput}
-                        onChange={(e) => setInlineInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && addArgument()}
-                        placeholder={`Аргумент для: ${activeSide === 'A' ? decisionData.optionA : decisionData.optionB}`}
-                        className="flex-1 bg-transparent px-2 py-3 text-[14px] font-bold focus:outline-none"
-                      />
-                      <button 
-                        onClick={addArgument}
-                        disabled={!inlineInput.trim()}
-                        className={`p-3 rounded-2xl transition-all active:scale-90 ${inlineInput.trim() ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-100 text-slate-300'}`}
-                      >
-                        <ChevronRight size={20} strokeWidth={3} />
-                      </button>
-                    </div>
-
+                 <div className="mt-4 pb-6">
                     <button 
                       onClick={performAnalysis} 
                       disabled={decisionData.argsA.length === 0 && decisionData.argsB.length === 0}
