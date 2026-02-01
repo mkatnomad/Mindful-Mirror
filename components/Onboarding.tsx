@@ -83,10 +83,8 @@ const SphereArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
     transform="translate(50, 50)"
   >
     <g>
-      {/* Статичные орбиты с эффектом "бегущего света" */}
       {[0, 60, 120].map((angle, i) => (
         <g key={angle} transform={`rotate(${angle})`}>
-          {/* Основная линия орбиты (тусклая) */}
           <ellipse
             cx="0" cy="0" rx="14" ry="42"
             fill="none"
@@ -94,7 +92,6 @@ const SphereArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
             strokeWidth="1.2"
             opacity="0.15"
           />
-          {/* Бегущий свет по орбите */}
           <motion.ellipse
             cx="0" cy="0" rx="14" ry="42"
             fill="none"
@@ -114,8 +111,6 @@ const SphereArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
           />
         </g>
       ))}
-      
-      {/* Центральное ядро с мягким свечением */}
       <motion.circle 
         animate={{ 
           scale: [1, 1.15, 1],
@@ -126,8 +121,6 @@ const SphereArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
         r="14" 
         fill={rpgMode ? "#B91C1C" : "#0891B2"} 
       />
-      
-      {/* Внешняя волна энергии */}
       <motion.circle 
         animate={{ scale: [0.8, 1.8, 0.8], opacity: [0.2, 0, 0.2] }}
         transition={{ duration: 4, repeat: Infinity }}
@@ -144,30 +137,54 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
   <motion.g
     animate={{ 
       y: [0, -10, 0],
-      rotate: [0, 2, -2, 0]
+      scale: [1, 1.05, 1]
     }}
     transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
     transform="translate(50, 50)"
   >
     <motion.g 
       animate={{ rotate: 360 }}
-      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+      transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
     >
-      <path d="M0 -42 L12 -12 L42 0 L12 12 L0 42 L-12 12 L-42 0 L-12 -12 Z" fill={rpgMode ? "#7F1D1D" : "#8B5CF6"} />
+      {/* Increased scale for the star shape (path) to fill space better */}
+      <path 
+        d="M0 -46 L14 -14 L46 0 L14 14 L0 46 L-14 14 L-46 0 L-14 -14 Z" 
+        fill={rpgMode ? "#7F1D1D" : "#7C3AED"} 
+      />
       <motion.path 
-        animate={{ opacity: [0.3, 0.7, 0.3] }}
-        transition={{ duration: 2, repeat: Infinity }}
-        d="M0 -42 L12 -12 L42 0 L12 12 L0 42 L-12 12 L-42 0 L-12 -12 Z" 
+        animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.02, 1] }}
+        transition={{ duration: 3, repeat: Infinity }}
+        d="M0 -46 L14 -14 L46 0 L14 14 L0 46 L-14 14 L-46 0 L-14 -14 Z" 
         fill="white" 
         opacity="0.2"
       />
     </motion.g>
+    
+    {/* Glowing core for better contrast and "life" */}
     <motion.circle 
-      animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
-      transition={{ duration: 1.5, repeat: Infinity }}
-      r="6" 
+      animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
+      transition={{ duration: 2, repeat: Infinity }}
+      r="8" 
       fill="white" 
     />
+    
+    {/* Orbiting sparkles */}
+    {[0, 120, 240].map((rot, i) => (
+      <motion.circle
+        key={i}
+        animate={{ 
+          rotate: [rot, rot + 360],
+          scale: [0.8, 1.2, 0.8]
+        }}
+        transition={{ 
+          rotate: { duration: 4 + i, repeat: Infinity, ease: "linear" },
+          scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+        }}
+        cx="32" cy="0" r="2"
+        fill="white"
+        style={{ originX: "0px", originY: "0px" }}
+      />
+    ))}
   </motion.g>
 );
 
@@ -269,23 +286,23 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
       <AuroraBackground colors={slide.aurora} rpgMode={rpgMode} />
       <ParticleField type={slide.title} rpgMode={rpgMode} />
 
-      <div className="flex-1 w-full max-w-md px-6 flex flex-col items-center justify-center z-10 text-center">
+      {/* Main Content Area - Use flexible spacing to avoid collisions */}
+      <div className="flex-1 w-full max-w-md px-6 flex flex-col items-center justify-evenly z-10 text-center py-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.4 }}
             className="flex flex-col items-center w-full"
           >
-            {/* Artifact Container: Clean glass feel, background rings removed */}
-            <div className={`w-48 h-48 rounded-[56px] relative flex items-center justify-center mb-12 overflow-hidden ${
+            {/* Artifact Container: Reduced margin-bottom for better mobile fit */}
+            <div className={`w-44 h-44 xs:w-48 xs:h-48 rounded-[56px] relative flex items-center justify-center mb-6 xs:mb-8 overflow-hidden ${
               rpgMode 
                 ? 'bg-white border-2 border-red-800 shadow-[10px_10px_0px_#b91c1c]' 
                 : 'bg-white/90 backdrop-blur-xl bento-border bento-shadow ring-4 ring-white shadow-[0_20px_50px_-10px_rgba(0,0,0,0.08)]'
             }`}>
-              {/* Dynamic Glow Layer */}
               <motion.div 
                 animate={{ 
                   opacity: [0.2, 0.5, 0.2], 
@@ -296,28 +313,27 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
                 className={`absolute inset-4 rounded-full blur-3xl bg-gradient-to-r ${slide.glowColor}`} 
               />
               
-              <div className="w-28 h-28 relative z-10">
+              <div className="w-24 h-24 xs:w-28 xs:h-28 relative z-10">
                 <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
                    <slide.Artifact rpgMode={rpgMode} />
                 </svg>
               </div>
 
-              {/* High-quality inner highlight */}
               {!rpgMode && <div className="absolute inset-0 border border-white/60 rounded-[56px] pointer-events-none" />}
             </div>
 
-            {/* Typography */}
+            {/* Typography: Reduced padding (p-10 -> p-8) and optimized text sizes for mobile */}
             <div
-              className={`w-full p-10 rounded-[48px] border transition-all duration-700 text-left ${
+              className={`w-full p-8 rounded-[40px] border transition-all duration-700 text-left ${
                 rpgMode 
                   ? 'bg-white/95 border-red-800/30 shadow-sm' 
                   : 'bg-white/95 backdrop-blur-3xl bento-border bento-shadow shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)]'
               }`}
             >
-              <h2 className={`text-3xl font-black tracking-tighter mb-6 leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy uppercase' : 'text-slate-900'}`}>
+              <h2 className={`text-2xl xs:text-3xl font-black tracking-tighter mb-4 xs:mb-6 leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy uppercase' : 'text-slate-900'}`}>
                 {slide.title}
               </h2>
-              <p className={`text-lg leading-relaxed font-semibold opacity-90 ${rpgMode ? 'text-red-900/80' : 'text-slate-600'}`}>
+              <p className={`text-base xs:text-lg leading-relaxed font-semibold opacity-90 ${rpgMode ? 'text-red-900/80' : 'text-slate-600'}`}>
                 {slide.description}
               </p>
             </div>
@@ -327,17 +343,17 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
 
       {/* Navigation Layer */}
       <div className={`w-full max-w-md px-6 pb-12 z-20 flex flex-col items-center transition-opacity duration-700 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
-        <div className="flex space-x-3 mb-10">
+        <div className="flex space-x-3 mb-8 xs:mb-10">
           {SLIDES.map((_, i) => (
             <motion.div 
               key={i} 
               animate={{ 
-                width: currentSlide === i ? 56 : 12,
+                width: currentSlide === i ? 48 : 10,
                 backgroundColor: currentSlide === i 
                   ? (rpgMode ? '#991B1B' : '#0F172A') 
                   : (rpgMode ? 'rgba(153, 27, 27, 0.15)' : 'rgba(15, 23, 42, 0.08)')
               }}
-              className="h-2.5 rounded-full transition-all duration-500"
+              className="h-2 rounded-full transition-all duration-500"
             />
           ))}
         </div>
@@ -345,7 +361,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
         <motion.button 
           whileTap={{ scale: 0.96 }}
           onClick={nextSlide}
-          className={`w-full py-6 rounded-[32px] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center space-x-4 shadow-2xl transition-all duration-300 ${
+          className={`w-full py-5 xs:py-6 rounded-[32px] font-black text-xs xs:text-sm uppercase tracking-[0.3em] flex items-center justify-center space-x-4 shadow-2xl transition-all duration-300 ${
             rpgMode ? 'rpg-button' : 'bg-slate-900 text-white shadow-slate-900/10'
           }`}
         >
