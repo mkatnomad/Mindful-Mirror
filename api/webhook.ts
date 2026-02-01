@@ -131,7 +131,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (kvUrl && kvToken) {
       const pipeline: any[] = [];
       if (payload.startsWith('energy_')) {
-        pipeline.push(['incrby', `user_energy_bonus_${userId}`, 10]);
+        // Прибавляем к серверному балансу решений
+        pipeline.push(['incrby', `user_energy_decisions_${userId}`, 10]);
         pipeline.push(['incr', 'stats:total_energy_sales']);
         pipeline.push(['sadd', 'set:energy_buyers', userId.toString()]);
         

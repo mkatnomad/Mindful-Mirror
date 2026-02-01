@@ -413,7 +413,7 @@ export const RANKS = [
 const QUESTIONS = [
   { q: 'Что для вас важнее всего в жизни?', options: ['Порядок и успех', 'Свобода и приключения', 'Любовь и близость', 'Знания и мудрость'] },
   { q: 'Как вы обычно реагируете на трудности?', options: ['Беру ответственность', 'Ищу новый путь', 'Помогаю другим', 'Анализирую причины'] },
-  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с семьей', 'Чтение и размышления'] },
+  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с family', 'Чтение и размышления'] },
   { q: 'Чего вы боитесь больше всего?', options: ['Хаоса и слабости', 'Ограничений и скуки', 'Одиночества и предательства', 'Невежества и обмана'] },
   { q: 'Ваша главная цель...', options: ['Оставить след в истории', 'Найти свое истинное Я', 'Сделать мир добрее', 'Понять суть вещей'] },
   { q: 'Как вы ведете себя в компании?', options: ['Беру роль лидера', 'Делюсь открытиями', 'Забочусь о комфорте', 'Наблюдаю за всеми'] },
@@ -477,14 +477,13 @@ const App: React.FC = () => {
       if (!resp.ok) return;
       const data = await resp.json();
       
-      setUserProfile(prev => {
-        let updatedProfile = { ...prev };
-        if (data.isSubscribed) updatedProfile.isSubscribed = true;
-        if (data.energyBonus && data.energyBonus > 0) {
-           updatedProfile.energyDecisions += data.energyBonus;
-        }
-        return updatedProfile;
-      });
+      setUserProfile(prev => ({
+        ...prev,
+        isSubscribed: data.isSubscribed || prev.isSubscribed,
+        energyDecisions: data.energy?.decisions ?? prev.energyDecisions,
+        energyEmotions: data.energy?.emotions ?? prev.energyEmotions,
+        energyQuests: data.energy?.quests ?? prev.energyQuests
+      }));
     } catch (e) {
       console.error("Sub check error", e);
     }
@@ -518,10 +517,8 @@ const App: React.FC = () => {
         if (profile) {
             setUserProfile(prev => ({ 
               ...prev, 
-              ...profile,
-              energyDecisions: profile.energyDecisions ?? WELCOME_ENERGY_DECISIONS,
-              energyEmotions: profile.energyEmotions ?? WELCOME_ENERGY_EMOTIONS,
-              energyQuests: profile.energyQuests ?? WELCOME_ENERGY_QUESTS
+              ...profile
+              // Энергию не берем из локального профиля, синхронизируем ниже
             }));
             if (!profile.onboardingDone) {
               setCurrentView('ONBOARDING');
@@ -530,10 +527,7 @@ const App: React.FC = () => {
             const now = Date.now();
             setUserProfile(prev => ({ 
               ...prev, 
-              firstRunDate: now,
-              energyDecisions: WELCOME_ENERGY_DECISIONS,
-              energyEmotions: WELCOME_ENERGY_EMOTIONS,
-              energyQuests: WELCOME_ENERGY_QUESTS
+              firstRunDate: now
             }));
             setCurrentView('ONBOARDING');
         }
@@ -569,7 +563,9 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!isInitializing) {
-      cloudStorage.setItem('mm_profile', userProfile);
+      // Исключаем баланс энергии из локального сохранения, чтобы не перезатереть серверные данные
+      const { energyDecisions, energyEmotions, energyQuests, ...safeProfile } = userProfile;
+      cloudStorage.setItem('mm_profile', safeProfile);
     }
   }, [userProfile, isInitializing]);
 
@@ -660,7 +656,8 @@ const App: React.FC = () => {
       if (!data.ok || !data.result) throw new Error(data.description || "Ошибка");
       tg.openInvoice(data.result, (status: string) => {
         if (status === 'paid') {
-          syncSubscription(userId);
+          // Принудительно синхронизируем энергию после покупки
+          setTimeout(() => syncSubscription(userId), 3000);
           if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
       });
@@ -782,7 +779,22 @@ const App: React.FC = () => {
     setGameStatus('RESULT');
   };
 
+  const spendEnergyOnServer = async (type: string) => {
+    const userId = getTelegramUserId();
+    if (!userId || userProfile.isSubscribed) return;
+    try {
+      fetch('/api/spend-energy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, type })
+      });
+    } catch (e) {
+      console.error("Spend energy API error", e);
+    }
+  };
+
   const acceptGift = () => {
+    const userId = getTelegramUserId();
     setUserProfile(prev => ({
       ...prev,
       xp: prev.xp + 50,
@@ -791,6 +803,7 @@ const App: React.FC = () => {
       totalQuestsDone: prev.totalQuestsDone + 1,
       energyQuests: prev.isSubscribed ? prev.energyQuests : Math.max(0, prev.energyQuests - 1)
     }));
+    spendEnergyOnServer('quests');
     setGameStatus('IDLE');
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
   };
@@ -1255,7 +1268,7 @@ const App: React.FC = () => {
         {currentView === 'ONBOARDING' && <Onboarding rpgMode={userProfile.rpgMode} onComplete={handleOnboardingComplete} />}
         {currentView === 'HOME' && renderHome()}
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); const xpGain = Math.max(1, Math.ceil(d / 60)); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); reportEvent('session', { seconds: d, mode: 'REFLECTION' }); if (i) reportEvent('journal_entry', { entryType: e.type }); }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={(e) => setJournalEntries(e)} onBack={(totalSec) => { const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0; if (totalSec > 10) { reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' }); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain})); } setCurrentView('HOME'); }} />}
-        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); setUserProfile(p => { const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; let newEnergyDecisions = p.energyDecisions; let newEnergyEmotions = p.energyEmotions; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEnergyEmotions = Math.max(0, p.energyEmotions - 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), energyDecisions: newEnergyDecisions, energyEmotions: newEnergyEmotions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
+        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; if (isDecision) spendEnergyOnServer('decisions'); if (isEmotions) spendEnergyOnServer('emotions'); setUserProfile(p => { let newEnergyDecisions = p.energyDecisions; let newEnergyEmotions = p.energyEmotions; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEnergyEmotions = Math.max(0, p.energyEmotions - 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), energyDecisions: newEnergyDecisions, energyEmotions: newEnergyEmotions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
         {currentView === 'ARCHETYPE_TEST' && (
            <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative overflow-hidden ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
              {/* 1. IMMERSIVE BACKGROUND LAYER (FIXED TO AVOID SCROLLING ISSUES) */}
