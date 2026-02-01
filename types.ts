@@ -86,10 +86,11 @@ export interface UserProfile {
   energyEmotions: number;
   energyQuests: number;
   // Limit tracking
-  lastUsageDate: string | null; // YYYY-MM-DD
+  lastUsageDate: null | string; // YYYY-MM-DD
   dailyDecisionCount: number;
   dailyEmotionsCount: number;
   totalQuestsDone: number;
+  totalEmotionsDone?: number; // Добавлено для лимита сессий состояний
 }
 
 export interface SiteConfig {

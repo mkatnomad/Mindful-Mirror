@@ -8,7 +8,7 @@ import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package, Plus, Send } from 'lucide-react';
+import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package, Plus, Send, Clock, Circle } from 'lucide-react';
 
 const WELCOME_ENERGY_DECISIONS = 5;
 const WELCOME_ENERGY_EMOTIONS = 3;
@@ -413,7 +413,7 @@ export const RANKS = [
 const QUESTIONS = [
   { q: 'Что для вас важнее всего в жизни?', options: ['Порядок и успех', 'Свобода и приключения', 'Любовь и близость', 'Знания и мудрость'] },
   { q: 'Как вы обычно реагируете на трудности?', options: ['Беру ответственность', 'Ищу новый путь', 'Помогаю другим', 'Анализирую причины'] },
-  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с family', 'Чтение и размышления'] },
+  { q: 'Ваш идеальный выходной...', options: ['Планирование дел', 'Творчество или поход', 'Время с семьей', 'Чтение и размышления'] },
   { q: 'Чего вы боитесь больше всего?', options: ['Хаоса и слабости', 'Ограничений и скуки', 'Одиночества и предательства', 'Невежества и обмана'] },
   { q: 'Ваша главная цель...', options: ['Оставить след в истории', 'Найти свое истинное Я', 'Сделать мир добрее', 'Понять суть вещей'] },
   { q: 'Как вы ведете себя в компании?', options: ['Беру роль лидера', 'Делюсь открытиями', 'Забочусь о комфорте', 'Наблюдаю за всеми'] },
@@ -438,7 +438,7 @@ const App: React.FC = () => {
     name: '', avatarUrl: null, isSetup: true, isRegistered: false, onboardingDone: false, archetype: null, xp: 0, 
     lastQuestDate: null, artifacts: [], totalSessions: 0, totalMinutes: 0, totalDecisions: 0, rpgMode: false,
     firstRunDate: null, isSubscribed: false, subscriptionExpiry: null,
-    lastUsageDate: null, dailyDecisionCount: 0, dailyEmotionsCount: 0, totalQuestsDone: 0,
+    lastUsageDate: null, dailyDecisionCount: 0, dailyEmotionsCount: 0, totalQuestsDone: 0, totalEmotionsDone: 0,
     energyDecisions: WELCOME_ENERGY_DECISIONS,
     energyEmotions: WELCOME_ENERGY_EMOTIONS,
     energyQuests: WELCOME_ENERGY_QUESTS
@@ -517,8 +517,8 @@ const App: React.FC = () => {
         if (profile) {
             setUserProfile(prev => ({ 
               ...prev, 
-              ...profile
-              // Энергию не берем из локального профиля, синхронизируем ниже
+              ...profile,
+              totalEmotionsDone: profile.totalEmotionsDone || 0
             }));
             if (!profile.onboardingDone) {
               setCurrentView('ONBOARDING');
@@ -563,7 +563,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (!isInitializing) {
-      // Исключаем баланс энергии из локального сохранения, чтобы не перезатереть серверные данные
       const { energyDecisions, energyEmotions, energyQuests, ...safeProfile } = userProfile;
       cloudStorage.setItem('mm_profile', safeProfile);
     }
@@ -607,7 +606,7 @@ const App: React.FC = () => {
   const checkModeLimit = (mode: JournalMode): boolean => {
     if (userProfile.isSubscribed) return true;
     if (mode === 'DECISION') return (userProfile.energyDecisions > 0);
-    if (mode === 'EMOTIONS') return (userProfile.energyEmotions > 0);
+    if (mode === 'EMOTIONS') return (userProfile.totalEmotionsDone || 0) < 3;
     return true; 
   };
 
@@ -640,7 +639,8 @@ const App: React.FC = () => {
     }
   };
 
-  const handleBuyEnergy = async () => {
+  const handleBuyEnergy = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (isBuyingEnergy) return;
     const tg = window.Telegram?.WebApp;
     const userId = getTelegramUserId();
@@ -656,7 +656,6 @@ const App: React.FC = () => {
       if (!data.ok || !data.result) throw new Error(data.description || "Ошибка");
       tg.openInvoice(data.result, (status: string) => {
         if (status === 'paid') {
-          // Принудительно синхронизируем энергию после покупки
           setTimeout(() => syncSubscription(userId), 3000);
           if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
@@ -755,15 +754,35 @@ const App: React.FC = () => {
   };
 
   const isQuestAvailable = () => {
+    const now = Date.now();
+    const lastQuest = userProfile.lastQuestDate || 0;
+    const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
+    const isCooldownOver = (now - lastQuest) >= cooldownPeriod;
+
+    if (!isCooldownOver) return false;
+
     if (userProfile.isSubscribed) return true;
-    return userProfile.energyQuests > 0;
+    
+    // Обычный пользователь: лимит 3 квеста всего
+    return (userProfile.totalQuestsDone || 0) < 3;
   };
 
   const handleStartQuest = async () => {
-    if (!isQuestAvailable()) {
-        setCurrentView('SUBSCRIPTION');
-        return;
+    const now = Date.now();
+    const lastQuest = userProfile.lastQuestDate || 0;
+    const isCooldownOver = (now - lastQuest) >= 24 * 60 * 60 * 1000;
+
+    if (!isCooldownOver) {
+      const remaining = 24 - (now - lastQuest) / (1000 * 60 * 60);
+      alert(`Новый квест будет доступен через ${Math.ceil(remaining)}ч.`);
+      return;
     }
+
+    if (!userProfile.isSubscribed && (userProfile.totalQuestsDone || 0) >= 3) {
+      setCurrentView('SUBSCRIPTION');
+      return;
+    }
+
     if (!userProfile.archetype) return;
     setGameStatus('LOADING');
     const data = await generateRPGQuest(userProfile.archetype);
@@ -800,7 +819,7 @@ const App: React.FC = () => {
       xp: prev.xp + 50,
       artifacts: [questOutcome!.artifact, ...prev.artifacts],
       lastQuestDate: Date.now(),
-      totalQuestsDone: prev.totalQuestsDone + 1,
+      totalQuestsDone: (prev.totalQuestsDone || 0) + 1,
       energyQuests: prev.isSubscribed ? prev.energyQuests : Math.max(0, prev.energyQuests - 1)
     }));
     spendEnergyOnServer('quests');
@@ -875,7 +894,8 @@ const App: React.FC = () => {
   const renderHome = () => {
     const nextThreshold = RANKS[RANKS.indexOf(currentRank) + 1]?.threshold || 50000;
     const progress = Math.min(100, (userProfile.xp / nextThreshold) * 100);
-    const questActive = isQuestAvailable();
+    const questAvailable = isQuestAvailable();
+    const isFreeLimitReached = !userProfile.isSubscribed && (userProfile.totalQuestsDone || 0) >= 3;
 
     return (
       <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
@@ -1003,19 +1023,19 @@ const App: React.FC = () => {
                 </div>
               ) : (
                 <div 
-                  className={`w-full p-6 rounded-[32px] border flex items-center justify-between active:scale-[0.98] transition-all duration-300 relative overflow-hidden text-left cursor-pointer ${userProfile.rpgMode ? 'rpg-card border-red-800/30 shadow-xl shadow-red-900/10' : 'bg-white bento-border bento-shadow'} ${!questActive ? 'grayscale opacity-70 cursor-default' : ''}`}
+                  className={`w-full p-6 rounded-[32px] border flex items-center justify-between active:scale-[0.98] transition-all duration-300 relative overflow-hidden text-left cursor-pointer ${userProfile.rpgMode ? 'rpg-card border-red-800/30 shadow-xl shadow-red-900/10' : 'bg-white bento-border bento-shadow'} ${!questAvailable && !isFreeLimitReached ? 'opacity-70 cursor-wait' : ''} ${isFreeLimitReached ? 'opacity-80' : ''}`}
                   onClick={handleStartQuest}
                 >
                   <div className="flex items-center space-x-5 relative z-10">
                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-100 text-indigo-600 shadow-inner'}`}>
-                        <motion.div animate={questActive ? { rotate: [0, 10, -10, 0] } : {}} transition={{ duration: 5, repeat: Infinity }}>
-                          <Compass size={28} strokeWidth={1.5} />
+                        <motion.div animate={questAvailable ? { rotate: [0, 10, -10, 0] } : {}} transition={{ duration: 5, repeat: Infinity }}>
+                          {questAvailable ? <Compass size={28} strokeWidth={1.5} /> : <Clock size={28} strokeWidth={1.5} />}
                         </motion.div>
                      </div>
                      <div>
                        <h3 className={`text-xl font-black uppercase tracking-tighter leading-none mb-1 ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-indigo-800'}`}>Путь Судьбы</h3>
                        <p className={`text-[10px] font-bold uppercase tracking-[0.05em] opacity-40 ${userProfile.rpgMode ? 'text-red-800' : 'text-indigo-400'}`}>
-                         {questActive ? 'Ежедневное испытание' : 'Испытание завершено'}
+                         {isFreeLimitReached ? 'Нужен Premium (3/3 пройден)' : (questAvailable ? 'Ежедневное испытание' : 'Ожидайте рассвета')}
                        </p>
                      </div>
                   </div>
@@ -1148,27 +1168,35 @@ const App: React.FC = () => {
             <div className="flex justify-center mb-8">
               <p className={`text-[12px] font-black uppercase tracking-[0.3em] ${isRpg ? 'text-red-900' : 'text-indigo-600'}`}>{t.balanceTitle}</p>
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-2">
                 <div className="flex flex-col items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-amber-50 text-amber-500'}`}>
                     <Zap size={20} fill="currentColor" />
                   </div>
-                  <span className="text-xl font-black mb-1 leading-none">{userProfile.energyDecisions}</span>
-                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest">Решения</span>
+                  <div className="flex items-center space-x-1.5 mb-1 h-5">
+                    <span className="text-xl font-black">{userProfile.energyDecisions}</span>
+                    <button 
+                      onClick={handleBuyEnergy}
+                      className={`w-5 h-5 rounded-full flex items-center justify-center text-white active:scale-90 transition-transform ${isRpg ? 'bg-red-800' : 'bg-amber-500 shadow-sm'}`}
+                    >
+                      <Plus size={12} strokeWidth={4} />
+                    </button>
+                  </div>
+                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest text-center">Заряды решений</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-rose-50 text-rose-500'}`}>
                     <Heart size={20} fill="currentColor" />
                   </div>
-                  <span className="text-xl font-black mb-1 leading-none">{userProfile.energyEmotions}</span>
-                  <span className="text-[8px] uppercase font-black opacity-40 gratification-widest">Эмоции</span>
+                  <span className="text-xl font-black mb-1 leading-none">{(userProfile.totalEmotionsDone || 0)}/3</span>
+                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest text-center">Состояний</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}>
-                    <Compass size={20} fill="currentColor" />
+                    <Circle size={18} fill="currentColor" />
                   </div>
-                  <span className="text-xl font-black mb-1 leading-none">{userProfile.energyQuests}</span>
-                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest">Квесты</span>
+                  <span className="text-xl font-black mb-1 leading-none">{(userProfile.totalQuestsDone || 0)}/3</span>
+                  <span className="text-[8px] uppercase font-black opacity-40 tracking-widest text-center">Квестов</span>
                 </div>
             </div>
           </div>
@@ -1268,12 +1296,10 @@ const App: React.FC = () => {
         {currentView === 'ONBOARDING' && <Onboarding rpgMode={userProfile.rpgMode} onComplete={handleOnboardingComplete} />}
         {currentView === 'HOME' && renderHome()}
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); const xpGain = Math.max(1, Math.ceil(d / 60)); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); reportEvent('session', { seconds: d, mode: 'REFLECTION' }); if (i) reportEvent('journal_entry', { entryType: e.type }); }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={(e) => setJournalEntries(e)} onBack={(totalSec) => { const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0; if (totalSec > 10) { reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' }); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain})); } setCurrentView('HOME'); }} />}
-        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; if (isDecision) spendEnergyOnServer('decisions'); if (isEmotions) spendEnergyOnServer('emotions'); setUserProfile(p => { let newEnergyDecisions = p.energyDecisions; let newEnergyEmotions = p.energyEmotions; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEnergyEmotions = Math.max(0, p.energyEmotions - 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), energyDecisions: newEnergyDecisions, energyEmotions: newEnergyEmotions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
+        {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; if (isDecision) spendEnergyOnServer('decisions'); if (isEmotions) spendEnergyOnServer('emotions'); setUserProfile(p => { let newEnergyDecisions = p.energyDecisions; let newEmotionsDone = p.totalEmotionsDone || 0; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEmotionsDone = Math.min(3, newEmotionsDone + 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), totalEmotionsDone: newEmotionsDone, energyDecisions: newEnergyDecisions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
         {currentView === 'ARCHETYPE_TEST' && (
            <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative overflow-hidden ${userProfile.rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
-             {/* 1. IMMERSIVE BACKGROUND LAYER (FIXED TO AVOID SCROLLING ISSUES) */}
              <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-                {/* Sacred Geometry - Global Absolute Center */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.04] scale-[2.5] transform">
                     <svg width="400" height="400" viewBox="0 0 100 100" className={userProfile.rpgMode ? 'text-amber-900' : 'text-blue-900'}>
                       <path d="M50 50 m-20 0 a20 20 0 1 0 40 0 a20 20 0 1 0 -40 0" fill="none" stroke="currentColor" strokeWidth="0.3" />
@@ -1285,12 +1311,8 @@ const App: React.FC = () => {
                       <circle cx="68" cy="60" r="20" fill="none" stroke="currentColor" strokeWidth="0.3" />
                     </svg>
                 </div>
-                
-                {/* Central Atmosphere Glow - Fills the physical screen */}
                 <div className={`absolute top-[-20%] left-[-20%] right-[-20%] bottom-[-20%] blur-[120px] opacity-[0.1] rounded-full ${userProfile.rpgMode ? 'bg-amber-500' : 'bg-blue-400'}`} />
              </div>
-
-             {/* 2. UI HEADER LAYER */}
              <header className="relative z-30 pt-6 px-6 mb-1 flex items-center justify-between pointer-events-none">
                 <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full active:bg-black/5 transition-all pointer-events-auto ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
                   <X size={24}/>
@@ -1302,19 +1324,15 @@ const App: React.FC = () => {
                 </div>
                 <span className="text-[11px] font-black tracking-widest opacity-40">{testQuestionIdx + 1}/{QUESTIONS.length}</span>
              </header>
-             
-             {/* 3. SCROLLABLE CONTENT - OPTIMIZED HEIGHT TO PREVENT CRYSTAL CLIPPING */}
              <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-6 z-20 overflow-x-hidden w-full">
                <div className="flex flex-col items-center pt-2 overflow-visible">
                  <PrismAnimation rpgMode={userProfile.rpgMode} />
-                 
                  <div className="relative mt-1 mb-6 text-center px-10 w-full max-w-lg mx-auto">
                     <div className={`absolute inset-0 blur-3xl opacity-[0.15] -z-10 rounded-full scale-y-[0.4] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-indigo-300'}`} />
                     <h2 className={`text-[22px] font-black italic leading-snug ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-800'}`}>
                       {QUESTIONS[testQuestionIdx].q}
                     </h2>
                  </div>
-
                  <div className="w-full px-6 space-y-3 max-w-md">
                    {QUESTIONS[testQuestionIdx].options.map((opt, idx) => (
                      <button 
