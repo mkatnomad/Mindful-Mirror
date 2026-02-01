@@ -367,10 +367,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       <div className="flex-1 overflow-y-auto no-scrollbar" ref={listContainerRef}>
         {mode === 'DECISION' ? (
-          <div className="h-full flex flex-col overflow-hidden">
+          <div className={`flex flex-col ${decisionStep === 4 ? 'min-h-full' : 'h-full overflow-hidden'}`}>
             {decisionStep === 1 && !isIdentifying && (
-              <div className="flex-1 flex flex-col animate-fade-in relative">
-                <div className="flex items-center px-4 pt-4">
+              <div className="flex-1 flex flex-col animate-fade-in relative h-full">
+                <div className="flex items-center px-4 pt-2 shrink-0">
                   <button onClick={handleBack} className={`p-3 rounded-full transition-colors ${rpgMode ? 'text-red-800' : 'text-slate-400 hover:text-slate-800'}`}>
                     <ArrowLeft size={24} />
                   </button>
@@ -378,39 +378,40 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <div className="w-10"></div>
                 </div>
 
-                <div className="px-6 py-6 flex flex-col items-center text-center">
-                   <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} className="mb-4">
-                     <DecisionIllustration rpgMode={rpgMode} size={80} />
+                <div className="px-6 py-2 flex flex-col items-center text-center shrink-0">
+                   <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} className="mb-2">
+                     <DecisionIllustration rpgMode={rpgMode} size={60} />
                    </motion.div>
                    
-                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`px-6 py-3 rounded-[24px] rounded-tl-none border shadow-sm max-w-[280px] relative ${rpgMode ? 'bg-white border-red-800 text-red-950 font-serif-fantasy italic' : 'bg-white bento-border text-slate-600 shadow-md ring-4 ring-indigo-50/30'}`}>
-                     <p className="text-[14px] leading-tight font-black uppercase tracking-tighter">
+                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`px-4 py-2 rounded-[20px] rounded-tl-none border shadow-sm max-w-[240px] relative ${rpgMode ? 'bg-white border-red-800 text-red-950 font-serif-fantasy italic' : 'bg-white bento-border text-slate-600 shadow-md ring-4 ring-indigo-50/10'}`}>
+                     <p className="text-[12px] leading-tight font-black uppercase tracking-tighter">
                        Какое решение требует ясности прямо сейчас?
                      </p>
                    </motion.div>
                 </div>
 
-                <div className="px-6 flex-1 flex flex-col">
-                   <div className="flex-1 flex flex-col items-center justify-center min-h-[160px] relative group">
-                      <div className={`absolute inset-0 transition-all duration-500 rounded-[48px] ${decisionData.topic.trim() ? (rpgMode ? 'bg-red-800/5 ring-4 ring-red-800/10' : 'bg-indigo-50/30 ring-4 ring-indigo-50') : 'bg-transparent'}`} />
+                <div className="px-6 flex-1 flex flex-col min-h-0">
+                   <div className="flex-1 flex flex-col items-center justify-center min-h-[100px] relative group">
+                      <div className={`absolute inset-0 transition-all duration-500 rounded-[32px] ${decisionData.topic.trim() ? (rpgMode ? 'bg-red-800/5 ring-4 ring-red-800/10' : 'bg-indigo-50/20 ring-4 ring-indigo-50/30') : 'bg-transparent'}`} />
                       <textarea 
                         autoFocus
                         value={decisionData.topic}
                         onChange={(e) => setDecisionData(prev => ({ ...prev, topic: e.target.value }))}
                         placeholder="Опишите вашу дилемму..."
-                        className={`w-full bg-transparent text-center text-2xl font-black tracking-tight focus:outline-none resize-none px-4 relative z-10 transition-all duration-300 ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'} ${decisionData.topic.length > 50 ? 'text-xl' : 'text-3xl'}`}
+                        className={`w-full bg-transparent text-center text-xl font-black tracking-tight focus:outline-none resize-none px-4 relative z-10 transition-all duration-300 ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'} ${decisionData.topic.length > 50 ? 'text-lg' : 'text-2xl'}`}
+                        rows={3}
                       />
                    </div>
-                   <div className="mt-8 mb-6 overflow-x-auto no-scrollbar flex space-x-2 py-2">
+                   <div className="mt-2 mb-2 overflow-x-auto no-scrollbar flex space-x-2 py-1 shrink-0">
                      {QUICK_STARTERS.map((s, i) => (
-                       <button key={i} onClick={() => { setDecisionData(prev => ({ ...prev, topic: s })); if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }} className={`shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all active:scale-95 ${rpgMode ? 'bg-white border-red-800 text-red-800 hover:bg-red-50' : 'bg-white bento-border text-slate-400 hover:text-slate-800 hover:border-slate-300'}`}>{s}</button>
+                       <button key={i} onClick={() => { setDecisionData(prev => ({ ...prev, topic: s })); if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light'); }} className={`shrink-0 px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest border transition-all active:scale-95 ${rpgMode ? 'bg-white border-red-800 text-red-800' : 'bg-white bento-border text-slate-400'}`}>{s}</button>
                      ))}
                    </div>
                 </div>
 
-                <div className="p-6 pb-10">
-                   <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim() || isIdentifying} className={`w-full py-7 rounded-[40px] font-black text-[13px] uppercase tracking-[0.3em] flex items-center justify-center space-x-5 transition-all shadow-2xl active:scale-95 border-b-[8px] disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-red-950' : 'bg-slate-900 text-white border-slate-950'}`}>
-                     <span>Взвесить факторы</span><ChevronRight size={18} strokeWidth={4} />
+                <div className="p-4 pb-6 shrink-0">
+                   <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim() || isIdentifying} className={`w-full py-5 rounded-[32px] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center space-x-4 transition-all shadow-xl active:scale-95 border-b-[6px] disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-red-950' : 'bg-slate-900 text-white border-slate-950'}`}>
+                     <span>Взвесить факторы</span><ChevronRight size={16} strokeWidth={4} />
                    </button>
                 </div>
               </div>
