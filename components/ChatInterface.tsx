@@ -316,7 +316,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="flex justify-end mt-1">
                 <button 
                   onClick={addArgument}
-                  className={`p-1.5 rounded-lg transition-all active:scale-90 ${inlineInput.trim() ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-all active:scale-90 ${inlineInput.trim() ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}
                 >
                   <Check size={20} strokeWidth={4} />
                 </button>
@@ -402,9 +402,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                   <div className="px-6 flex-1 flex flex-col min-h-0 mt-8">
                     <div className="flex-1 flex flex-col items-center justify-center min-h-[120px] relative group">
-                        <div className={`absolute inset-0 transition-all duration-500 rounded-[32px] ${decisionData.topic.trim() ? (rpgMode ? 'bg-red-800/5 ring-4 ring-red-800/10' : 'bg-indigo-50/20 ring-4 ring-indigo-50/30') : 'bg-transparent'}`} />
+                        <div className={`absolute inset-0 transition-all duration-500 rounded-[32px] ${decisionData.topic.trim() ? (rpgMode ? 'bg-red-800/5 ring-4 ring-red-800/10' : 'bg-indigo-50/20 ring-4 ring-indigo-50/30') : (rpgMode ? 'bg-red-800/5 border-2 border-dashed border-red-800/20' : 'bg-slate-50 border-2 border-dashed border-slate-100')}`} />
                         <textarea 
-                          autoFocus
                           value={decisionData.topic}
                           onChange={(e) => setDecisionData(prev => ({ ...prev, topic: e.target.value }))}
                           placeholder="Опишите вашу дилемму..."
