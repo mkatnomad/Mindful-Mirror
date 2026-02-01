@@ -8,201 +8,235 @@ interface OnboardingProps {
   rpgMode?: boolean;
 }
 
-// --- Background Aurora Component (Optimized) ---
+// --- Background Aurora Component (Max Performance) ---
 const AuroraBackground = ({ colors, rpgMode }: { colors: string[], rpgMode: boolean }) => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
     {colors.map((color, i) => (
       <motion.div
         key={i}
         animate={{
-          x: [Math.random() * 40 - 20, Math.random() * 40 - 20, Math.random() * 40 - 20],
-          y: [Math.random() * 40 - 20, Math.random() * 40 - 20, Math.random() * 40 - 20],
-          scale: [1, 1.1, 0.9, 1],
-          opacity: [0.1, 0.2, 0.15, 0.1]
+          x: [Math.random() * 30 - 15, Math.random() * 30 - 15],
+          y: [Math.random() * 30 - 15, Math.random() * 30 - 15],
+          opacity: [0.1, 0.15, 0.1]
         }}
         transition={{
-          duration: 30 + i * 15,
+          duration: 20 + i * 10,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "linear"
         }}
-        // Reduced blur from 120px to 60px for better performance
-        className="absolute w-[180%] h-[180%] rounded-full blur-[60px]"
+        className="absolute w-[150%] h-[150%] rounded-full blur-[40px]"
         style={{
           background: color,
-          top: i === 0 ? '-40%' : '10%',
-          left: i === 0 ? '-20%' : '30%',
+          top: i === 0 ? '-30%' : '20%',
+          left: i === 0 ? '-10%' : '40%',
         }}
       />
     ))}
   </div>
 );
 
-// --- Sacred Geometry Background Layer ---
-const SacredGeometry = ({ rpgMode, colorClass }: { rpgMode: boolean, colorClass: string }) => (
-  <motion.div 
-    animate={{ rotate: 360 }}
-    transition={{ duration: 120, repeat: Infinity, ease: "linear" }}
-    className={`absolute inset-0 flex items-center justify-center opacity-20 pointer-events-none mix-blend-overlay ${colorClass}`}
-  >
-    <svg width="260" height="260" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8">
-      <circle cx="50" cy="50" r="18" />
-      <circle cx="50" cy="32" r="18" />
-      <circle cx="50" cy="68" r="18" />
-      <circle cx="34.4" cy="41" r="18" />
-      <circle cx="65.6" cy="41" r="18" />
-      <circle cx="34.4" cy="59" r="18" />
-      <circle cx="65.6" cy="59" r="18" />
-      <circle cx="50" cy="50" r="36" />
-    </svg>
-  </motion.div>
-);
-
-// --- Particle Field Component (Optimized) ---
+// --- Particle Field (Max Performance) ---
 const ParticleField = ({ type, rpgMode }: { type: string, rpgMode: boolean }) => {
-  // Reduced particle count from 20 to 8 for better performance
   const particles = Array.from({ length: 8 });
-  
   return (
     <div className="absolute inset-0 pointer-events-none z-0">
       {particles.map((_, i) => (
         <motion.div
           key={`${type}-${i}`}
-          initial={{ 
-            x: Math.random() * window.innerWidth, 
-            y: window.innerHeight + 50,
-            opacity: 0,
-            scale: 0.5
-          }}
-          animate={{ 
-            y: -100, 
-            opacity: [0, 0.3, 0],
-            rotate: 360,
-            scale: [0.5, 0.7, 0.5],
-            x: `calc(${Math.random() * 100}vw + ${Math.sin(i) * 30}px)`
-          }}
-          transition={{ 
-            duration: 20 + Math.random() * 10, 
-            repeat: Infinity, 
-            delay: Math.random() * 5,
-            ease: "linear"
-          }}
+          initial={{ x: Math.random() * 350, y: 900, opacity: 0 }}
+          animate={{ y: -200, opacity: [0, 0.3, 0] }}
+          transition={{ duration: 20 + Math.random() * 10, repeat: Infinity, delay: i * 2, ease: "linear" }}
           className="absolute"
+          style={{ left: `${(i / 8) * 100}%` }}
         >
-          {type === 'gold' && <div className="w-1.5 h-1.5 bg-amber-400 rounded-full blur-[1px]" />}
-          {type === 'cyan' && <div className="w-1 h-3 bg-cyan-300 rounded-full blur-[1px] opacity-30" />}
-          {type === 'magic' && <Sparkles size={8} className="text-violet-300 opacity-20" />}
-          {type === 'leaves' && (
-            <div 
-              className={`w-3 h-3 rounded-tr-full rounded-bl-full ${rpgMode ? 'bg-red-900/10' : 'bg-emerald-400/15'}`} 
-              style={{ transform: `rotate(${Math.random() * 360}deg)` }}
-            />
-          )}
+          <div className={`w-1 h-1 rounded-full blur-[1px] ${rpgMode ? 'bg-red-400/30' : 'bg-white/40'}`} />
         </motion.div>
       ))}
     </div>
   );
 };
 
-// --- Artifacts ---
+// --- Layered Artifact Animations ---
 const LightningArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
-  <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
+  <motion.g
+    animate={{ 
+      y: [0, -8, 0]
+    }}
+    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+  >
     <motion.path 
-      animate={{ filter: ["drop-shadow(0 0 3px #F59E0B)", "drop-shadow(0 0 8px #F59E0B)", "drop-shadow(0 0 3px #F59E0B)"] }}
-      transition={{ duration: 4, repeat: Infinity }}
+      animate={{ 
+        opacity: [1, 0.7, 1],
+        scale: [1, 1.04, 1]
+      }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       d="M50 15 L35 55 L50 55 L40 85 L70 40 L50 40 L60 15 Z" 
       fill={rpgMode ? "#7F1D1D" : "#F59E0B"} 
     />
-  </svg>
+  </motion.g>
 );
 
 const SphereArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
-  <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
-    <g transform="translate(50, 50)">
-      {[0, 45, 90, 135].map((angle, i) => (
-        <motion.ellipse
-          key={angle}
-          animate={{ rx: [10, 13, 10], ry: [35, 40, 35], opacity: [0.2, 0.5, 0.2] }}
-          transition={{ duration: 6, delay: i * 1, repeat: Infinity }}
-          cx="0" cy="0" rx="12" ry="40"
-          fill="none"
-          stroke={rpgMode ? "#7F1D1D" : "#22D3EE"}
-          strokeWidth="1.5"
-          transform={`rotate(${angle})`}
-        />
+  <motion.g 
+    animate={{ y: [0, -4, 0] }}
+    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+    transform="translate(50, 50)"
+  >
+    <g>
+      {/* Статичные орбиты с эффектом "бегущего света" */}
+      {[0, 60, 120].map((angle, i) => (
+        <g key={angle} transform={`rotate(${angle})`}>
+          {/* Основная линия орбиты (тусклая) */}
+          <ellipse
+            cx="0" cy="0" rx="14" ry="42"
+            fill="none"
+            stroke={rpgMode ? "#7F1D1D" : "#22D3EE"}
+            strokeWidth="1.2"
+            opacity="0.15"
+          />
+          {/* Бегущий свет по орбите */}
+          <motion.ellipse
+            cx="0" cy="0" rx="14" ry="42"
+            fill="none"
+            stroke={rpgMode ? "#B91C1C" : "#22D3EE"}
+            strokeWidth="1.8"
+            strokeDasharray="30 150"
+            animate={{ 
+              strokeDashoffset: [0, -180],
+              opacity: [0.3, 0.6, 0.3],
+              scale: [1, 1.02, 1]
+            }}
+            transition={{ 
+              strokeDashoffset: { duration: 4 + i * 1.5, repeat: Infinity, ease: "linear" },
+              opacity: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 },
+              scale: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }
+            }}
+          />
+        </g>
       ))}
-      <motion.circle animate={{ scale: [1, 1.1, 1] }} transition={{ duration: 4, repeat: Infinity }} r="10" fill={rpgMode ? "#B91C1C" : "#0891B2"} />
-      <circle r="4" fill="white" opacity="0.8" />
+      
+      {/* Центральное ядро с мягким свечением */}
+      <motion.circle 
+        animate={{ 
+          scale: [1, 1.15, 1],
+          opacity: [0.8, 1, 0.8],
+          filter: ["blur(0px)", "blur(3px)", "blur(0px)"]
+        }}
+        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+        r="14" 
+        fill={rpgMode ? "#B91C1C" : "#0891B2"} 
+      />
+      
+      {/* Внешняя волна энергии */}
+      <motion.circle 
+        animate={{ scale: [0.8, 1.8, 0.8], opacity: [0.2, 0, 0.2] }}
+        transition={{ duration: 4, repeat: Infinity }}
+        r="18"
+        fill="none"
+        stroke={rpgMode ? "#B91C1C" : "#22D3EE"}
+        strokeWidth="0.8"
+      />
     </g>
-  </svg>
+  </motion.g>
 );
 
 const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
-  <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
-    <g transform="translate(50, 50)">
-      <motion.g animate={{ rotate: [0, 10, -10, 0] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}>
-        <path d="M0 -42 L12 -12 L42 0 L12 12 L0 42 L-12 12 L-42 0 L-12 -12 Z" fill={rpgMode ? "#7F1D1D" : "#8B5CF6"} />
-      </motion.g>
-      <motion.circle animate={{ scale: [1, 1.2, 1], opacity: [0.6, 0.8, 0.6] }} transition={{ duration: 3, repeat: Infinity }} r="6" fill="white" />
-    </g>
-  </svg>
+  <motion.g
+    animate={{ 
+      y: [0, -10, 0],
+      rotate: [0, 2, -2, 0]
+    }}
+    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+    transform="translate(50, 50)"
+  >
+    <motion.g 
+      animate={{ rotate: 360 }}
+      transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+    >
+      <path d="M0 -42 L12 -12 L42 0 L12 12 L0 42 L-12 12 L-42 0 L-12 -12 Z" fill={rpgMode ? "#7F1D1D" : "#8B5CF6"} />
+      <motion.path 
+        animate={{ opacity: [0.3, 0.7, 0.3] }}
+        transition={{ duration: 2, repeat: Infinity }}
+        d="M0 -42 L12 -12 L42 0 L12 12 L0 42 L-12 12 L-42 0 L-12 -12 Z" 
+        fill="white" 
+        opacity="0.2"
+      />
+    </motion.g>
+    <motion.circle 
+      animate={{ scale: [1, 1.5, 1], opacity: [1, 0.5, 1] }}
+      transition={{ duration: 1.5, repeat: Infinity }}
+      r="6" 
+      fill="white" 
+    />
+  </motion.g>
 );
 
 const BookArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
-  <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
-    <motion.g animate={{ y: [0, -3, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
-      <rect x="20" y="30" width="60" height="45" rx="5" fill="none" stroke={rpgMode ? "#B91C1C" : "#10B981"} strokeWidth="3" opacity="0.4" />
-      <path d="M50 30 V75" stroke={rpgMode ? "#B91C1C" : "#10B981"} strokeWidth="3" />
-      <path d="M25 42 H45 M25 52 H45 M25 62 H35" stroke={rpgMode ? "#7F1D1D" : "#059669"} strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-      <path d="M55 42 H75 M55 52 H75 M55 62 H65" stroke={rpgMode ? "#7F1D1D" : "#059669"} strokeWidth="2.5" strokeLinecap="round" opacity="0.6" />
-    </motion.g>
-  </svg>
+  <motion.g
+    animate={{ y: [0, -8, 0] }}
+    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+  >
+    <rect x="20" y="30" width="60" height="40" rx="6" fill="white" fillOpacity="0.1" stroke={rpgMode ? "#B91C1C" : "#10B981"} strokeWidth="2.5" />
+    <motion.path 
+      animate={{ opacity: [0.3, 0.6, 0.3] }}
+      transition={{ duration: 3, repeat: Infinity }}
+      d="M50 30 V70 M25 45 H45 M25 55 H45 M55 45 H75 M55 55 H75" 
+      stroke={rpgMode ? "#7F1D1D" : "#059669"} 
+      strokeWidth="2.5" 
+      strokeLinecap="round" 
+    />
+    <motion.path 
+      animate={{ d: ["M20 30 Q35 25 50 30", "M20 30 Q35 35 50 30"] }}
+      transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
+      stroke={rpgMode ? "#B91C1C" : "#10B981"}
+      strokeWidth="2"
+      fill="none"
+    />
+  </motion.g>
 );
 
 const SLIDES = [
   {
-    title: 'Ясность в каждом выборе',
+    title: 'Ясность выбора',
     description: 'Разложите сомнения на атомы. Наша система поможет увидеть скрытые факторы и принять правильное решение.',
     Artifact: LightningArtifact,
-    particles: 'gold',
     aurora: ['rgba(245, 158, 11, 0.15)', 'rgba(251, 191, 36, 0.08)'],
-    haptic: 'light',
-    glowColor: 'from-amber-400/10 to-transparent',
-    geomColor: 'text-amber-900'
+    glowColor: 'from-amber-400/20 to-transparent',
+    geomColor: 'text-amber-900',
+    accentColor: 'text-amber-600'
   },
   {
     title: 'Гармония чувств',
-    description: 'Прислушайтесь к своему состоянию. Исследуйте природу своих эмоций через глубокий диалог и находите точку покоя внутри себя.',
+    description: 'Прислушайтесь к себе. Исследуйте природу своих эмоций через глубокий диалог и находите точку покоя внутри.',
     Artifact: SphereArtifact,
-    particles: 'cyan',
     aurora: ['rgba(6, 182, 212, 0.15)', 'rgba(34, 211, 238, 0.08)'],
-    haptic: 'medium',
-    glowColor: 'from-cyan-400/10 to-transparent',
-    geomColor: 'text-cyan-900'
+    glowColor: 'from-cyan-400/20 to-transparent',
+    geomColor: 'text-cyan-900',
+    accentColor: 'text-cyan-600'
   },
   {
     title: 'Ваша истинная суть',
-    description: 'Узнайте свой психологический архетип. Проходите ежедневные испытания, собирайте артефакты и взрастите свое Древо Мудрости.',
+    description: 'Узнайте свой архетип. Проходите ежедневные испытания, собирайте артефакты и взрастите свое Древо Мудрости.',
     Artifact: SparkleArtifact,
-    particles: 'magic',
     aurora: ['rgba(139, 92, 246, 0.15)', 'rgba(216, 180, 254, 0.08)'],
-    haptic: 'impact',
-    glowColor: 'from-violet-400/10 to-transparent',
-    geomColor: 'text-violet-900'
+    glowColor: 'from-violet-400/20 to-transparent',
+    geomColor: 'text-violet-900',
+    accentColor: 'text-violet-600'
   },
   {
-    title: 'Летопись вашей жизни',
+    title: 'Летопись жизни',
     description: 'Сохраните важные инсайты и моменты благодарности. Создайте личную базу мудрости, которая станет вашей опорой.',
     Artifact: BookArtifact,
-    particles: 'leaves',
     aurora: ['rgba(16, 185, 129, 0.15)', 'rgba(20, 184, 166, 0.08)'],
-    haptic: 'success',
-    glowColor: 'from-emerald-400/10 to-transparent',
-    geomColor: 'text-emerald-900'
+    glowColor: 'from-emerald-400/20 to-transparent',
+    geomColor: 'text-emerald-900',
+    accentColor: 'text-emerald-600'
   }
 ];
 
 export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = false }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
 
   const nextSlide = () => {
     if (currentSlide < SLIDES.length - 1) {
@@ -211,122 +245,117 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
         window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
       }
     } else {
-      onComplete();
+      setIsExiting(true);
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+      setTimeout(onComplete, 900);
     }
   };
 
   const slide = SLIDES[currentSlide];
 
   return (
-    <div className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-1000 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
-      
-      {/* Background Atmosphere */}
+    <motion.div 
+      initial={{ opacity: 1 }}
+      animate={{ 
+        opacity: isExiting ? 0 : 1, 
+        scale: isExiting ? 1.05 : 1,
+        filter: isExiting ? 'blur(10px)' : 'blur(0px)'
+      }}
+      transition={{ duration: 0.9, ease: "easeInOut" }}
+      className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-1000 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}
+    >
       <AuroraBackground colors={slide.aurora} rpgMode={rpgMode} />
-
-      {/* Global Particles (Persistent on all slides) */}
-      <AnimatePresence mode="wait">
-        <motion.div 
-          key={`particles-${currentSlide}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          className="absolute inset-0 pointer-events-none"
-        >
-          <ParticleField type={slide.particles} rpgMode={rpgMode} />
-        </motion.div>
-      </AnimatePresence>
+      <ParticleField type={slide.title} rpgMode={rpgMode} />
 
       <div className="flex-1 w-full max-w-md px-6 flex flex-col items-center justify-center z-10 text-center">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSlide}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.4 }}
             className="flex flex-col items-center w-full"
           >
-            {/* Artifact Container */}
-            <div className={`w-48 h-48 rounded-[56px] relative flex items-center justify-center mb-10 animate-float ${
+            {/* Artifact Container: Clean glass feel, background rings removed */}
+            <div className={`w-48 h-48 rounded-[56px] relative flex items-center justify-center mb-12 overflow-hidden ${
               rpgMode 
-                ? 'bg-white border-2 border-red-800 shadow-[8px_8px_0px_#b91c1c]' 
-                : 'bg-white bento-border bento-shadow ring-4 ring-white/30'
+                ? 'bg-white border-2 border-red-800 shadow-[10px_10px_0px_#b91c1c]' 
+                : 'bg-white/90 backdrop-blur-xl bento-border bento-shadow ring-4 ring-white shadow-[0_20px_50px_-10px_rgba(0,0,0,0.08)]'
             }`}>
-              
-              {/* Layer 1: Sacred Geometry */}
-              <SacredGeometry rpgMode={rpgMode} colorClass={slide.geomColor} />
-
-              {/* Layer 2: Breathing Glow (Reduced intensity for perf) */}
+              {/* Dynamic Glow Layer */}
               <motion.div 
                 animate={{ 
-                  scale: [0.9, 1.1, 0.9],
-                  opacity: [0.2, 0.4, 0.2]
+                  opacity: [0.2, 0.5, 0.2], 
+                  scale: [1, 1.4, 1],
+                  rotate: [0, 90, 180, 270, 360]
                 }}
-                transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                className={`absolute inset-6 rounded-full blur-2xl bg-gradient-to-r ${slide.glowColor}`}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                className={`absolute inset-4 rounded-full blur-3xl bg-gradient-to-r ${slide.glowColor}`} 
               />
-
-              {/* Layer 3: Main Icon */}
-              <div className="w-24 h-24 relative z-10">
-                <slide.Artifact rpgMode={rpgMode} />
+              
+              <div className="w-28 h-28 relative z-10">
+                <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                   <slide.Artifact rpgMode={rpgMode} />
+                </svg>
               </div>
+
+              {/* High-quality inner highlight */}
+              {!rpgMode && <div className="absolute inset-0 border border-white/60 rounded-[56px] pointer-events-none" />}
             </div>
 
-            {/* Typography in Bento Box (Updated to match app style) */}
-            <motion.div
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className={`w-full p-8 rounded-[32px] border transition-all duration-500 text-left ${
+            {/* Typography */}
+            <div
+              className={`w-full p-10 rounded-[48px] border transition-all duration-700 text-left ${
                 rpgMode 
-                  ? 'bg-white/60 border-red-800/20 shadow-sm' 
-                  : 'bg-white/80 backdrop-blur-xl bento-border bento-shadow'
+                  ? 'bg-white/95 border-red-800/30 shadow-sm' 
+                  : 'bg-white/95 backdrop-blur-3xl bento-border bento-shadow shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)]'
               }`}
             >
-              <h2 className={`text-2xl font-black tracking-tighter mb-4 leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy uppercase' : 'text-slate-900'}`}>
+              <h2 className={`text-3xl font-black tracking-tighter mb-6 leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy uppercase' : 'text-slate-900'}`}>
                 {slide.title}
               </h2>
-
-              <p className={`text-[14px] leading-relaxed font-medium ${rpgMode ? 'text-red-900' : 'text-slate-600'}`}>
+              <p className={`text-lg leading-relaxed font-semibold opacity-90 ${rpgMode ? 'text-red-900/80' : 'text-slate-600'}`}>
                 {slide.description}
               </p>
-            </motion.div>
+            </div>
           </motion.div>
         </AnimatePresence>
       </div>
 
-      <div className="w-full max-w-md px-6 pb-12 z-20 flex flex-col items-center">
-        {/* Progress System */}
-        <div className="flex space-x-3 mb-8">
+      {/* Navigation Layer */}
+      <div className={`w-full max-w-md px-6 pb-12 z-20 flex flex-col items-center transition-opacity duration-700 ${isExiting ? 'opacity-0' : 'opacity-100'}`}>
+        <div className="flex space-x-3 mb-10">
           {SLIDES.map((_, i) => (
             <motion.div 
               key={i} 
               animate={{ 
-                width: currentSlide === i ? 40 : 8,
+                width: currentSlide === i ? 56 : 12,
                 backgroundColor: currentSlide === i 
                   ? (rpgMode ? '#991B1B' : '#0F172A') 
-                  : (rpgMode ? 'rgba(153, 27, 27, 0.1)' : 'rgba(15, 23, 42, 0.1)')
+                  : (rpgMode ? 'rgba(153, 27, 27, 0.15)' : 'rgba(15, 23, 42, 0.08)')
               }}
-              className="h-1.5 rounded-full transition-all duration-300"
+              className="h-2.5 rounded-full transition-all duration-500"
             />
           ))}
         </div>
 
         <motion.button 
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+          whileTap={{ scale: 0.96 }}
           onClick={nextSlide}
-          className={`w-full py-5 rounded-[32px] font-black text-xs uppercase tracking-[0.3em] flex items-center justify-center space-x-4 shadow-xl transition-all ${
-            rpgMode ? 'rpg-button' : 'bg-slate-900 text-white shadow-slate-900/20'
+          className={`w-full py-6 rounded-[32px] font-black text-sm uppercase tracking-[0.3em] flex items-center justify-center space-x-4 shadow-2xl transition-all duration-300 ${
+            rpgMode ? 'rpg-button' : 'bg-slate-900 text-white shadow-slate-900/10'
           }`}
         >
           <span>{currentSlide === SLIDES.length - 1 ? 'Начать путь' : 'Далее'}</span>
-          <ArrowRight size={18} strokeWidth={3} />
+          <ArrowRight size={22} strokeWidth={3} className="transition-transform group-hover:translate-x-1" />
         </motion.button>
       </div>
       
-      <div className="absolute inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
-    </div>
+      {/* Texture Overlay */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.015] mix-blend-overlay bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
+    </motion.div>
   );
 };
