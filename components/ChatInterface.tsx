@@ -236,7 +236,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     
     return (
       <div 
-        className={`flex flex-col space-y-3 transition-all duration-500 ease-out ${isActive ? 'flex-[2.5]' : 'flex-[1] opacity-40 grayscale-[0.5]'}`}
+        className={`flex flex-col space-y-2 transition-all duration-500 ease-out min-w-0 overflow-hidden ${isActive ? 'flex-[2]' : 'flex-[1] opacity-40 grayscale-[0.8]'}`}
         onClick={() => {
           if (!isActive) {
             setActiveSide(side);
@@ -245,16 +245,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           }
         }}
       >
-        <div className="flex items-center justify-between px-2 mb-1">
-          <h4 className={`text-[10px] font-black uppercase tracking-[0.15em] truncate ${isActive ? (rpgMode ? 'text-red-900' : 'text-indigo-600') : 'text-slate-400'}`}>
+        <div className="flex items-center justify-between px-1 mb-1">
+          <h4 className={`text-[9px] font-black uppercase tracking-widest truncate ${isActive ? (rpgMode ? 'text-red-900' : 'text-indigo-600') : 'text-slate-400'}`}>
             {title}
           </h4>
-          <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md ${isActive ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'}`}>
+          <span className={`text-[8px] font-black px-1 py-0.5 rounded ${isActive ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'bg-slate-200 text-slate-400'}`}>
             {items.length}
           </span>
         </div>
 
-        <div className="space-y-3">
+        <div className="space-y-2">
           <AnimatePresence mode="popLayout">
             {items.map((arg, i) => (
               <motion.div
@@ -262,19 +262,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 initial={{ opacity: 0, scale: 0.9, y: 10 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.8, x: side === 'A' ? -20 : 20 }}
-                className={`relative p-4 rounded-[24px] border-2 border-b-4 group shadow-sm transition-all ${
+                className={`relative p-3 rounded-[20px] border-2 border-b-4 group shadow-sm transition-all ${
                   rpgMode ? 'bg-white border-red-800/20 text-red-950' : 'bg-white border-slate-100 text-slate-800'
                 }`}
               >
-                <p className={`text-[14px] font-bold leading-tight break-words ${!isActive && 'line-clamp-2'}`}>
+                <p className={`text-[13px] font-bold leading-tight break-words ${!isActive && 'line-clamp-1'}`}>
                   {arg.text}
                 </p>
                 {isActive && (
                   <button 
                     onClick={(e) => { e.stopPropagation(); removeArgument(side, i); }}
-                    className="absolute -right-2 -top-2 w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                    className="absolute -right-1.5 -top-1.5 w-5 h-5 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
                   >
-                    <X size={12} strokeWidth={4} />
+                    <X size={10} strokeWidth={4} />
                   </button>
                 )}
               </motion.div>
@@ -287,7 +287,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               layout
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className={`p-4 rounded-[24px] border-2 border-b-[6px] shadow-xl relative z-30 ${
+              className={`p-3 rounded-[20px] border-2 border-b-[4px] shadow-xl relative z-30 ${
                 rpgMode ? 'bg-white border-red-800' : 'bg-white border-indigo-500 ring-4 ring-indigo-50'
               }`}
             >
@@ -302,15 +302,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   }
                 }}
                 placeholder="Плюс или минус..."
-                className="w-full bg-transparent text-[16px] font-black leading-tight focus:outline-none resize-none min-h-[60px]"
+                className="w-full bg-transparent text-[15px] font-black leading-tight focus:outline-none resize-none min-h-[50px]"
                 rows={2}
               />
-              <div className="flex justify-end mt-2">
+              <div className="flex justify-end mt-1">
                 <button 
                   onClick={addArgument}
-                  className={`p-2 rounded-xl transition-all active:scale-90 ${inlineInput.trim() ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'text-slate-300'}`}
+                  className={`p-1.5 rounded-lg transition-all active:scale-90 ${inlineInput.trim() ? (rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white') : 'text-slate-300'}`}
                 >
-                  <CheckCircle2 size={24} strokeWidth={3} />
+                  <Check size={20} strokeWidth={4} />
                 </button>
               </div>
             </motion.div>
@@ -322,14 +322,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 setActiveSide(side);
                 setIsEditingNew(true);
               }}
-              className={`w-full py-6 rounded-[24px] border-2 border-dashed flex flex-col items-center justify-center transition-all ${
+              className={`w-full py-5 rounded-[20px] border-2 border-dashed flex flex-col items-center justify-center transition-all ${
                 isActive 
                   ? (rpgMode ? 'border-red-800 bg-red-50 text-red-800' : 'border-indigo-400 bg-indigo-50/30 text-indigo-600') 
                   : 'border-slate-200 text-slate-300'
               }`}
             >
-              <Plus size={isActive ? 28 : 20} strokeWidth={3} />
-              {isActive && <span className="text-[9px] font-black uppercase tracking-widest mt-1">Добавить</span>}
+              <Plus size={isActive ? 22 : 18} strokeWidth={3} />
             </motion.button>
           )}
         </div>
@@ -339,7 +338,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const renderProgress = (step: number) => {
     return (
-      <div className="flex space-x-1.5 px-6 pt-4 mb-4">
+      <div className="flex space-x-1.5 px-6 pt-4 mb-3">
         {[1, 2, 4].map((s) => (
           <div 
             key={s} 
@@ -368,7 +367,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       <div className="flex-1 overflow-y-auto no-scrollbar" ref={listContainerRef}>
         {mode === 'DECISION' ? (
-          <div className="h-full flex flex-col">
+          <div className="h-full flex flex-col overflow-hidden">
             {decisionStep === 1 && !isIdentifying && (
               <div className="flex-1 flex flex-col animate-fade-in relative">
                 <div className="flex items-center px-4 pt-4">
@@ -428,8 +427,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             )}
 
             {decisionStep === 2 && !isIdentifying && (
-              <div className="p-4 flex-1 flex flex-col animate-fade-in h-full overflow-hidden">
-                 <div className="flex items-center justify-between mb-4">
+              <div className="px-4 pb-4 flex-1 flex flex-col animate-fade-in h-full overflow-hidden">
+                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2 flex-1">
                       <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-800' : 'text-slate-400 hover:text-slate-800'}`}>
                         <ArrowLeft size={20} />
@@ -438,39 +437,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     </div>
                  </div>
 
-                 <div className="mb-4">
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`px-5 py-3 rounded-[24px] border-2 border-b-4 text-center transition-all ${rpgMode ? 'bg-red-50 border-red-800' : 'bg-indigo-600 border-indigo-900 text-white shadow-xl shadow-indigo-200/50'}`}
-                    >
-                      <p className={`text-[11px] font-black uppercase tracking-widest leading-tight`}>
-                        <Sparkles size={12} className="inline mr-2 -mt-0.5" />
-                        Напишите плюсы и минусы для каждого варианта. Мастер взвесит их ценность.
+                 <div className="mb-2 px-2">
+                    <div className="flex items-center space-x-2">
+                      <Sparkles size={14} className={rpgMode ? 'text-red-800' : 'text-indigo-600'} />
+                      <p className={`text-[10px] font-black uppercase tracking-widest leading-tight ${rpgMode ? 'text-red-900' : 'text-slate-500'}`}>
+                        Напишите плюсы и минусы для вариантов
                       </p>
-                    </motion.div>
+                    </div>
                  </div>
 
-                 <div className="flex-1 flex space-x-3 items-stretch min-h-0 py-2 relative">
+                 <div className="flex-1 flex space-x-1.5 items-stretch min-h-0 py-2 relative w-full overflow-hidden">
                    {renderSideColumn('A')}
                    
-                   {/* Разделитель VS - стал меньше и компактнее */}
-                   <div className="flex flex-col items-center justify-center px-1">
+                   <div className="flex flex-col items-center justify-center px-0.5 shrink-0">
                       <div className={`w-[1px] flex-1 ${rpgMode ? 'bg-red-800/10' : 'bg-slate-200'}`}></div>
-                      <div className={`my-2 w-7 h-7 rounded-full flex items-center justify-center font-black text-[9px] border-2 transition-all duration-500 ${activeSide === 'A' ? '-rotate-12' : 'rotate-12'} ${rpgMode ? 'bg-white border-red-800 text-red-800' : 'bg-white border-slate-200 text-slate-400'}`}>VS</div>
+                      <div className={`my-2 w-6 h-6 rounded-full flex items-center justify-center font-black text-[8px] border-2 transition-all duration-500 ${activeSide === 'A' ? '-rotate-12' : 'rotate-12'} ${rpgMode ? 'bg-white border-red-800 text-red-800' : 'bg-white border-slate-200 text-slate-400'}`}>VS</div>
                       <div className={`w-[1px] flex-1 ${rpgMode ? 'bg-red-800/10' : 'bg-slate-200'}`}></div>
                    </div>
 
                    {renderSideColumn('B')}
                  </div>
 
-                 <div className="mt-4 pb-6">
+                 <div className="mt-2 pb-4">
                     <button 
                       onClick={performAnalysis} 
                       disabled={decisionData.argsA.length === 0 && decisionData.argsB.length === 0}
-                      className={`w-full py-6 rounded-[32px] font-black text-xs uppercase tracking-[0.4em] shadow-2xl flex items-center justify-center space-x-5 active:scale-95 transition-all border-b-8 disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-[#7f1d1d]' : 'bg-slate-900 text-white border-slate-950'}`}
+                      className={`w-full py-5 rounded-[28px] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl flex items-center justify-center space-x-4 active:scale-95 transition-all border-b-6 disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-[#7f1d1d]' : 'bg-slate-900 text-white border-slate-950'}`}
                     >
-                      <Wand2 size={20} /><span>Синтезировать истину</span>
+                      <Wand2 size={18} /><span>Синтезировать</span>
                     </button>
                  </div>
               </div>
