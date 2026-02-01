@@ -398,7 +398,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                    </motion.div>
                 </div>
 
-                <div className="px-6 flex-1 flex flex-col min-h-0">
+                {/* Увеличен mt-12 для отступа от пузыря вопроса */}
+                <div className="px-6 flex-1 flex flex-col min-h-0 mt-12">
                    <div className="flex-1 flex flex-col items-center justify-center min-h-[100px] relative group">
                       <div className={`absolute inset-0 transition-all duration-500 rounded-[32px] ${decisionData.topic.trim() ? (rpgMode ? 'bg-red-800/5 ring-4 ring-red-800/10' : 'bg-indigo-50/20 ring-4 ring-indigo-50/30') : 'bg-transparent'}`} />
                       <textarea 
