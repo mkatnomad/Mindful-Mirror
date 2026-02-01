@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, ImageIcon as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star, PieChart, TrendingUp, Sparkles, BookOpen, Zap, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, Save, Plus, Trash2, Camera, Lock, X, ImageIcon as ImageIcon, Gift, RefreshCcw, BarChart3, Users, Clock, Flame, Star, PieChart, TrendingUp, Sparkles, BookOpen, Zap, ShoppingCart, Globe } from 'lucide-react';
 import { SiteConfig } from '../types';
 
 interface AdminInterfaceProps {
@@ -151,6 +151,34 @@ export const AdminInterface: React.FC<AdminInterfaceProps> = ({ config, stats, o
                    <p className="text-xs text-slate-400 font-bold uppercase tracking-widest relative z-10">Premium (Акт.)</p>
                    <p className="text-3xl font-black text-slate-800 relative z-10">{stats.premium}</p>
                    <div className="absolute top-2 right-4 text-[10px] font-black text-slate-300">всего: {stats.premiumEver || 0}</div>
+                </div>
+             </div>
+
+             {/* НОВЫЙ БЛОК: ИСТОЧНИКИ ТРАФИКА */}
+             <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+                <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6 flex items-center space-x-2">
+                   <Globe size={14} className="text-blue-500" />
+                   <span>Источники трафика (start_param)</span>
+                </h3>
+                <div className="space-y-3">
+                   {stats.sources && Object.keys(stats.sources).length > 0 ? (
+                     Object.entries(stats.sources).sort((a: any, b: any) => b[1] - a[1]).map(([source, count]) => (
+                       <div key={source} className="flex items-center justify-between group">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-2 h-2 rounded-full bg-blue-400 shadow-sm group-hover:scale-125 transition-transform" />
+                            <span className="text-sm font-bold text-slate-700">{source}</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-black text-blue-600 bg-blue-50 px-3 py-1 rounded-full">{count as number}</span>
+                          </div>
+                       </div>
+                     ))
+                   ) : (
+                     <div className="py-8 text-center">
+                        <Globe size={32} className="mx-auto text-slate-200 mb-2" />
+                        <p className="text-xs text-slate-400 italic">Данные о переходах пока не собраны</p>
+                     </div>
+                   )}
                 </div>
              </div>
 

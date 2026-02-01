@@ -15,15 +15,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const pipeline: any[] = [];
 
     if (type === 'session') {
-      // Use seconds if provided, otherwise fallback to minutes * 60
       const seconds = value.seconds !== undefined ? parseInt(value.seconds) : (parseInt(value.minutes) * 60 || 0);
       const mode = value.mode || 'UNKNOWN';
       
       pipeline.push(['incr', 'global_sessions']);
-      // We store raw seconds in the KV now for precision
       pipeline.push(['incrby', 'global_seconds_total', seconds]);
       
-      // Segmented statistics in seconds
       pipeline.push(['hincrby', 'stats:sessions', mode, 1]);
       pipeline.push(['hincrby', 'stats:seconds_total', mode, seconds]);
       
@@ -38,6 +35,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const archName = value.name;
       pipeline.push(['hincrby', 'archetype_counts', archName, 1]);
       pipeline.push(['incr', 'stats:test_finished']);
+    } else if (type === 'app_start') {
+      const source = value.source || 'organic';
+      pipeline.push(['hincrby', 'stats:sources', source, 1]);
     }
 
     if (pipeline.length > 0) {

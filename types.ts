@@ -76,6 +76,7 @@ export interface UserProfile {
   totalMinutes: number;
   totalDecisions?: number; // Добавлено для статистики
   rpgMode: boolean;
+  source?: string | null; // Источник перехода (start_param)
   // Subscription fields
   firstRunDate: number | null;
   isSubscribed: boolean;

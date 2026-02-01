@@ -42,9 +42,9 @@ const SacredGeometry = ({ rpgMode, colorClass }: { rpgMode: boolean, colorClass:
   <motion.div 
     animate={{ rotate: 360 }}
     transition={{ duration: 80, repeat: Infinity, ease: "linear" }}
-    className={`absolute inset-0 flex items-center justify-center opacity-15 pointer-events-none mix-blend-soft-light ${colorClass}`}
+    className={`absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none mix-blend-overlay ${colorClass}`}
   >
-    <svg width="260" height="260" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.5">
+    <svg width="260" height="260" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.8">
       <circle cx="50" cy="50" r="18" />
       <circle cx="50" cy="32" r="18" />
       <circle cx="50" cy="68" r="18" />
