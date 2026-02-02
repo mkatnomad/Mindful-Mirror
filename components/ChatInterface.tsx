@@ -45,6 +45,27 @@ const MiniPrism = ({ rpgMode }: { rpgMode: boolean }) => (
   </div>
 );
 
+const TypingIndicator = ({ rpgMode }: { rpgMode: boolean }) => (
+  <div className={`flex items-center space-x-1.5 px-5 py-3.5 rounded-[24px] rounded-bl-sm w-fit ${rpgMode ? 'bg-white border-2 border-red-800/10 shadow-sm shadow-red-900/5' : 'bg-white bento-border shadow-sm'}`}>
+    {[0, 1, 2].map((i) => (
+      <motion.div
+        key={i}
+        animate={{ 
+          y: [0, -5, 0],
+          opacity: [0.4, 1, 0.4]
+        }}
+        transition={{ 
+          duration: 0.9, 
+          repeat: Infinity, 
+          delay: i * 0.15,
+          ease: "easeInOut"
+        }}
+        className={`w-2 h-2 rounded-full ${rpgMode ? 'bg-red-800' : 'bg-indigo-400'}`}
+      />
+    ))}
+  </div>
+);
+
 const QUICK_STARTERS = [
   "Уволиться или остаться?",
   "Купить это сейчас или подождать?",
@@ -69,11 +90,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const startTimeRef = useRef<number>(Date.now());
   const isInitialized = useRef(false);
   
-  // Рефы для авто-скролла к активной плитке
   const activeInputRef = useRef<HTMLTextAreaElement>(null);
   const listContainerRef = useRef<HTMLDivElement>(null);
 
-  // Decision States
   const [decisionStep, setDecisionStep] = useState<number>(1); 
   const [activeSide, setActiveSide] = useState<'A' | 'B'>('A');
   const [inlineInput, setInlineInput] = useState('');
@@ -108,13 +127,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     isInitialized.current = true;
   }, [mode, readOnly, initialMessages, rpgMode]);
 
-  // Фокус и скролл при активации плитки
   useEffect(() => {
     if (isEditingNew && activeInputRef.current) {
       activeInputRef.current.focus();
       activeInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [isEditingNew, activeSide]);
+
+  // Улучшенный автоскролл
+  useEffect(() => {
+    if (listContainerRef.current) {
+      if (decisionStep === 4) {
+        // Если мы на финальном шаге решения — сбрасываем скролл ВВЕРХ
+        listContainerRef.current.scrollTop = 0;
+      } else {
+        // В чате — скроллим ВНИЗ к новым сообщениям
+        listContainerRef.current.scrollTop = listContainerRef.current.scrollHeight;
+      }
+    }
+  }, [messages, isLoading, decisionStep]);
 
   const handleBack = () => {
     const hasUserInteraction = mode === 'DECISION' 
@@ -146,7 +177,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }));
       await new Promise(r => setTimeout(r, 800));
       setDecisionStep(2);
-      // Сразу активируем ввод для первой стороны
       setIsEditingNew(true);
       setActiveSide('A');
     } catch (e) {
@@ -173,7 +203,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setInlineInput('');
     if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     
-    // Оставляем режим редактирования активным для следующей плитки
     setTimeout(() => {
       if (activeInputRef.current) {
         activeInputRef.current.focus();
@@ -289,7 +318,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             ))}
           </AnimatePresence>
 
-          {/* Плитка ввода - всегда видна на активной стороне */}
           {isActive && isEditingNew ? (
             <motion.div
               layout
@@ -386,7 +414,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <div className="w-10"></div>
                 </div>
 
-                {/* Основной контент в скролл-зоне для мобильных устройств */}
                 <div className="flex-1 overflow-y-auto no-scrollbar flex flex-col">
                   <div className="px-6 py-2 flex flex-col items-center text-center shrink-0">
                     <motion.div initial={{ scale: 0, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} className="mb-2">
@@ -419,7 +446,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 </div>
 
-                {/* Кнопка зафиксирована снизу */}
                 <div className={`p-4 pb-6 shrink-0 z-20 transition-colors ${rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
                    <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim() || isIdentifying} className={`w-full py-5 rounded-[32px] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center space-x-4 transition-all shadow-xl border-b-[6px] disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-red-950' : 'bg-slate-900 text-white border-slate-950'}`}>
                      <span>Взвесить факторы</span><ChevronRight size={16} strokeWidth={4} />
@@ -513,7 +539,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                  </div>
                </div>
              ))}
-             {isLoading && <Loader2 className="mx-auto text-indigo-400 animate-spin" />}
+             {isLoading && (
+               <div className="flex justify-start">
+                  <TypingIndicator rpgMode={rpgMode} />
+               </div>
+             )}
           </div>
         )}
       </div>
