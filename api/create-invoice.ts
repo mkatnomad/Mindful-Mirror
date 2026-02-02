@@ -25,12 +25,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       title: "10 Зарядов Решений",
       description: "Дополнительная энергия для глубокого анализа ситуаций",
       payload: `energy_${userId}`,
-      amount: 99 // 2 звезды за пак энергии
+      amount: 33 // 2 звезды за пак энергии
     } : {
       title: "Premium статус на 30 дней",
       description: "Безлимитный доступ ко всем функциям на 30 дней",
       payload: `user_${userId}`,
-      amount: 349 // 1 звезда за премиум (тестовая цена)
+      amount: 300 // 1 звезда за премиум (тестовая цена)
     };
 
     const response = await fetch(`https://api.telegram.org/bot${token}/createInvoiceLink`, {

@@ -134,7 +134,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [isEditingNew, activeSide]);
 
-  // Улучшенный автоскролл: теперь при Step 4 скроллит ВВЕРХ
   useEffect(() => {
     if (listContainerRef.current) {
       if (decisionStep === 4) {
@@ -388,7 +387,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   return (
-    <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}>
+    <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
       {mode !== 'DECISION' && (
         <div className={`px-6 py-4 border-b flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-red-800/30' : 'bg-white/80 backdrop-blur-xl border-slate-100'}`}>
           <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}><ArrowLeft size={20} /></button>
@@ -444,7 +443,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 </div>
 
-                <div className={`p-4 pb-6 shrink-0 z-20 transition-colors ${rpgMode ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
+                <div className={`p-4 pb-6 shrink-0 z-20 transition-colors ${rpgMode ? 'bg-parchment' : 'bg-transparent'}`}>
                    <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim() || isIdentifying} className={`w-full py-5 rounded-[32px] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center space-x-4 transition-all shadow-xl border-b-[6px] disabled:opacity-20 disabled:grayscale ${rpgMode ? 'rpg-button border-red-950' : 'bg-slate-900 text-white border-slate-950'}`}>
                      <span>Взвесить факторы</span><ChevronRight size={16} strokeWidth={4} />
                    </button>

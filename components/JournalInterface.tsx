@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
@@ -362,7 +363,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
 
   return (
     <div className={`flex flex-col h-full relative overflow-hidden transition-all duration-500 ${
-      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'
+      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'
     }`}>
       {isEditorOpen && renderEditor()}
 
