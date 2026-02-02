@@ -756,14 +756,13 @@ const App: React.FC = () => {
   const isQuestAvailable = () => {
     const now = Date.now();
     const lastQuest = userProfile.lastQuestDate || 0;
-    const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
+    const cooldownPeriod = 24 * 60 * 60 * 1000; 
     const isCooldownOver = (now - lastQuest) >= cooldownPeriod;
 
     if (!isCooldownOver) return false;
 
     if (userProfile.isSubscribed) return true;
     
-    // Обычный пользователь: лимит 3 квеста всего
     return (userProfile.totalQuestsDone || 0) < 3;
   };
 
@@ -1143,8 +1142,12 @@ const App: React.FC = () => {
     const isSubscribed = userProfile.isSubscribed;
     const t = isRpg ? SUBSCRIPTION_TEXTS.rpg : SUBSCRIPTION_TEXTS.normal;
 
+    // Расчет ОСТАТКОВ попыток для отображения
+    const remainingEmotions = Math.max(0, 3 - (userProfile.totalEmotionsDone || 0));
+    const remainingQuests = Math.max(0, 3 - (userProfile.totalQuestsDone || 0));
+
     return (
-      <div className={`h-full overflow-y-auto flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
+      <div className={`h-full overflow-y-auto overflow-x-hidden flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-[#F8F9FB]'}`}>
         <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-red-800' : 'bg-indigo-500'}`} />
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-2 mb-4 relative w-full flex flex-col items-center">
           <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-64 h-64 blur-[80px] rounded-full ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} />
@@ -1188,14 +1191,14 @@ const App: React.FC = () => {
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-rose-50 text-rose-500'}`}>
                     <Heart size={20} fill="currentColor" />
                   </div>
-                  <span className="text-xl font-black mb-1 leading-none">{(userProfile.totalEmotionsDone || 0)}/3</span>
+                  <span className="text-xl font-black mb-1 leading-none">{remainingEmotions}</span>
                   <span className="text-[8px] uppercase font-black opacity-40 tracking-widest text-center">Состояний</span>
                 </div>
                 <div className="flex flex-col items-center">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${isRpg ? 'bg-red-800 text-white shadow-lg' : 'bg-indigo-50 text-indigo-500'}`}>
                     <Circle size={18} fill="currentColor" />
                   </div>
-                  <span className="text-xl font-black mb-1 leading-none">{(userProfile.totalQuestsDone || 0)}/3</span>
+                  <span className="text-xl font-black mb-1 leading-none">{remainingQuests}</span>
                   <span className="text-[8px] uppercase font-black opacity-40 tracking-widest text-center">Квестов</span>
                 </div>
             </div>
@@ -1272,6 +1275,7 @@ const App: React.FC = () => {
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
+    /* Fix: Corrected onReset prop to use handleResetSub instead of handleGiftSub to match expected signature () => void */
     return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleResetSub} />;
   };
 

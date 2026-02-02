@@ -134,14 +134,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [isEditingNew, activeSide]);
 
-  // Улучшенный автоскролл
+  // Улучшенный автоскролл: теперь при Step 4 скроллит ВВЕРХ
   useEffect(() => {
     if (listContainerRef.current) {
       if (decisionStep === 4) {
-        // Если мы на финальном шаге решения — сбрасываем скролл ВВЕРХ
         listContainerRef.current.scrollTop = 0;
       } else {
-        // В чате — скроллим ВНИЗ к новым сообщениям
         listContainerRef.current.scrollTop = listContainerRef.current.scrollHeight;
       }
     }
