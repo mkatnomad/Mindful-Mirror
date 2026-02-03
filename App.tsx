@@ -431,7 +431,7 @@ const PrismAnimation = ({ rpgMode }: { rpgMode: boolean }) => (
 const ARCHETYPES: Archetype[] = [
   { id: '1', name: 'Шут', role: 'Мастер игры', motto: 'Живи моментом!', strength: 'Юмор и игривость', weakness: 'Легкомыслие', quote: 'Смех — это кратчайшее расстояние между двумя людьми.', description: 'Вы умеете находить радость в любой ситуации и превращать скуку в праздник.', meaning: 'Учит не принимать жизнь слишком серьезно и видеть абсурдность проблем.' },
   { id: '2', name: 'Славный малый', role: 'Союзник', motto: 'Мы все равны.', strength: 'Эмпатия и реализм', weakness: 'Потеря индивидуальности', quote: 'Быть собой — величайшее достижение в мире, который пытается сделать вас кем-то другим.', description: 'Вы цените честность, приземленность и глубокую связь с обычными людьми.', meaning: 'Символизирует потребность в принадлежности и принятии себя таким, какой ты есть.' },
-  { id: '3', name: 'Заботливый', role: 'Опекун', motto: 'Люби ближнего своего.', strength: 'Альтруизм и щеาะดростью', weakness: 'Мученичество', quote: 'Забота о других — это самая высокая форма заботы о собственной душе.', description: 'Ваше призвание — помогать, защищать и создавать безопасное пространство для роста.', meaning: 'Символизирует потребность в безусловной поддержке и сострадании.' },
+  { id: '3', name: 'Заботливый', role: 'Опекун', motto: 'Люби ближнего своего.', strength: 'Альтруизм и щеาะдростью', weakness: 'Мученичество', quote: 'Забота о других — это самая высокая форма заботы о собственной душе.', description: 'Ваше призвание — помогать, защищать и создавать безопасное пространство для роста.', meaning: 'Символизирует потребность в безусловной поддержке и сострадании.' },
   { id: '4', name: 'Правитель', role: 'Лидер', motto: 'Власть — это ответственность.', strength: 'Лидерство и системность', weakness: 'Авторитаризм', quote: 'Управляй собой, прежде чем пытаться управлять миром.', description: 'Вы стремитесь создать порядок из хаоса и нести ответственность за структуру.', meaning: 'Учит ответственности за результат и умению выстраивать гармоничные системы.' },
   { id: '5', name: 'Творец', role: 'Архитектор', motto: 'Если это можно представить, это можно сделать.', strength: 'Креативность и воображение', weakness: 'Перфекционизм', quote: 'Творчество требует мужества отпустить уверенность в известном.', description: 'Ваша цель — создать нечто вечное и уникальное, выразив свою внутреннюю истину.', meaning: 'Импульс к самовыражению и материализации идей.' },
   { id: '6', name: 'Невинный', role: 'Мечтатель', motto: 'Счастье доступно каждому.', strength: 'Оптимизм и вера', weakness: 'Наивность', quote: 'Чистое сердце видит правду там, где разум видит лишь сложности.', description: 'Вы верите в доброту мира и стремитесь к простоте и гармонии.', meaning: 'Стремление к возвращению к истокам и первозданной радости.' },
@@ -492,7 +492,7 @@ const App: React.FC = () => {
 
   const [history, setHistory] = useState<ChatSession[]>([]);
   const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
-  const [currentView, setCurrentView] = useState<ViewState>('HOME');
+  const [currentView, setCurrentView] = useState<ViewState>('ONBOARDING');
   const [selectedMode, setSelectedMode] = useState<JournalMode | null>(null);
   const [testQuestionIdx, setTestQuestionIdx] = useState(0);
   const [testAnswers, setTestAnswers] = useState<number[]>([]);
@@ -568,6 +568,8 @@ const App: React.FC = () => {
             }));
             if (!profile.onboardingDone) {
               setCurrentView('ONBOARDING');
+            } else {
+              setCurrentView('HOME');
             }
         } else {
             const now = Date.now();
@@ -1157,7 +1159,7 @@ const App: React.FC = () => {
 
         {arc && <ArchetypeCard archetype={arc} expanded={arcExpanded} onToggle={() => setArcExpanded(!arcExpanded)} showReset={true} isProfile={true} />}
         {!isSubscribed && (
-          <div className={`p-6 rounded-[32px] mb-6 shadow-sm border-2 transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-[#2dbdc0] text-white border-[#29a1a4]'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
+          <div className={`p-6 rounded-[32px] mb-6 shadow-sm border-2 transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-[#2dbdc0] text-white border-[#FFFFFF]'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
             <div className="flex items-center space-x-3 mb-2"><Star size={18} fill="currentColor" className="text-amber-400" /><p className={`text-[9px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-blue-100'}`}>Статус: Странник</p></div>
             <h4 className={`text-xl font-black mb-1 leading-tight uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : ''}`}>Открой все функции</h4>
             <p className={`text-[11px] opacity-80 mb-6 leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium' : 'text-blue-50'}`}>Безлимитные сессии, ежедневные квесты и полное самопознание.</p>
@@ -1213,7 +1215,7 @@ const App: React.FC = () => {
       <div className={`h-full overflow-y-auto overflow-x-hidden flex flex-col items-center px-6 pt-2 pb-12 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-transparent'}`}>
         <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-red-800' : 'bg-indigo-500'}`} />
         <div className="w-full flex mb-2">
-           <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full text-white`}><ArrowLeft size={24}/></button>
+           <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-950' : 'text-white'}`}><ArrowLeft size={24}/></button>
         </div>
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-0 mb-2 relative w-full flex flex-col items-center">
           <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-64 h-64 blur-[80px] rounded-full ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} />
@@ -1304,7 +1306,7 @@ const App: React.FC = () => {
   const renderRanksInfo = () => (
     <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
       <header className="mb-6 flex items-center space-x-4">
-        <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full text-white`}><ArrowLeft size={24}/></button>
+        <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-950' : 'text-white'}`}><ArrowLeft size={24}/></button>
         <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-white shadow-sm'}`}>Ранги Сознания</h1>
       </header>
       <div className={`mb-10 p-6 rounded-[32px] border-2 border-amber-400 ${userProfile.rpgMode ? 'bg-white/40 shadow-none' : 'bg-white shadow-sm shadow-slate-200/40'}`}>
@@ -1367,7 +1369,7 @@ const App: React.FC = () => {
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); const xpGain = Math.max(1, Math.ceil(d / 60)); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); reportEvent('session', { seconds: d, mode: 'REFLECTION' }); if (i) reportEvent('journal_entry', { entryType: e.type }); }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={(e) => setJournalEntries(e)} onBack={(totalSec) => { const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0; if (totalSec > 10) { reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' }); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain})); } setCurrentView('HOME'); }} />}
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; if (isDecision) spendEnergyOnServer('decisions'); if (isEmotions) spendEnergyOnServer('emotions'); setUserProfile(p => { let newEnergyDecisions = p.energyDecisions; let newEmotionsDone = p.totalEmotionsDone || 0; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEmotionsDone = Math.min(3, newEmotionsDone + 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), totalEmotionsDone: newEmotionsDone, energyDecisions: newEnergyDecisions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
         {currentView === 'ARCHETYPE_TEST' && (
-           <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative overflow-hidden ${userProfile.rpgMode ? 'bg-parchment' : 'bg-transparent'}`}>
+           <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative overflow-hidden ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
              <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.04] scale-[2.5] transform">
                     <svg width="400" height="400" viewBox="0 0 100 100" className={userProfile.rpgMode ? 'text-amber-900' : 'text-blue-900'}>
@@ -1424,7 +1426,7 @@ const App: React.FC = () => {
         {currentView === 'ARCHETYPE_RESULT' && renderArchetypeResult()}
         {currentView === 'ARCHETYPE_GLOSSARY' && (
            <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
-             <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className="p-2 -ml-2 rounded-full text-white"><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-white shadow-sm'}`}>Глоссарий</h1></header>
+             <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-red-950' : 'text-white'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-white shadow-sm'}`}>Глоссарий</h1></header>
              <div className="space-y-6">{ARCHETYPES.map(arc => (<div key={arc.id} className={`p-6 rounded-[28px] border ${userProfile.rpgMode ? 'rpg-card border-red-800/10' : 'bg-white bento-border bento-shadow'}`}><h3 className="text-xl font-bold mb-1">{arc.name}</h3><p className="text-xs uppercase font-bold text-indigo-500 mb-4">{arc.role}</p><p className="text-sm italic mb-4 opacity-70">"{arc.motto}"</p><p className="text-xs leading-relaxed opacity-80">{arc.description}</p></div>))}</div>
            </div>
         )}

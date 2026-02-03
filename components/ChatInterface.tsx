@@ -389,7 +389,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
       {mode !== 'DECISION' && (
         <div className={`px-6 py-4 flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-white/40 border-b border-red-800/30' : 'bg-transparent'}`}>
-          <button onClick={handleBack} className={`p-2 -ml-2 rounded-full text-white`}><ArrowLeft size={20} /></button>
+          <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-950' : 'text-white'}`}><ArrowLeft size={20} /></button>
           <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-white shadow-sm'}`}>
             {mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
           </h2>
@@ -403,7 +403,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {decisionStep === 1 && !isIdentifying && (
               <div className="flex-1 flex flex-col animate-fade-in relative h-full overflow-hidden">
                 <div className="flex items-center px-4 pt-2 shrink-0">
-                  <button onClick={handleBack} className={`p-3 rounded-full transition-colors text-white hover:text-white/80`}>
+                  <button onClick={handleBack} className={`p-3 rounded-full transition-colors ${rpgMode ? 'text-red-950' : 'text-white'} hover:text-white/80`}>
                     <ArrowLeft size={24} />
                   </button>
                   <div className="flex-1">{renderProgress(1)}</div>
@@ -464,7 +464,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="px-4 pb-4 flex-1 flex flex-col animate-fade-in h-full overflow-hidden">
                  <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2 flex-1">
-                      <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors text-white hover:text-white/80`}>
+                      <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-950' : 'text-white'} hover:text-white/80`}>
                         <ArrowLeft size={20} />
                       </button>
                       <div className="flex-1 pr-6">{renderProgress(2)}</div>
@@ -517,7 +517,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {decisionStep === 4 && (
               <div className="animate-fade-in pb-32">
                 <div className="px-6 pt-6 flex items-center space-x-2 mb-2">
-                    <button onClick={handleBack} className={`p-2 -ml-2 rounded-full transition-colors text-white hover:bg-white/10`}>
+                    <button onClick={handleBack} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-red-950' : 'text-white'} hover:bg-white/10`}>
                       <ArrowLeft size={20} />
                     </button>
                     <div className="flex-1 pr-12">{renderProgress(4)}</div>

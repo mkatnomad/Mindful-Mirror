@@ -371,7 +371,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
       }`}>
         <div className="flex items-center justify-between">
             <div className="flex items-center">
-                <button onClick={() => onBack(activeSeconds)} className={`p-2 -ml-2 rounded-full text-white`}>
+                <button onClick={() => onBack(activeSeconds)} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-red-950' : 'text-white'}`}>
                   <ArrowLeft size={20} />
                 </button>
                 <h2 className={`ml-2 text-xl font-black uppercase tracking-tighter ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-white shadow-sm'}`}>
