@@ -253,33 +253,80 @@ const DecisionIllustration = ({ rpgMode, size = 32, opacity = 1 }: { rpgMode: bo
 );
 
 const EmotionsIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: boolean, size?: number, opacity?: number }) => (
-  <ArtifactBase rpgMode={rpgMode} colorStart="#FB7185" colorEnd="#E11D48" size={size} idPrefix="emo" isOutline={opacity < 1}>
-    <path 
-      d="M50 82C30 72 12 55 12 35C12 22 25 15 40 22C45 25 50 30 50 30C50 30 55 25 60 22C75 15 88 22 88 35C88 55 70 72 50 82Z" 
-      stroke={rpgMode ? "white" : `url(#emo-FB7185)`} 
-      strokeWidth="6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      fill={rpgMode ? "white" : "#FB7185"}
-      fillOpacity={opacity < 1 ? 0.1 : 0.05}
+  <ArtifactBase rpgMode={rpgMode} colorStart="#0891B2" colorEnd="#22D3EE" size={size} idPrefix="emo" isOutline={opacity < 1}>
+    <motion.g 
+      animate={{ y: [0, -4, 0] }}
+      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+      transform="translate(50, 50)"
       opacity={opacity}
-    />
+    >
+      <g>
+        {[0, 60, 120].map((angle, i) => (
+          <g key={angle} transform={`rotate(${angle})`}>
+            <ellipse
+              cx="0" cy="0" rx="14" ry="42"
+              fill="none"
+              stroke={rpgMode ? "white" : "#22D3EE"}
+              strokeWidth="1.2"
+              opacity="0.15"
+            />
+            <motion.ellipse
+              cx="0" cy="0" rx="14" ry="42"
+              fill="none"
+              stroke={rpgMode ? (i === 0 ? "white" : "#FDE68A") : "#22D3EE"}
+              strokeWidth="1.8"
+              strokeDasharray="30 150"
+              animate={{ 
+                strokeDashoffset: [0, -180],
+                opacity: [0.3, 0.6, 0.3],
+                scale: [1, 1.02, 1]
+              }}
+              transition={{ 
+                strokeDashoffset: { duration: 4 + i * 1.5, repeat: Infinity, ease: "linear" },
+                opacity: { duration: 3, repeat: Infinity, ease: "easeInOut", delay: i * 0.5 },
+                scale: { duration: 5, repeat: Infinity, ease: "easeInOut", delay: i * 0.3 }
+              }}
+            />
+          </g>
+        ))}
+        <motion.circle 
+          animate={{ 
+            scale: [1, 1.15, 1],
+            opacity: [0.8, 1, 0.8],
+          }}
+          transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+          r="14" 
+          fill={rpgMode ? "white" : "#0891B2"} 
+        />
+      </g>
+    </motion.g>
   </ArtifactBase>
 );
 
 const ReflectionIllustration = ({ rpgMode, size = 26, opacity = 1 }: { rpgMode: boolean, size?: number, opacity?: number }) => (
-  <ArtifactBase rpgMode={rpgMode} colorStart="#34D399" colorEnd="#059669" size={size} idPrefix="ref" isOutline={opacity < 1}>
-    <g opacity={opacity}>
-      <rect 
-        x="22" y="18" width="56" height="64" rx="6" 
-        stroke={rpgMode ? "white" : `url(#ref-34D399)`} 
-        strokeWidth="6"
-        fill={rpgMode ? "white" : "#34D399"}
-        fillOpacity="0.05"
+  <ArtifactBase rpgMode={rpgMode} colorStart="#10B981" colorEnd="#059669" size={size} idPrefix="ref" isOutline={opacity < 1}>
+    <motion.g
+      animate={{ y: [0, -8, 0] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      opacity={opacity}
+    >
+      <rect x="20" y="30" width="60" height="40" rx="6" fill="white" fillOpacity="0.1" stroke={rpgMode ? "white" : "#10B981"} strokeWidth="2.5" />
+      <motion.path 
+        animate={{ opacity: [0.3, 0.6, 0.3] }}
+        transition={{ duration: 3, repeat: Infinity }}
+        d="M50 30 V70 M25 45 H45 M25 55 H45 M55 45 H75 M55 55 H75" 
+        stroke={rpgMode ? "white" : "#059669"} 
+        strokeWidth="2.5" 
+        strokeLinecap="round" 
       />
-      <path d="M35 35H65M35 50H65M35 65H55" stroke={rpgMode ? "white" : `url(#ref-34D399)`} strokeWidth="4" strokeLinecap="round" opacity="0.4" />
-      <path d="M60 18V45L68 38L76 45V18H60Z" fill={rpgMode ? "#FDE68A" : "#059669"} fillOpacity="0.6" />
-    </g>
+      <motion.path 
+        animate={{ d: ["M20 30 Q35 25 50 30", "M20 30 Q35 35 50 30"] }}
+        transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
+        stroke={rpgMode ? "white" : "#10B981"}
+        strokeWidth="2"
+        fill="none"
+      />
+    </motion.g>
   </ArtifactBase>
 );
 
@@ -1062,7 +1109,7 @@ const App: React.FC = () => {
               <h3 className={`text-2xl font-black leading-tight ${userProfile.rpgMode ? 'text-red-950' : 'text-white shadow-sm'}`}>{userProfile.name || 'Странник'}</h3>
               <div className="flex items-center space-x-2 mt-2">
                  {isSubscribed && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-amber-100 border-amber-800 text-amber-900' : 'bg-blue-50 border-blue-200 text-white'}`}><Star size={10} fill="currentColor" /><span>Premium</span></div>}
-                 {arc && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-red-800 border-red-950 text-white' : 'bg-indigo-50 border-indigo-100 text-white'}`}>{arc.name}</div>}
+                 {arc && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-red-800 border-red-950 text-white' : 'bg-indigo-50 border-indigo-100 text-indigo-600'}`}>{arc.name}</div>}
               </div>
            </div>
         </div>
@@ -1229,7 +1276,7 @@ const App: React.FC = () => {
               <span className="tracking-tight uppercase">{isPaying ? 'Соединение...' : 'Пробудить Силу'}</span>
            </button>
            <div className="flex flex-col items-center space-y-6">
-              <div className={`flex items-center space-x-2 ${isRpg ? 'text-red-800/60' : 'text-slate-400'}`}><ShieldCheck size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Безопасно через Telegram Stars</span></div>
+              <div className={`flex items-center space-x-2 ${isRpg ? 'text-white/60' : 'text-slate-400'}`}><ShieldCheck size={16} /><span className="text-[10px] font-black uppercase tracking-widest">Безопасно через Telegram Stars</span></div>
            </div>
         </div>
       </div>
