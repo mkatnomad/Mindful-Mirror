@@ -19,7 +19,7 @@ const SUBSCRIPTION_TEXTS = {
   normal: {
     title: 'Расширь границы',
     subTitle: '',
-    description: 'Premium открывает безлимитный доступ на 30 дней.',
+    description: 'Premium открывает безлимитный доступ на 30 дней. Без автопродления и неожиданных списаний.',
     mentorSpeech: 'Твой путь осознанности требует больше пространства для маневра.',
     balanceTitle: 'Ваш текущий баланс',
   },
@@ -975,19 +975,19 @@ const App: React.FC = () => {
           
           <div className="grid grid-cols-2 gap-4">
             {[
-              { id: 'EMOTIONS', label: 'Состояние', icon: EmotionsIllustration, color: userProfile.rpgMode ? 'text-red-800' : 'text-rose-500' },
-              { id: 'REFLECTION', label: 'Дневник', icon: ReflectionIllustration, color: userProfile.rpgMode ? 'text-red-800' : 'text-emerald-500' }
+              { id: 'EMOTIONS', label: 'Состояние', icon: EmotionsIllustration },
+              { id: 'REFLECTION', label: 'Дневник', icon: ReflectionIllustration }
             ].map(m => (
               <button 
                 key={m.id} 
                 onClick={() => handleModeSelection(m.id as JournalMode)} 
-                className={`w-full h-20 rounded-[16px] border relative overflow-hidden active:scale-95 transition-all duration-300 text-left p-4 flex items-center ${userProfile.rpgMode ? 'rpg-card border-red-800/20' : 'bg-white bento-border bento-shadow'}`}
+                className={`w-full h-16 rounded-[32px] border relative overflow-hidden active:scale-95 transition-all duration-300 text-left px-3 flex items-center ${userProfile.rpgMode ? 'rpg-card border-red-800/20' : 'bg-white bento-border bento-shadow'}`}
               >
-                <div className="flex items-center space-x-3">
-                  <div className={`p-2.5 rounded-xl flex items-center justify-center shrink-0 ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-slate-50'}`}>
-                    <m.icon rpgMode={userProfile.rpgMode} size={20} />
+                <div className="flex items-center space-x-2">
+                  <div className="shrink-0 flex items-center justify-center -ml-1">
+                    <m.icon rpgMode={userProfile.rpgMode} size={44} />
                   </div>
-                  <span className={`text-[12px] font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+                  <span className={`text-[11px] font-black uppercase tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
                     {m.label}
                   </span>
                 </div>
@@ -1193,21 +1193,21 @@ const App: React.FC = () => {
     const remainingQuests = Math.max(0, 3 - (userProfile.totalQuestsDone || 0));
 
     return (
-      <div className={`h-full overflow-y-auto overflow-x-hidden flex flex-col items-center px-6 py-8 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-transparent'}`}>
+      <div className={`h-full overflow-y-auto overflow-x-hidden flex flex-col items-center px-6 pt-2 pb-12 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-transparent'}`}>
         <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-red-800' : 'bg-indigo-500'}`} />
-        <div className="w-full flex mb-6">
+        <div className="w-full flex mb-2">
            <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full text-white`}><ArrowLeft size={24}/></button>
         </div>
-        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-2 mb-4 relative w-full flex flex-col items-center">
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mt-0 mb-2 relative w-full flex flex-col items-center">
           <motion.div animate={{ scale: [1, 1.15, 1], opacity: [0.15, 0.25, 0.15] }} transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }} className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%] w-64 h-64 blur-[80px] rounded-full ${isRpg ? 'bg-red-500' : 'bg-indigo-400'}`} />
           <div className="relative z-10 flex flex-col items-center">
              <div className="relative group">
                 <motion.div animate={{ scale: [1, 1.3], opacity: [0.4, 0] }} transition={{ duration: 3, repeat: Infinity }} className={`absolute inset-0 rounded-full border-2 ${isRpg ? 'border-red-800/30' : 'border-indigo-400/30'}`} />
                 <motion.div animate={{ y: [0, -5, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}>
-                  <TreeIcon stage={9} size={160} rpgMode={isRpg} />
+                  <TreeIcon stage={9} size={150} rpgMode={isRpg} />
                 </motion.div>
              </div>
-             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className={`mt-4 px-6 py-4 rounded-3xl rounded-tl-none border shadow-2xl max-w-[280px] relative ${isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'}`}>
+             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.5 }} className={`mt-2 px-6 py-4 rounded-3xl rounded-tl-none border shadow-2xl max-w-[280px] relative ${isRpg ? 'bg-white border-red-800 text-red-950 italic' : 'bg-white bento-border text-slate-600'}`}>
                 <p className="text-[14px] font-bold leading-snug">{t.mentorSpeech}</p>
                 <div className={`absolute -bottom-2 -right-2 p-1.5 rounded-lg text-white shadow-lg ${isRpg ? 'bg-red-800' : 'bg-indigo-600'}`}>
                    <Sparkles size={12} />
@@ -1217,7 +1217,7 @@ const App: React.FC = () => {
         </motion.div>
         {!isSubscribed && (
           <div className={`w-full p-8 rounded-[40px] mb-8 relative z-10 border-2 transition-all ${isRpg ? 'bg-white/60 border-red-800/30' : 'bg-white bento-border shadow-xl shadow-slate-200/40'}`}>
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-6">
               <p className={`text-[12px] font-black uppercase tracking-[0.3em] ${isRpg ? 'text-red-900' : 'text-indigo-600'}`}>{t.balanceTitle}</p>
             </div>
             <div className="grid grid-cols-3 gap-2">
