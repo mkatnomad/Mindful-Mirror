@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, Archetype, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
@@ -212,6 +213,7 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
             <circle cx="30" cy="30" r="5" fill="#F59E0B" />
             <circle cx="70" cy="30" r="5" fill="#F59E0B" />
             <circle cx="50" cy="45" r="5" fill="#F59E0B" />
+            {/* Corrected i="15" to cx="15" */}
             <circle cx="15" cy="50" r="5" fill="#F59E0B" />
             <circle cx="85" cy="50" r="5" fill="#F59E0B" />
           </g>
@@ -1107,9 +1109,26 @@ const App: React.FC = () => {
            <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-sm ${userProfile.rpgMode ? 'border-red-800' : 'bento-border'}`}>{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={40} className="m-6 text-slate-200" />}</div>
            <div>
               <h3 className={`text-2xl font-black leading-tight ${userProfile.rpgMode ? 'text-red-950' : 'text-white shadow-sm'}`}>{userProfile.name || 'Странник'}</h3>
-              <div className="flex items-center space-x-2 mt-2">
-                 {isSubscribed && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-amber-100 border-amber-800 text-amber-900' : 'bg-blue-50 border-blue-200 text-white'}`}><Star size={10} fill="currentColor" /><span>Premium</span></div>}
-                 {arc && <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'bg-red-800 border-red-950 text-white' : 'bg-indigo-50 border-indigo-100 text-indigo-600'}`}>{arc.name}</div>}
+              <div className="flex flex-wrap items-center gap-2 mt-3">
+                 {isSubscribed && (
+                   <div className={`inline-flex items-center space-x-1.5 px-3 py-1 rounded-full border shadow-lg shadow-amber-400/20 text-[9px] font-black uppercase tracking-[0.1em] ${
+                     userProfile.rpgMode 
+                       ? 'bg-amber-600 border-amber-900 text-white' 
+                       : 'bg-amber-400 border-amber-500 text-slate-900'
+                   }`}>
+                     <Star size={11} fill="currentColor" />
+                     <span>Premium</span>
+                   </div>
+                 )}
+                 {arc && (
+                   <div className={`inline-flex items-center px-3 py-1 rounded-full border text-[9px] font-black uppercase tracking-widest ${
+                     userProfile.rpgMode 
+                       ? 'bg-red-800 border-red-950 text-white' 
+                       : 'bg-slate-900 border-slate-950 text-white shadow-md'
+                   }`}>
+                     {arc.name}
+                   </div>
+                 )}
               </div>
            </div>
         </div>
