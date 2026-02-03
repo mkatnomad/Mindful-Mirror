@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Share2, Check, Sparkles, Search, AlertTriangle, Activity, Compass, ShieldAlert, Trophy, Zap, Target } from 'lucide-react';
 import { DecisionData } from '../types';
@@ -177,7 +176,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         </div>
         
         <div className="space-y-2">
-          <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${rpgMode ? 'text-red-800' : 'text-slate-400'}`}>
+          <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${rpgMode ? 'text-red-800/60' : 'text-white/60 shadow-sm'}`}>
             Истина найдена
           </p>
           <h3 className={`text-3xl font-black leading-tight tracking-tight ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>
