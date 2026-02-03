@@ -1403,7 +1403,7 @@ const App: React.FC = () => {
     const config: SiteConfig = {
       appTitle: "Mindful Mirror",
       logoText: "MM",
-      aboutParagraphs: ["Mindful Mirror - это ваш персональный помощник в мире осознанности."],
+      aboutParagraphs: ["Mindful Mirror - это ваш персональный помощник в мире осознанности"],
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
