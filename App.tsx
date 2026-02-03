@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, Archetype, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
@@ -51,8 +50,9 @@ declare global {
 const cloudStorage = {
   setItem: (key: string, value: any): Promise<void> => {
     return new Promise((resolve) => {
-      if (window.Telegram?.WebApp?.CloudStorage) {
-        window.Telegram.WebApp.CloudStorage.setItem(key, JSON.stringify(value), (err: any) => {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.isVersionAtLeast?.('6.9') && tg?.CloudStorage) {
+        tg.CloudStorage.setItem(key, JSON.stringify(value), (err: any) => {
           if (err) console.error(`CloudStorage Set Error [${key}]:`, err);
           resolve();
         });
@@ -64,8 +64,9 @@ const cloudStorage = {
   },
   getItem: <T,>(key: string): Promise<T | null> => {
     return new Promise((resolve) => {
-      if (window.Telegram?.WebApp?.CloudStorage) {
-        window.Telegram.WebApp.CloudStorage.getItem(key, (err: any, value: string) => {
+      const tg = window.Telegram?.WebApp;
+      if (tg?.isVersionAtLeast?.('6.9') && tg?.CloudStorage) {
+        tg.CloudStorage.getItem(key, (err: any, value: string) => {
           if (err || !value) resolve(null);
           else {
             try {
@@ -239,6 +240,69 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
     <ArtifactBase rpgMode={rpgMode} colorStart={cfg.start} colorEnd={cfg.end} size={size} idPrefix="tree">
       {renderTreeContent()}
     </ArtifactBase>
+  );
+};
+
+const BackgroundEffects = ({ rpgMode }: { rpgMode: boolean }) => {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {rpgMode ? (
+        <>
+          <div className="absolute top-[10%] left-[-5%] opacity-[0.03] rotate-12 scale-[2]">
+            <Compass size={120} />
+          </div>
+          <div className="absolute bottom-[15%] right-[-5%] opacity-[0.02] -rotate-12 scale-[2.5]">
+            <BookOpen size={150} />
+          </div>
+          <div className="absolute top-[40%] right-[10%] opacity-[0.015] rotate-45">
+             <Wand2 size={80} />
+          </div>
+          {[...Array(12)].map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ y: '110vh', x: `${Math.random() * 100}vw`, opacity: 0 }}
+              animate={{ 
+                y: '-10vh', 
+                opacity: [0, 0.2, 0],
+                x: `${(Math.random() * 100)}vw` 
+              }}
+              transition={{ 
+                duration: 15 + Math.random() * 20, 
+                repeat: Infinity, 
+                delay: Math.random() * 10,
+                ease: "linear"
+              }}
+              className="absolute w-1 h-1 bg-white rounded-full blur-[1px]"
+            />
+          ))}
+        </>
+      ) : (
+        <>
+          <div className="absolute inset-0 opacity-[0.05]" style={{ 
+            backgroundImage: 'radial-gradient(#94a3b8 0.5px, transparent 0.5px)', 
+            backgroundSize: '24px 24px' 
+          }} />
+          <motion.div 
+            animate={{ 
+              x: [0, 50, -30, 0],
+              y: [0, -40, 60, 0],
+              scale: [1, 1.2, 0.9, 1]
+            }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] rounded-full bg-indigo-200/20 blur-[100px]"
+          />
+          <motion.div 
+            animate={{ 
+              x: [0, -60, 40, 0],
+              y: [0, 50, -30, 0],
+              scale: [1, 0.8, 1.1, 1]
+            }}
+            transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+            className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-200/20 blur-[100px]"
+          />
+        </>
+      )}
+    </div>
   );
 };
 
@@ -1187,7 +1251,7 @@ const App: React.FC = () => {
               <Send size={22} />
             </div>
             <div>
-              <p className={`text- [10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Сообщество</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-red-800' : 'text-slate-400'}`}>Сообщество</p>
               <span className={`text-lg font-extrabold ${userProfile.rpgMode ? 'text-red-950' : 'text-slate-700'}`}>Наш Telegram канал</span>
             </div>
           </div>
@@ -1280,7 +1344,6 @@ const App: React.FC = () => {
         </div>
         <div className="w-full space-y-4 mb-10 relative z-10">
            {[
-             // Fix: Replacing undefined variable 'i' with 'isRpg'
              { id: '1', label: isRpg ? 'Око Истины' : 'Безлимитные Решения', desc: isRpg ? 'Взгляд сквоют туман сомнений без границ.' : 'Анализируйте любые дилеммы, анализируйте свой выбор.', icon: Zap, color: isRpg ? 'bg-red-800' : 'bg-amber-500', textColor: isRpg ? 'text-red-800' : 'text-amber-600' },
              { id: '2', label: isRpg ? 'Сердце Покоя' : 'Безлимитные Состояния', desc: isRpg ? 'Крепость духа, не знающая усталости.' : 'Проходите сессии, разбирайте свои чувства с помощником столько раз, сколько нужно.', icon: Heart, color: isRpg ? 'bg-red-800' : 'bg-rose-500', textColor: isRpg ? 'text-red-800' : 'text-rose-600' },
              { id: '3', label: isRpg ? 'Свитки Судьбы' : 'Ежедневные Квесты', desc: isRpg ? 'Новые испытания мудрости каждый рассвет.' : 'Проходите RPG-квесты ежедневно без ограничений.', icon: Sword, color: isRpg ? 'bg-red-800' : 'bg-indigo-500', textColor: isRpg ? 'text-red-800' : 'text-indigo-600' }
@@ -1344,7 +1407,7 @@ const App: React.FC = () => {
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
-    return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleGiftSub} />;
+    return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleResetSub} />;
   };
 
   const renderArchetypeResult = () => {
@@ -1364,6 +1427,7 @@ const App: React.FC = () => {
 
   return (
     <div className={`h-screen w-full overflow-hidden flex flex-col font-sans relative transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-gradient-to-b from-[#9d8eed] via-[#A0E9F7] to-white'}`}>
+      <BackgroundEffects rpgMode={userProfile.rpgMode} />
       <main className="flex-1 relative overflow-hidden z-10">
         {currentView === 'ONBOARDING' && <Onboarding rpgMode={userProfile.rpgMode} onComplete={handleOnboardingComplete} />}
         {currentView === 'HOME' && renderHome()}

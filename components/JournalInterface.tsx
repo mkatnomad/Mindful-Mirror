@@ -84,9 +84,12 @@ const JournalCard: React.FC<{
       setIsLongPressed(true);
       isDraggingActive.current = true;
       
-      if (window.Telegram?.WebApp) {
-        window.Telegram.WebApp.disableVerticalSwipes?.();
-        window.Telegram.WebApp.HapticFeedback?.impactOccurred('medium');
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        if (tg.isVersionAtLeast?.('6.1') && tg.disableVerticalSwipes) {
+          tg.disableVerticalSwipes();
+        }
+        tg.HapticFeedback?.impactOccurred('medium');
       }
 
       dragControls.start(event);
@@ -113,8 +116,9 @@ const JournalCard: React.FC<{
       timerRef.current = null;
     }
     
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.enableVerticalSwipes?.();
+    const tg = window.Telegram?.WebApp;
+    if (tg && tg.isVersionAtLeast?.('6.1') && tg.enableVerticalSwipes) {
+      tg.enableVerticalSwipes();
     }
 
     setIsLongPressed(false);
@@ -181,14 +185,14 @@ const JournalCard: React.FC<{
                 transition={{ repeat: Infinity, duration: 1.5 }}
                 className="bg-red-800 text-white rounded-full p-1 shadow-lg"
               >
-                <ChevronLeft size={16} strokeWidth={3} />
+                <div className="p-1"><ChevronLeft size={16} strokeWidth={3} /></div>
               </motion.div>
               <motion.div 
                 animate={{ x: [2, -2, 2] }} 
                 transition={{ repeat: Infinity, duration: 1.5 }}
                 className="bg-red-800 text-white rounded-full p-1 shadow-lg"
               >
-                <ChevronRight size={16} strokeWidth={3} />
+                <div className="p-1"><ChevronRight size={16} strokeWidth={3} /></div>
               </motion.div>
             </motion.div>
           )}
@@ -231,18 +235,16 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<JournalEntryType | 'ALL'>('ALL');
   
-  // Advanced timer state
   const [activeSeconds, setActiveSeconds] = useState(0);
   const editorStartTimeRef = useRef<number>(0);
   const lastTickRef = useRef<number>(Date.now());
 
-  // Track total active time in the section
   useEffect(() => {
     const tick = () => {
       if (!document.hidden) {
         const now = Date.now();
         const delta = Math.round((now - lastTickRef.current) / 1000);
-        if (delta > 0 && delta < 10) { // Avoid huge jumps if computer was asleep
+        if (delta > 0 && delta < 10) {
           setActiveSeconds(prev => prev + delta);
         }
         lastTickRef.current = now;
