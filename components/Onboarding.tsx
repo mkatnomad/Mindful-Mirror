@@ -146,7 +146,6 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
       animate={{ rotate: 360 }}
       transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
     >
-      {/* Increased scale for the star shape (path) to fill space better */}
       <path 
         d="M0 -46 L14 -14 L46 0 L14 14 L0 46 L-14 14 L-46 0 L-14 -14 Z" 
         fill={rpgMode ? "#7F1D1D" : "#7C3AED"} 
@@ -159,16 +158,12 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
         opacity="0.2"
       />
     </motion.g>
-    
-    {/* Glowing core for better contrast and "life" */}
     <motion.circle 
       animate={{ scale: [1, 1.4, 1], opacity: [0.6, 1, 0.6] }}
       transition={{ duration: 2, repeat: Infinity }}
       r="8" 
       fill="white" 
     />
-    
-    {/* Orbiting sparkles */}
     {[0, 120, 240].map((rot, i) => (
       <motion.circle
         key={i}
@@ -219,7 +214,8 @@ const SLIDES = [
     Artifact: LightningArtifact,
     aurora: ['rgba(245, 158, 11, 0.15)', 'rgba(251, 191, 36, 0.08)'],
     glowColor: 'from-amber-400/20 to-transparent',
-    geomColor: 'text-amber-900',
+    mainBg: '#FFFBEB',
+    cardBg: 'rgba(255, 252, 240, 0.95)',
     accentColor: 'text-amber-600'
   },
   {
@@ -228,7 +224,8 @@ const SLIDES = [
     Artifact: SphereArtifact,
     aurora: ['rgba(6, 182, 212, 0.15)', 'rgba(34, 211, 238, 0.08)'],
     glowColor: 'from-cyan-400/20 to-transparent',
-    geomColor: 'text-cyan-900',
+    mainBg: '#ECFEFF',
+    cardBg: 'rgba(240, 253, 250, 0.95)',
     accentColor: 'text-cyan-600'
   },
   {
@@ -237,7 +234,8 @@ const SLIDES = [
     Artifact: SparkleArtifact,
     aurora: ['rgba(139, 92, 246, 0.15)', 'rgba(216, 180, 254, 0.08)'],
     glowColor: 'from-violet-400/20 to-transparent',
-    geomColor: 'text-violet-900',
+    mainBg: '#F5F3FF',
+    cardBg: 'rgba(249, 245, 255, 0.95)',
     accentColor: 'text-violet-600'
   },
   {
@@ -246,7 +244,8 @@ const SLIDES = [
     Artifact: BookArtifact,
     aurora: ['rgba(16, 185, 129, 0.15)', 'rgba(20, 184, 166, 0.08)'],
     glowColor: 'from-emerald-400/20 to-transparent',
-    geomColor: 'text-emerald-900',
+    mainBg: '#ECFDF5',
+    cardBg: 'rgba(240, 255, 249, 0.95)',
     accentColor: 'text-emerald-600'
   }
 ];
@@ -281,12 +280,13 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
         filter: isExiting ? 'blur(10px)' : 'blur(0px)'
       }}
       transition={{ duration: 0.9, ease: "easeInOut" }}
-      className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-colors duration-1000 ${rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]'}`}
+      className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-all duration-1000 ${rpgMode ? 'bg-parchment font-serif-fantasy' : ''}`}
+      style={{ backgroundColor: !rpgMode ? slide.mainBg : undefined }}
     >
       <AuroraBackground colors={slide.aurora} rpgMode={rpgMode} />
       <ParticleField type={slide.title} rpgMode={rpgMode} />
 
-      {/* Main Content Area - Use flexible spacing to avoid collisions */}
+      {/* Main Content Area */}
       <div className="flex-1 w-full max-w-md px-6 flex flex-col items-center justify-evenly z-10 text-center py-10">
         <AnimatePresence mode="wait">
           <motion.div
@@ -297,12 +297,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
             transition={{ duration: 0.4 }}
             className="flex flex-col items-center w-full"
           >
-            {/* Artifact Container: Reduced margin-bottom for better mobile fit */}
-            <div className={`w-44 h-44 xs:w-48 xs:h-48 rounded-[56px] relative flex items-center justify-center mb-6 xs:mb-8 overflow-hidden ${
+            {/* Artifact Container */}
+            <div className={`w-44 h-44 xs:w-48 xs:h-48 rounded-[56px] relative flex items-center justify-center mb-6 xs:mb-8 overflow-hidden transition-all duration-700 ${
               rpgMode 
                 ? 'bg-white border-2 border-red-800 shadow-[10px_10px_0px_#b91c1c]' 
-                : 'bg-white/90 backdrop-blur-xl bento-border bento-shadow ring-4 ring-white shadow-[0_20px_50px_-10px_rgba(0,0,0,0.08)]'
-            }`}>
+                : 'bento-border ring-4 ring-white shadow-[0_20px_50px_-10px_rgba(0,0,0,0.08)]'
+            }`}
+            style={{ backgroundColor: !rpgMode ? slide.cardBg : undefined }}
+            >
               <motion.div 
                 animate={{ 
                   opacity: [0.2, 0.5, 0.2], 
@@ -322,13 +324,14 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
               {!rpgMode && <div className="absolute inset-0 border border-white/60 rounded-[56px] pointer-events-none" />}
             </div>
 
-            {/* Typography: Reduced padding (p-10 -> p-8) and optimized text sizes for mobile */}
+            {/* Typography */}
             <div
               className={`w-full p-8 rounded-[40px] border transition-all duration-700 text-left ${
                 rpgMode 
                   ? 'bg-white/95 border-red-800/30 shadow-sm' 
-                  : 'bg-white/95 backdrop-blur-3xl bento-border bento-shadow shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)]'
+                  : 'backdrop-blur-3xl bento-border bento-shadow shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)]'
               }`}
+              style={{ backgroundColor: !rpgMode ? slide.cardBg : undefined }}
             >
               <h2 className={`text-2xl xs:text-3xl font-black tracking-tighter mb-4 xs:mb-6 leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy uppercase' : 'text-slate-900'}`}>
                 {slide.title}
