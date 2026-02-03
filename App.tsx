@@ -1271,9 +1271,9 @@ const App: React.FC = () => {
           </div>
         )}
         <div className="mb-10 space-y-2 relative z-10">
-           <h2 className={`text-3xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-white shadow-sm'}`}>{t.title}</h2>
+           <h2 className={`text-6xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-red-950 font-display-fantasy' : 'text-white shadow-sm'}`}>{t.title}</h2>
            <p className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-50 ${isRpg ? 'text-red-800' : 'text-white/60'}`}>{t.subTitle}</p>
-           <p className={`text-[12px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-white/80'}`}>{t.description}</p>
+           <p className={`text-[16px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-red-950 font-serif-fantasy' : 'text-white/80'}`}>{t.description}</p>
         </div>
         <div className="w-full space-y-4 mb-10 relative z-10">
            {[
