@@ -1157,7 +1157,7 @@ const App: React.FC = () => {
 
         {arc && <ArchetypeCard archetype={arc} expanded={arcExpanded} onToggle={() => setArcExpanded(!arcExpanded)} showReset={true} isProfile={true} />}
         {!isSubscribed && (
-          <div className={`p-6 rounded-[32px] mb-6 shadow-sm border-2 transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-blue-600 text-white border-blue-800'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
+          <div className={`p-6 rounded-[32px] mb-6 shadow-sm border-2 transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card' : 'bg-[#2dbdc0] text-white border-[#29a1a4]'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
             <div className="flex items-center space-x-3 mb-2"><Star size={18} fill="currentColor" className="text-amber-400" /><p className={`text-[9px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-blue-100'}`}>Статус: Странник</p></div>
             <h4 className={`text-xl font-black mb-1 leading-tight uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : ''}`}>Открой все функции</h4>
             <p className={`text-[11px] opacity-80 mb-6 leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium' : 'text-blue-50'}`}>Безлимитные сессии, ежедневные квесты и полное самопознание.</p>
