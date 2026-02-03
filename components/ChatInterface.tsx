@@ -454,8 +454,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6 animate-fade-in">
                  <MiniPrism rpgMode={rpgMode} />
                  <div className="text-center space-y-2">
-                   <p className={`text-[11px] font-black uppercase tracking-[0.4em] ${rpgMode ? 'text-red-800' : 'text-white'}`}>Ритуал прозрения</p>
-                   <p className={`text-[14px] font-bold italic ${rpgMode ? 'text-red-950' : 'text-white/60'}`}>Мастер вникает в суть дилеммы...</p>
+                   <p className={`text-[11px] font-black uppercase tracking-[0.4em] ${rpgMode ? 'text-red-800' : 'text-black'}`}>Ритуал прозрения</p>
+                   <p className={`text-[14px] font-bold italic ${rpgMode ? 'text-red-950' : 'text-black/60'}`}>Мастер вникает в суть дилеммы...</p>
                  </div>
               </div>
             )}
@@ -508,9 +508,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-6">
                  <div className="relative">
                    <div className="absolute inset-0 bg-white/10 blur-3xl rounded-full scale-150 animate-pulse"></div>
-                   <Loader2 size={56} strokeWidth={1.5} className="text-white animate-spin relative z-10" />
+                   <Loader2 size={56} strokeWidth={1.5} className="text-yellow animate-spin relative z-10" />
                  </div>
-                 <p className="text-xs font-black uppercase tracking-[0.4em] text-white animate-pulse">Вычисляем вероятности...</p>
+                 <p className="text-xs font-black uppercase tracking-[0.4em] text-yellow animate-pulse">Вычисляем вероятности...</p>
               </div>
             )}
 
