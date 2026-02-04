@@ -46,7 +46,7 @@ const TYPE_CONFIG: Record<JournalEntryType, {
     bg: 'bg-indigo-100',
     gradient: 'from-indigo-50 to-blue-50',
     rpgGradient: 'from-red-100 to-red-200',
-    placeholder: 'Какую клятву вы дадите себе на завтра?'
+    placeholder: 'Какое действие вы готовы совершить?'
   }
 };
 
