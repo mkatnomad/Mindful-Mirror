@@ -118,7 +118,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setMessages([{
         id: 'init', role: 'assistant',
         content: mode === 'EMOTIONS' 
-          ? (rpgMode ? "Какая буря бушует в вашей душе?" : "Какие эмоции вы испытываете сейчас?")
+          ? (rpgMode ? "Какая буря бушует в вашей душе?" : "Я здесь, чтобы выслушать. Как вы себя чувствуете в этот момент?")
           : (rpgMode ? "Расскажите о своих подвигах за день." : "Как прошел ваш день?"),
         timestamp: Date.now()
       }]);
