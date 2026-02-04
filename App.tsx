@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ViewState, JournalMode, ChatSession, Message, UserProfile, JournalEntry, Archetype, SiteConfig } from './types';
 import { BottomNav } from './components/BottomNav';
@@ -5,6 +6,7 @@ import { ChatInterface } from './components/ChatInterface';
 import { JournalInterface } from './components/JournalInterface';
 import { AdminInterface } from './components/AdminInterface';
 import { Onboarding } from './components/Onboarding';
+// Fixed: Removed non-existent import processRPGQuest
 import { generateRPGQuest, processRPGChoice } from './services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, BookOpen, User as UserIcon, Zap, Star, ArrowLeft, ArrowRight, Compass, Check, X, Quote, Loader2, Trophy, Wand2, ChevronRight, Sparkles, Sword, ShieldCheck, Lock, Settings2, History as HistoryIcon, RefreshCcw, ShieldAlert, Flame, Shield, RotateCcw, ChevronDown, ChevronUp, Package, Plus, Send, Clock, Circle } from 'lucide-react';
@@ -130,7 +132,7 @@ export const TreeIcon = ({ stage, size = 40, rpgMode = false }: { stage: number,
   const cfg = treeConfigs[stage] || treeConfigs[0];
   const strokeColor = rpgMode ? "#FFFBEB" : `url(#tree-${cfg.start.replace('#','')})`;
   const fillColor = rpgMode ? "#FFFBEB" : `url(#tree-${cfg.start.replace('#','')})`;
-  const trunkColor = rpgMode ? "#451A03" : "#78350F";
+  const trunkColor = rpgMode ? "#78350F" : "#78350F";
 
   const renderTreeContent = () => {
     switch(stage) {
@@ -536,6 +538,7 @@ const QUESTIONS = [
   { q: 'Какую суперсилу вы бы выбрали?', options: ['Власть над временем', 'Создание новых миров', 'Исцеление душ', 'Знание будущего'] },
   { q: 'Где вы чувствуете себя лучше всего?', options: ['В центре событий', 'В пути к цели', 'В кругу любимых людей', 'В тишине и покое'] },
   { q: 'Ваше кредо:', options: ['Победа любой ценой', 'Вечный поиск смысла', 'Любовь спасет мир', 'Истина превыше всего'] },
+  { q: 'Что для вас является истинным богатством?', options: ['Стабильность и наследие', 'Свобода и новые открытия', 'Глубина человеческих связей', 'Внутренняя сила и влияние'] },
 ];
 
 const App: React.FC = () => {
@@ -1022,8 +1025,8 @@ const App: React.FC = () => {
             </div>
           </div>
         </div>
-        <div className="px-6 mb-6 relative z-20">
-          <button onClick={() => handleModeSelection('DECISION')} className={`w-full mb-6 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${userProfile.rpgMode ? 'rpg-card border-red-800/30 shadow-xl shadow-red-900/10' : 'bg-white bento-border bento-shadow shadow-slate-200/40'}`}>
+        <div className="px-6 mb-5 relative z-20">
+          <button onClick={() => handleModeSelection('DECISION')} className={`w-full mb-4 p-10 rounded-[44px] border flex flex-col active:scale-95 transition-all duration-300 relative overflow-hidden text-left ${userProfile.rpgMode ? 'rpg-card border-red-800/30 shadow-xl shadow-red-900/10' : 'bg-white bento-border bento-shadow shadow-slate-200/40'}`}>
             <div className="absolute top-0 right-0 -translate-y-4 translate-x-4 opacity-10 pointer-events-none scale-150 transform rotate-12"><DecisionIllustration rpgMode={userProfile.rpgMode} size={180} /></div>
             <div className="relative z-10 flex flex-col h-full justify-between">
               <div className="flex justify-between items-start mb-12">
@@ -1048,16 +1051,17 @@ const App: React.FC = () => {
               <button 
                 key={m.id} 
                 onClick={() => handleModeSelection(m.id as JournalMode)} 
-                className={`w-full h-16 rounded-[32px] border relative overflow-hidden active:scale-95 transition-all duration-300 text-left px-3 flex items-center ${userProfile.rpgMode ? 'rpg-card border-red-800/20' : 'bg-white bento-border bento-shadow'}`}
+                className={`w-full h-16 rounded-[28px] border relative overflow-hidden active:scale-95 transition-all duration-300 flex items-center justify-center ${userProfile.rpgMode ? 'rpg-card border-red-800/20' : 'bg-white bento-border bento-shadow'}`}
               >
-                <div className="flex items-center space-x-2">
-                  <div className="shrink-0 flex items-center justify-center -ml-1">
-                    <m.icon rpgMode={userProfile.rpgMode} size={44} />
-                  </div>
-                  <span className={`text-[11px] font-black uppercase tracking-tighter leading-none ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
-                    {m.label}
-                  </span>
+                {/* Watermark Icon */}
+                <div className="absolute -bottom-5 -right-5 opacity-[0.18] pointer-events-none transform -rotate-12 scale-[1.8]">
+                   <m.icon rpgMode={userProfile.rpgMode} size={90} />
                 </div>
+
+                {/* Button Content */}
+                <span className={`relative z-10 text-[14px] font-black uppercase tracking-wider text-center px-2 drop-shadow-sm ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>
+                  {m.label}
+                </span>
               </button>
             ))}
           </div>
@@ -1127,7 +1131,7 @@ const App: React.FC = () => {
                 <div className={`rounded-[32px] p-8 shadow-2xl animate-fade-in text-center border relative overflow-hidden ${userProfile.rpgMode ? 'rpg-card' : 'bg-white bento-border shadow-xl shadow-slate-200/20'}`}>
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg ${userProfile.rpgMode ? 'bg-red-800 text-white' : 'bg-emerald-50 text-emerald-600'}`}><Trophy size={28} /></motion.div>
                   <h4 className={`text-3xl font-black mb-2 tracking-tighter ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-800'}`}>+50 XP</h4>
-                  <p className={`text-xs mb-8 leading-relaxed italic px-2 ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
+                  <p className={`text-base mb-8 leading-relaxed italic px-2 ${userProfile.rpgMode ? 'text-red-950 font-serif-fantasy' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
                   <div className={`p-4 rounded-2xl mb-8 border relative ${userProfile.rpgMode ? 'bg-white border-amber-500 shadow-xl shadow-amber-900/5' : 'bg-slate-50 border-slate-100'}`}>
                      <p className={`text-xl font-black tracking-tight ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : 'text-indigo-400'}`}>{questOutcome.artifact}</p>
                   </div>
@@ -1228,7 +1232,7 @@ const App: React.FC = () => {
             <div className="flex items-center space-x-3 mb-2"><Star size={18} fill="currentColor" className="text-amber-400" /><p className={`text-[9px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-red-800' : 'text-blue-100'}`}>Статус: Странник</p></div>
             <h4 className={`text-2xl font-black mb-1 leading-tight uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-red-950 font-display-fantasy' : ''}`}>Открой все функции</h4>
             <p className={`text-[11px] opacity-80 mb-6 leading-relaxed ${userProfile.rpgMode ? 'text-red-950 font-medium' : 'text-blue-50'}`}>Безлимитные сессии, ежедневные квесты и полное самопознание.</p>
-            <button className={`w-full py-3.5 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'rpg-button' : 'bg-white text-blue-600 shadow-md active:scale-95'}`}><Sparkles size={14} fill="currentColor" /><span>Подробнее о Premium</span></button>
+            <button className={`w-full py-3.5 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'bg-white text-blue-600 shadow-md active:scale-95' : 'bg-white text-blue-600 shadow-md active:scale-95'}`}><Sparkles size={14} fill="currentColor" /><span>Подробнее о Premium</span></button>
           </div>
         )}
         <div className="space-y-4">
@@ -1407,6 +1411,8 @@ const App: React.FC = () => {
       quotes: [{ text: "Познай самого себя", author: "Сократ" }],
       adminPasscode: "0000"
     };
+    // Fixed: onReset was incorrectly using handleGiftSub (which expects a targetId string).
+    // Switched it to handleResetSub which correctly implements () => void (or Promise<void>).
     return <AdminInterface stats={appStats} config={config} onSave={(newCfg) => console.log('Saving config', newCfg)} onBack={() => setCurrentView('PROFILE')} onGift={handleGiftSub} onReset={handleResetSub} />;
   };
 
