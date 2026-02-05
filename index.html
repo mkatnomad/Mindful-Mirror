@@ -47,16 +47,16 @@
 
       /* Parchment Texture Simulation */
       .bg-parchment {
-        background-color: #fdf6e3;
+        background-color: #111827;
         background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0) 100%),
                           url('https://www.transparenttextures.com/patterns/asfalt-dark.png');
         background-blend-mode: overlay;
       }
 
       .rpg-card {
-        background: #fffefc;
-        border: 2px solid #d4a373;
-        box-shadow: 4px 4px 0px #b91c1c;
+        background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
         position: relative;
       }
 
@@ -64,13 +64,13 @@
         content: '';
         position: absolute;
         inset: 2px;
-        border: 1px solid rgba(212, 163, 115, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         pointer-events: none;
         border-radius: inherit;
       }
 
       .rpg-button {
-        background: #b91c1c;
+        background: #4f46e5;
         color: white;
         border: 2px solid #7f1d1d;
         box-shadow: 3px 3px 0px #450a0a;
@@ -162,7 +162,7 @@
       }
 
       .rpg-energy-bar-gradient {
-        background: linear-gradient(90deg, #991B1B, #EF4444, #991B1B);
+        background: linear-gradient(90deg, #4F46E5, #818CF8, #991B1B);
         background-size: 200% 200%;
         animation: energy-flow 3s ease infinite;
       }

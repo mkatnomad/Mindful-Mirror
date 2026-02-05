@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Share2, Check, Sparkles, Search, AlertTriangle, Activity, Compass, ShieldAlert, Trophy, Zap, Target } from 'lucide-react';
 import { DecisionData } from '../types';
@@ -140,7 +141,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
               delay: 0.3,
               y: { repeat: Infinity, duration: 4, ease: "easeInOut" }
             }}
-            className={`w-20 h-20 mx-auto rounded-[28px] flex items-center justify-center shadow-2xl relative overflow-hidden z-10 ${rpgMode ? 'bg-red-800 text-white' : 'bg-indigo-600 text-white'}`}
+            className={`w-20 h-20 mx-auto rounded-[28px] flex items-center justify-center shadow-2xl relative overflow-hidden z-10 ${rpgMode ? 'bg-indigo-600 text-white' : 'bg-indigo-600 text-white'}`}
           >
             <Trophy size={40} strokeWidth={2.5} className="relative z-10" />
             <motion.div 
@@ -176,10 +177,10 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
         </div>
         
         <div className="space-y-2">
-          <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${rpgMode ? 'text-red-800/60' : 'text-white/60 shadow-sm'}`}>
+          <p className={`text-[10px] font-black uppercase tracking-[0.4em] ${rpgMode ? 'text-indigo-400/60' : 'text-white/60 shadow-sm'}`}>
             Истина найдена
           </p>
-          <h3 className={`text-3xl font-black leading-tight tracking-tight ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-slate-900'}`}>
+          <h3 className={`text-3xl font-black leading-tight tracking-tight ${rpgMode ? 'text-white font-display-fantasy' : 'text-slate-900'}`}>
             {analysis.verdict}
           </h3>
         </div>
@@ -188,34 +189,34 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
       {/* 2. THE WINNER CARD */}
       <motion.div variants={itemVariants} className={`p-8 rounded-[40px] border-2 border-b-8 relative overflow-hidden transition-all ${
         rpgMode 
-          ? 'bg-white border-red-800 shadow-xl' 
+          ? 'bg-slate-800 border-slate-700 shadow-xl' 
           : `bg-white border-${winnerColor}-500 shadow-xl shadow-${winnerColor}-500/10`
       }`}>
         <div className="flex justify-between items-center mb-6 relative z-10">
            <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${
-             rpgMode ? 'bg-red-800 text-white' : `bg-${winnerColor}-500 text-white`
+             rpgMode ? 'bg-indigo-600 text-white' : `bg-${winnerColor}-500 text-white`
            }`}>
              Рекомендуемый путь
            </div>
-           <div className={`text-2xl font-black ${rpgMode ? 'text-red-900' : `text-${winnerColor}-600`}`}>
+           <div className={`text-2xl font-black ${rpgMode ? 'text-indigo-400' : `text-${winnerColor}-600`}`}>
              {winnerPercent}%
            </div>
         </div>
         
-        <h4 className={`text-2xl font-black mb-4 tracking-tight ${rpgMode ? 'text-red-950 italic' : 'text-slate-900'}`}>
+        <h4 className={`text-2xl font-black mb-4 tracking-tight ${rpgMode ? 'text-white italic' : 'text-slate-900'}`}>
           {winnerTitle}
         </h4>
         
-        <div className={`h-4 w-full rounded-full overflow-hidden mb-2 p-1 ${rpgMode ? 'bg-red-900/10' : 'bg-slate-100'}`}>
+        <div className={`h-4 w-full rounded-full overflow-hidden mb-2 p-1 ${rpgMode ? 'bg-slate-900' : 'bg-slate-100'}`}>
            <motion.div 
              initial={{ width: 0 }}
              animate={{ width: `${winnerPercent}%` }}
              transition={{ duration: 1.5, ease: "circOut" }}
-             className={`h-full rounded-full ${rpgMode ? 'bg-red-800' : `bg-${winnerColor}-500 shadow-lg shadow-${winnerColor}-500/20`}`}
+             className={`h-full rounded-full ${rpgMode ? 'bg-indigo-600' : `bg-${winnerColor}-500 shadow-lg shadow-${winnerColor}-500/20`}`}
            />
         </div>
         
-        <p className={`text-[10px] font-bold uppercase tracking-widest opacity-40 mt-3 ${rpgMode ? 'text-red-800' : 'text-slate-500'}`}>
+        <p className={`text-[10px] font-bold uppercase tracking-widest opacity-40 mt-3 ${rpgMode ? 'text-slate-500' : 'text-slate-500'}`}>
            Против: {100 - winnerPercent}%
         </p>
       </motion.div>
@@ -223,7 +224,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
       {/* 3. RISK & HIDDEN FACTOR (BALANCED COLUMNS) */}
       <div className="grid grid-cols-2 gap-4 items-stretch">
         {/* RISK METER */}
-        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 flex flex-col items-center justify-start ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
+        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 flex flex-col items-center justify-start ${rpgMode ? 'rpg-card border-slate-700' : 'bg-white bento-border'}`}>
            <div className="h-6 mb-4 flex items-center justify-center">
              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">{rpgMode ? 'Угроза' : 'Опасность'}</p>
            </div>
@@ -243,13 +244,13 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
                 }`}
               />
            </div>
-           <p className={`text-[13px] font-bold leading-snug text-center ${rpgMode ? 'text-red-900/80 font-serif-fantasy italic' : 'text-slate-700'}`}>
+           <p className={`text-[13px] font-bold leading-snug text-center ${rpgMode ? 'text-slate-400 italic' : 'text-slate-700'}`}>
              {analysis.riskDescription}
            </p>
         </motion.div>
 
         {/* HIDDEN FACTOR (INSIGHT) CARD */}
-        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 relative overflow-hidden flex flex-col items-center justify-start text-center ${rpgMode ? 'rpg-card' : 'bg-white bento-border'}`}>
+        <motion.div variants={itemVariants} className={`p-6 rounded-[32px] border-2 border-b-4 relative overflow-hidden flex flex-col items-center justify-start text-center ${rpgMode ? 'rpg-card border-slate-700' : 'bg-white bento-border'}`}>
            <div className="h-6 mb-4 flex items-center justify-center">
              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">
                {rpgMode ? 'Тайное знание' : 'Инсайт'}
@@ -263,13 +264,13 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
                   rotate: [0, 5, -5, 0]
                 }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                className={`w-16 h-16 rounded-full flex items-center justify-center border-4 ${rpgMode ? 'bg-red-800 text-white border-red-900/10' : 'bg-indigo-50 text-indigo-600 border-indigo-100/50'}`}
+                className={`w-16 h-16 rounded-full flex items-center justify-center border-4 ${rpgMode ? 'bg-indigo-600 text-white border-white/10' : 'bg-indigo-50 text-indigo-600 border-indigo-100/50'}`}
               >
                 {rpgMode ? <Compass size={32} /> : <Search size={32} strokeWidth={2.5} />}
               </motion.div>
            </div>
 
-           <p className={`text-[13px] font-bold leading-tight ${rpgMode ? 'text-red-950 italic' : 'text-slate-800'}`}>
+           <p className={`text-[13px] font-bold leading-tight ${rpgMode ? 'text-white italic' : 'text-slate-800'}`}>
              {analysis.hiddenFactor}
            </p>
         </motion.div>
@@ -277,24 +278,24 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
 
       {/* 4. THE ACTION STEP */}
       <motion.div variants={itemVariants} className="relative group">
-         <div className={`absolute inset-0 blur-2xl opacity-20 transition-opacity group-hover:opacity-40 ${rpgMode ? 'bg-red-800' : 'bg-indigo-600'}`}></div>
+         <div className={`absolute inset-0 blur-2xl opacity-20 transition-opacity group-hover:opacity-40 ${rpgMode ? 'bg-indigo-600' : 'bg-indigo-600'}`}></div>
          <div className={`relative p-8 rounded-[44px] border-2 border-b-[10px] overflow-hidden transition-all active:scale-[0.98] ${
            rpgMode 
-             ? 'bg-white border-red-800 shadow-[0_4px_0_#7f1d1d]' 
+             ? 'bg-slate-800 border-slate-700 shadow-xl' 
              : 'bg-white border-slate-900 shadow-xl'
          }`}>
             <div className="flex items-center space-x-3 mb-6">
-               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white ${rpgMode ? 'bg-red-800' : 'bg-slate-900'}`}>
+               <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white ${rpgMode ? 'bg-indigo-600' : 'bg-slate-900'}`}>
                  {rpgMode ? <Activity size={20} strokeWidth={2.5} /> : <Zap size={20} fill="currentColor" />}
                </div>
                <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">{rpgMode ? 'Ваше задание' : 'Первый шаг'}</span>
             </div>
             
-            <h5 className={`text-xl font-black mb-4 leading-tight ${rpgMode ? 'text-red-950' : 'text-slate-900'}`}>
+            <h5 className={`text-xl font-black mb-4 leading-tight ${rpgMode ? 'text-white' : 'text-slate-900'}`}>
               {analysis.actionStep}
             </h5>
             
-            <div className={`flex items-center space-x-2 text-[11px] font-black uppercase tracking-widest transition-all ${rpgMode ? 'text-red-800' : 'text-indigo-600'}`}>
+            <div className={`flex items-center space-x-2 text-[11px] font-black uppercase tracking-widest transition-all ${rpgMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                <span>{rpgMode ? 'Принимаю вызов' : 'Я сделаю это'}</span>
             </div>
          </div>
@@ -304,10 +305,10 @@ export const InsightCard: React.FC<InsightCardProps> = ({ data, rpgMode = false 
       <motion.button 
         variants={itemVariants}
         onClick={handleShare}
-        className={`w-full py-5 rounded-[32px] font-black text-[11px] uppercase tracking-[0.4em] flex items-center justify-center space-x-3 border-2 border-b-4 transition-all ${
+        className={`w-full py-5 rounded-[32px] font-black text-[11px] uppercase tracking-[0.4em] flex items-center justify-center space-x-3 border-2 transition-all ${
           isCopied 
             ? 'bg-emerald-50 border-emerald-500 text-emerald-600 shadow-inner' 
-            : `bg-white ${rpgMode ? 'border-red-800 text-red-800' : 'border-slate-200 text-slate-400'} active:scale-95`
+            : `bg-white ${rpgMode ? 'bg-slate-800 border-slate-700 text-slate-400' : 'border-slate-200 text-slate-400'} active:scale-95`
         }`}
       >
         {isCopied ? <Check size={18} strokeWidth={3} /> : <Share2 size={18} />}
