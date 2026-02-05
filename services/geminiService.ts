@@ -158,6 +158,30 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
   return result.text || "...";
 };
 
+export const summarizeChatSession = async (history: Message[]): Promise<string> => {
+  try {
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const chatContent = history
+      .filter(m => m.content && m.content.trim() !== '')
+      .map(m => `${m.role === 'user' ? 'Пользователь' : 'ИИ'}: ${m.content}`)
+      .join('\n');
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Проанализируй этот диалог и дай ему краткое, понятное название (3-5 слов), которое отражает главную тему или эмоциональный итог. Только текст названия, без кавычек и точек в конце.\n\nДиалог:\n${chatContent}`,
+      config: {
+        temperature: 0.7,
+        maxOutputTokens: 20
+      }
+    });
+
+    return response.text?.trim() || "Сессия рефлексии";
+  } catch (e) {
+    console.error("Summarization error:", e);
+    return "Завершенная сессия";
+  }
+};
+
 export const analyzeDecision = async (data: DecisionData): Promise<DecisionData> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   

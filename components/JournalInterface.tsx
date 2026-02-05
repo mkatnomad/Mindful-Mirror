@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
@@ -275,7 +276,8 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
 
   const openNewEntry = () => {
     setEditingId(null);
-    setSelectedType('INSIGHT');
+    // Use currently active filter as default type if not 'ALL'
+    setSelectedType(activeFilter === 'ALL' ? 'INSIGHT' : activeFilter);
     setContent('');
     editorStartTimeRef.current = Date.now();
     setIsEditorOpen(true);
@@ -297,10 +299,10 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
 
   const renderEditor = () => (
     <div className={`absolute inset-0 z-[100] flex flex-col animate-fade-in transition-all duration-500 ${
-      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-white'
+      rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-[#F8F9FB]/40 backdrop-blur-2xl'
     }`}>
       <div className={`flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10 transition-all duration-500 ${
-        rpgMode ? 'bg-white/50 border-red-800/20' : 'bg-white/80 border-slate-200'
+        rpgMode ? 'bg-white/50 border-red-800/20' : 'bg-white/30 border-slate-200/50'
       }`}>
         <button onClick={() => setIsEditorOpen(false)} className={`p-2 -ml-2 rounded-full transition-colors ${
           rpgMode ? 'text-red-800 hover:bg-red-100' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
@@ -324,7 +326,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
       </div>
 
       <div className={`flex p-4 space-x-2 border-b overflow-x-auto no-scrollbar transition-all duration-500 ${
-        rpgMode ? 'bg-white/20 border-red-800/10' : 'bg-slate-50/50 border-slate-200'
+        rpgMode ? 'bg-white/20 border-red-800/10' : 'bg-white/10 border-slate-200/20'
       }`}>
         {(Object.keys(TYPE_CONFIG) as JournalEntryType[]).map((type) => {
           const config = TYPE_CONFIG[type];
@@ -338,7 +340,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                 flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all min-w-[120px]
                 ${isSelected 
                   ? (rpgMode ? 'rpg-button font-display-fantasy shadow-none' : 'bg-slate-900 text-white shadow-md ring-1 ring-black/5') 
-                  : (rpgMode ? 'text-red-800/50 hover:bg-red-800/10' : 'text-slate-500 hover:bg-white/50')}
+                  : (rpgMode ? 'text-red-800/50 hover:bg-red-800/10' : 'text-slate-500 hover:bg-white/40')}
               `}
             >
               <Icon size={16} strokeWidth={isSelected ? 3 : 2} />
@@ -354,7 +356,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
           onChange={(e) => setContent(e.target.value)} 
           placeholder={TYPE_CONFIG[selectedType].placeholder} 
           className={`w-full h-full resize-none text-lg focus:outline-none leading-relaxed transition-all duration-500 ${
-            rpgMode ? 'bg-transparent text-red-950 placeholder:text-red-900/30' : 'bg-transparent text-slate-800 placeholder:text-slate-400'
+            rpgMode ? 'bg-transparent text-red-950 placeholder:text-red-900/30' : 'bg-transparent text-slate-800 placeholder:text-slate-400/60'
           }`} 
           autoFocus 
         />
@@ -444,7 +446,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                 <Sparkles size={32} />
              </div>
              <p className={`text-sm font-bold uppercase tracking-widest ${rpgMode ? 'text-red-950 font-display-fantasy' : 'text-white'}`}>
-               {rpgMode ? 'Тишина в залах' : 'Ничего не найдено'}
+               {rpgMode ? 'Тишина в залах' : 'Пока нет записей'}
              </p>
           </div>
         )}

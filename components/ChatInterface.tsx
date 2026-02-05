@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, ArrowLeft, Loader2, Sparkles, Plus, Zap, X, ChevronRight, Target, LayoutGrid, Wand2, MessageSquare, Lightbulb, Compass, Rocket, CheckCircle2, ArrowRightLeft, MessageCircle, MinusCircle, PlusCircle, Check } from 'lucide-react';
 import { JournalMode, Message, DecisionData, Archetype, DecisionArgument } from '../types';
 import { InsightCard } from './InsightCard';
-import { sendMessageToGemini, analyzeDecision, identifyDecisionIntent } from '../services/geminiService';
+import { sendMessageToGemini, analyzeDecision, identifyDecisionIntent, summarizeChatSession } from '../services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TreeIcon, RANKS } from '../App';
 
@@ -45,7 +46,7 @@ const MiniPrism = ({ rpgMode }: { rpgMode: boolean }) => (
 );
 
 const TypingIndicator = ({ rpgMode }: { rpgMode: boolean }) => (
-  <div className={`flex items-center space-x-1.5 px-5 py-3.5 rounded-[24px] rounded-bl-sm w-fit ${rpgMode ? 'bg-white border-2 border-red-800/10 shadow-sm shadow-red-900/5' : 'bg-white bento-border shadow-sm shadow-slate-200/40'}`}>
+  <div className={`flex items-center space-x-1.5 px-5 py-3.5 rounded-[24px] rounded-bl-sm w-fit ${rpgMode ? 'bg-white border-2 border-red-800/10 shadow-sm shadow-red-900/5' : 'bg-white/40 backdrop-blur-xl border border-white/20 shadow-sm'}`}>
     {[0, 1, 2].map((i) => (
       <motion.div
         key={i}
@@ -143,16 +144,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [messages, isLoading, decisionStep]);
 
-  const handleBack = () => {
+  const handleBack = async () => {
     const hasUserInteraction = mode === 'DECISION' 
       ? (decisionStep >= 2) 
       : messages.some(m => m.role === 'user'); 
 
     if (!readOnly && onSessionComplete && hasUserInteraction) {
+      let previewSummary = undefined;
+      
+      // If it's a chat session (not just a decision), generate a smart summary for the preview
+      if (mode !== 'DECISION' && messages.length > 2) {
+        setIsLoading(true);
+        try {
+          previewSummary = await summarizeChatSession(messages);
+        } catch (e) {
+          console.error("Failed to generate summary:", e);
+        }
+        setIsLoading(false);
+      } else if (mode === 'DECISION') {
+        previewSummary = decisionData.topic;
+      }
+
       onSessionComplete(
         messages, 
         (Date.now() - startTimeRef.current) / 1000,
-        mode === 'DECISION' ? decisionData.topic : undefined
+        previewSummary
       );
     }
     onBack();
