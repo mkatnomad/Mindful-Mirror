@@ -71,7 +71,7 @@ const LightningArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
       }}
       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
       d="M50 15 L35 55 L50 55 L40 85 L70 40 L50 40 L60 15 Z" 
-      fill={rpgMode ? "#7F1D1D" : "#F59E0B"} 
+      fill={rpgMode ? "#FBBF24" : "#F59E0B"} 
     />
   </motion.g>
 );
@@ -88,7 +88,7 @@ const SphereArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
           <ellipse
             cx="0" cy="0" rx="14" ry="42"
             fill="none"
-            stroke={rpgMode ? "#7F1D1D" : "#22D3EE"}
+            stroke={rpgMode ? "#FBBF24" : "#22D3EE"}
             strokeWidth="1.2"
             opacity="0.15"
           />
@@ -148,7 +148,7 @@ const SparkleArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
     >
       <path 
         d="M0 -46 L14 -14 L46 0 L14 14 L0 46 L-14 14 L-46 0 L-14 -14 Z" 
-        fill={rpgMode ? "#7F1D1D" : "#7C3AED"} 
+        fill={rpgMode ? "#FBBF24" : "#7C3AED"} 
       />
       <motion.path 
         animate={{ opacity: [0.2, 0.6, 0.2], scale: [1, 1.02, 1] }}
@@ -193,7 +193,7 @@ const BookArtifact = ({ rpgMode }: { rpgMode: boolean }) => (
       animate={{ opacity: [0.3, 0.6, 0.3] }}
       transition={{ duration: 3, repeat: Infinity }}
       d="M50 30 V70 M25 45 H45 M25 55 H45 M55 45 H75 M55 55 H75" 
-      stroke={rpgMode ? "#7F1D1D" : "#059669"} 
+      stroke={rpgMode ? "#FBBF24" : "#059669"} 
       strokeWidth="2.5" 
       strokeLinecap="round" 
     />
@@ -300,7 +300,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
             {/* Artifact Container */}
             <div className={`w-44 h-44 xs:w-48 xs:h-48 rounded-[56px] relative flex items-center justify-center mb-6 xs:mb-8 overflow-hidden transition-all duration-700 ${
               rpgMode 
-                ? 'bg-white border-2 border-red-800 shadow-[10px_10px_0px_#b91c1c]' 
+                ? 'bg-slate-800/50 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50'
                 : 'bento-border ring-4 ring-white shadow-[0_20px_50px_-10px_rgba(0,0,0,0.08)]'
             }`}
             style={{ backgroundColor: !rpgMode ? slide.cardBg : undefined }}
@@ -328,15 +328,15 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
             <div
               className={`w-full p-8 rounded-[40px] border transition-all duration-700 text-left ${
                 rpgMode 
-                  ? 'bg-white/95 border-red-800/30 shadow-sm' 
+                  ? 'bg-slate-900/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/40'
                   : 'backdrop-blur-3xl bento-border bento-shadow shadow-[0_30px_60px_-15px_rgba(0,0,0,0.05)]'
               }`}
               style={{ backgroundColor: !rpgMode ? slide.cardBg : undefined }}
             >
-              <h2 className={`text-2xl xs:text-3xl font-black tracking-tighter mb-4 xs:mb-6 leading-tight ${rpgMode ? 'text-red-950  uppercase' : 'text-slate-900'}`}>
+              <h2 className={`text-2xl xs:text-3xl font-black tracking-tighter mb-4 xs:mb-6 leading-tight ${rpgMode ? 'text-slate-100  uppercase' : 'text-slate-900'}`}>
                 {slide.title}
               </h2>
-              <p className={`text-base xs:text-lg leading-relaxed font-semibold opacity-90 ${rpgMode ? 'text-red-900/80' : 'text-slate-600'}`}>
+              <p className={`text-base xs:text-lg leading-relaxed font-semibold opacity-90 ${rpgMode ? 'text-slate-300' : 'text-slate-600'}`}>
                 {slide.description}
               </p>
             </div>
@@ -353,8 +353,8 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
               animate={{ 
                 width: currentSlide === i ? 48 : 10,
                 backgroundColor: currentSlide === i 
-                  ? (rpgMode ? '#991B1B' : '#0F172A') 
-                  : (rpgMode ? 'rgba(153, 27, 27, 0.15)' : 'rgba(15, 23, 42, 0.08)')
+                  ? (rpgMode ? '#fbbf24' : '#0F172A') 
+                  : (rpgMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(15, 23, 42, 0.08)')
               }}
               className="h-2 rounded-full transition-all duration-500"
             />
