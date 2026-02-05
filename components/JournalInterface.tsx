@@ -299,7 +299,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
 
   const renderEditor = () => (
     <div className={`absolute inset-0 z-[100] flex flex-col animate-fade-in transition-all duration-500 ${
-      rpgMode ? 'bg-[#0F172A] font-serif-fantasy' : 'bg-[#F8F9FB]/40 backdrop-blur-2xl'
+      rpgMode ? 'bg-[#0F172A] ' : 'bg-[#F8F9FB]/40 backdrop-blur-2xl'
     }`}>
       <div className={`flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10 transition-all duration-500 ${
         rpgMode ? 'bg-slate-900 border-slate-800' : 'bg-white/30 border-slate-200/50'
@@ -366,7 +366,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
 
   return (
     <div className={`flex flex-col h-full relative overflow-hidden transition-all duration-500 ${
-      rpgMode ? 'bg-[#0F172A] font-serif-fantasy' : 'bg-transparent'
+      rpgMode ? 'bg-[#0F172A] ' : 'bg-transparent'
     }`}>
       {isEditorOpen && renderEditor()}
 

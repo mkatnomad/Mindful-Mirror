@@ -333,7 +333,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
               }`}
               style={{ backgroundColor: !rpgMode ? slide.cardBg : undefined }}
             >
-              <h2 className={`text-2xl xs:text-3xl font-black tracking-tighter mb-4 xs:mb-6 leading-tight ${rpgMode ? 'text-red-950 font-display-fantasy uppercase' : 'text-slate-900'}`}>
+              <h2 className={`text-2xl xs:text-3xl font-black tracking-tighter mb-4 xs:mb-6 leading-tight ${rpgMode ? 'text-red-950  uppercase' : 'text-slate-900'}`}>
                 {slide.title}
               </h2>
               <p className={`text-base xs:text-lg leading-relaxed font-semibold opacity-90 ${rpgMode ? 'text-red-900/80' : 'text-slate-600'}`}>

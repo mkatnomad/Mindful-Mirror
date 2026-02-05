@@ -405,7 +405,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       {mode !== 'DECISION' && (
         <div className={`px-6 py-4 flex items-center justify-between sticky top-0 z-40 transition-all ${rpgMode ? 'bg-[#0F172A]/80 backdrop-blur-md border-b border-slate-700' : 'bg-transparent'}`}>
           <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={20} /></button>
-          <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-white font-display-fantasy' : 'text-white shadow-sm'}`}>
+          <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>
             {mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
           </h2>
           <div className="w-8"></div>

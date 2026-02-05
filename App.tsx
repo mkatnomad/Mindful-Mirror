@@ -998,7 +998,7 @@ const App: React.FC = () => {
             <div className="h-[1px] w-8 bg-slate-300"></div>
             {expanded ? <ChevronUp size={16} className="text-slate-300 ml-2" /> : <ChevronDown size={16} className="text-slate-300 ml-2" />}
          </div>
-         <h2 className={`text-5xl font-black italic uppercase tracking-tighter mb-2 ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-slate-800'}`}>{archetype.name}</h2>
+         <h2 className={`text-5xl font-black italic uppercase tracking-tighter mb-2 ${userProfile.rpgMode ? 'text-white ' : 'text-slate-800'}`}>{archetype.name}</h2>
          <p className={`text-xs font-bold uppercase tracking-[0.2em] mb-6 ${userProfile.rpgMode ? 'text-indigo-400' : 'text-indigo-50'}`}>{archetype.role}</p>
          
          {expanded && userProfile.secondaryArchetypes && userProfile.secondaryArchetypes.length > 0 && (
@@ -1056,7 +1056,7 @@ const App: React.FC = () => {
     const isFreeLimitReached = !userProfile.isSubscribed && (userProfile.totalQuestsDone || 0) >= 3;
 
     return (
-      <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
+      <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
         <div className="px-6 pt-6 mb-8 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className={`w-11 h-11 rounded-full overflow-hidden bg-white shadow-sm border-2 ${userProfile.rpgMode ? 'border-slate-700' : 'bento-border'} cursor-pointer`} onClick={() => setCurrentView('PROFILE')}>
@@ -1080,7 +1080,7 @@ const App: React.FC = () => {
                  </div>
               </div>
               <div>
-                <h3 className={`text-3xl font-black uppercase tracking-tighter leading-none mb-3 ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-slate-800'}`}>Принять решение</h3>
+                <h3 className={`text-3xl font-black uppercase tracking-tighter leading-none mb-3 ${userProfile.rpgMode ? 'text-white ' : 'text-slate-800'}`}>Принять решение</h3>
                 <p className={`text-[11px] font-bold uppercase tracking-[0.2em] leading-snug opacity-40 ${userProfile.rpgMode ? 'text-indigo-400' : 'text-slate-500'}`}>Выбор верного пути через анализ</p>
               </div>
             </div>
@@ -1102,7 +1102,7 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Button Content */}
-                <span className={`relative z-10 text-[14px] font-black uppercase tracking-wider text-center px-2 drop-shadow-sm ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-slate-800'}`}>
+                <span className={`relative z-10 text-[14px] font-black uppercase tracking-wider text-center px-2 drop-shadow-sm ${userProfile.rpgMode ? 'text-white ' : 'text-slate-800'}`}>
                   {m.label}
                 </span>
               </button>
@@ -1117,7 +1117,7 @@ const App: React.FC = () => {
                  <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={RANKS.indexOf(currentRank)} size={48} rpgMode={userProfile.rpgMode} /></div>
                  <div className="ml-2">
                    <p className={`text-[8px] font-black uppercase tracking-widest mb-0.5 ${userProfile.rpgMode ? 'text-indigo-400' : 'text-slate-400'}`}>Прогресс роста</p>
-                   <h4 className={`text-lg font-bold tracking-tight ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-slate-800'}`}>{currentRank.title}</h4>
+                   <h4 className={`text-lg font-bold tracking-tight ${userProfile.rpgMode ? 'text-white ' : 'text-slate-800'}`}>{currentRank.title}</h4>
                  </div>
               </div>
               
@@ -1144,7 +1144,7 @@ const App: React.FC = () => {
           {!userProfile.archetype ? (
             <div className={`rounded-[32px] p-8 bento-shadow border active:scale-[0.98] transition-all ${userProfile.rpgMode ? 'rpg-card border-slate-700' : 'bg-white bento-border'}`} onClick={() => { setTestQuestionIdx(0); setTestAnswers([]); reportEvent('test_started', {}); setCurrentView('ARCHETYPE_TEST'); }}>
               <div className="flex items-center space-x-2 mb-3"><Sparkles size={18} className={userProfile.rpgMode ? 'text-indigo-400' : 'text-indigo-400'} /><p className={`${userProfile.rpgMode ? 'text-indigo-400' : 'text-indigo-400'} text-[10px] font-bold uppercase tracking-widest`}>Первый шаг</p></div>
-              <h2 className={`text-[26px] font-black mb-2 leading-tight ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-slate-800'}`}>Узнать архетип и пройти квест</h2>
+              <h2 className={`text-[26px] font-black mb-2 leading-tight ${userProfile.rpgMode ? 'text-white ' : 'text-slate-800'}`}>Узнать архетип и пройти квест</h2>
               <p className={`text-xs ${userProfile.rpgMode ? 'text-slate-400' : 'text-slate-500'}`}>Раскройте свою истинную суть и начните свое легендарное путешествие.</p>
             </div>
           ) : (
@@ -1158,7 +1158,7 @@ const App: React.FC = () => {
                 </div>
               ) : gameStatus === 'QUEST' && questData ? (
                 <div className={`rounded-[32px] p-8 shadow-2xl border animate-fade-in relative overflow-hidden ${userProfile.rpgMode ? 'rpg-card border-slate-700' : 'bg-white bento-border shadow-xl shadow-slate-200/20'}`}>
-                  <h3 className={`text-lg font-bold mb-8 leading-relaxed italic text-center ${userProfile.rpgMode ? 'text-white font-serif-fantasy' : 'text-slate-800'}`}>"{questData.scene}"</h3>
+                  <h3 className={`text-lg font-bold mb-8 leading-relaxed italic text-center ${userProfile.rpgMode ? 'text-white ' : 'text-slate-800'}`}>"{questData.scene}"</h3>
                   <div className="space-y-3">
                      <button onClick={() => handleChoice(questData.optA)} className={`group w-full p-4 rounded-2xl font-black text-[11px] uppercase tracking-widest border-2 active:scale-95 transition-all flex items-center justify-between ${userProfile.rpgMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-slate-200 text-slate-700 shadow-sm font-bold'}`}>
                        <span>{questData.optA}</span>
@@ -1173,10 +1173,10 @@ const App: React.FC = () => {
               ) : gameStatus === 'RESULT' && questOutcome ? (
                 <div className={`rounded-[32px] p-8 shadow-2xl animate-fade-in text-center border relative overflow-hidden ${userProfile.rpgMode ? 'rpg-card border-slate-700' : 'bg-white bento-border shadow-xl shadow-slate-200/20'}`}>
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className={`w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg ${userProfile.rpgMode ? 'bg-indigo-600 text-white' : 'bg-emerald-50 text-emerald-600'}`}><Trophy size={28} /></motion.div>
-                  <h4 className={`text-3xl font-black mb-2 tracking-tighter ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-slate-800'}`}>+50 XP</h4>
-                  <p className={`text-base mb-8 leading-relaxed italic px-2 ${userProfile.rpgMode ? 'text-white font-serif-fantasy' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
+                  <h4 className={`text-3xl font-black mb-2 tracking-tighter ${userProfile.rpgMode ? 'text-white ' : 'text-slate-800'}`}>+50 XP</h4>
+                  <p className={`text-base mb-8 leading-relaxed italic px-2 ${userProfile.rpgMode ? 'text-white ' : 'text-slate-400'}`}>"{questOutcome.outcome}"</p>
                   <div className={`p-4 rounded-2xl mb-8 border relative ${userProfile.rpgMode ? 'bg-slate-900 border-indigo-500 shadow-xl' : 'bg-slate-50 border-slate-100'}`}>
-                     <p className={`text-xl font-black tracking-tight ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-indigo-400'}`}>{questOutcome.artifact}</p>
+                     <p className={`text-xl font-black tracking-tight ${userProfile.rpgMode ? 'text-white ' : 'text-indigo-400'}`}>{questOutcome.artifact}</p>
                   </div>
                   <button onClick={acceptGift} className={`w-full py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] active:scale-95 transition-all shadow-xl ${userProfile.rpgMode ? 'rpg-button border-slate-700' : 'bg-slate-900 text-white'}`}>Продолжить путь</button>
                 </div>
@@ -1192,7 +1192,7 @@ const App: React.FC = () => {
                         </motion.div>
                      </div>
                      <div>
-                       <h3 className={`text-xl font-black uppercase tracking-tighter leading-none mb-1 ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-indigo-800'}`}>Путь Судьбы</h3>
+                       <h3 className={`text-xl font-black uppercase tracking-tighter leading-none mb-1 ${userProfile.rpgMode ? 'text-white ' : 'text-indigo-800'}`}>Путь Судьбы</h3>
                        <p className={`text-[10px] font-bold uppercase tracking-[0.05em] opacity-40 ${userProfile.rpgMode ? 'text-indigo-400' : 'text-indigo-400'}`}>
                          {isFreeLimitReached ? 'Нужен Premium (3/3 пройден)' : (questAvailable ? 'Ежедневное испытание' : 'Ожидайте рассвета')}
                        </p>
@@ -1215,8 +1215,8 @@ const App: React.FC = () => {
     const isOwner = getTelegramUserId() === ADMIN_ID;
     const arc = userProfile.archetype;
     return (
-      <div className={`px-5 pt-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
-        <header className="mb-8 flex items-center justify-between"><h1 className={`text-4xl font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-white shadow-sm'}`}>Профиль</h1></header>
+      <div className={`px-5 pt-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
+        <header className="mb-8 flex items-center justify-between"><h1 className={`text-4xl font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Профиль</h1></header>
         <div className="flex items-center space-x-6 mb-10">
            <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-sm ${userProfile.rpgMode ? 'border-slate-700' : 'bento-border'}`}>{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={40} className="m-6 text-slate-200" />}</div>
            <div>
@@ -1273,7 +1273,7 @@ const App: React.FC = () => {
         {!isSubscribed && (
           <div className={`py-5 px-5 rounded-[32px] mb-6 shadow-sm border-2 transition-all cursor-pointer ${userProfile.rpgMode ? 'rpg-card border-slate-700' : 'bg-[#2dbdc0] text-white border-[#FFFFFF]'}`} onClick={() => setCurrentView('SUBSCRIPTION')}>
             <div className="flex items-center space-x-3 mb-2"><Star size={18} fill="currentColor" className="text-amber-400" /><p className={`text-[9px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-indigo-400' : 'text-blue-100'}`}>Статус: Странник</p></div>
-            <h4 className={`text-2xl font-black mb-1 leading-tight uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-white font-display-fantasy' : ''}`}>Открой все функции</h4>
+            <h4 className={`text-2xl font-black mb-1 leading-tight uppercase tracking-tighter italic ${userProfile.rpgMode ? 'text-white ' : ''}`}>Открой все функции</h4>
             <p className={`text-[11px] opacity-80 mb-6 leading-relaxed ${userProfile.rpgMode ? 'text-white font-medium' : 'text-blue-50'}`}>Безлимитные сессии, ежедневные квесты и полное самопознание.</p>
             <button className={`w-full py-3.5 rounded-2xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center space-x-2 transition-all ${userProfile.rpgMode ? 'bg-white text-blue-600 shadow-md active:scale-95' : 'bg-white text-blue-600 shadow-md active:scale-95'}`}><Sparkles size={14} fill="currentColor" /><span>Подробнее о Premium</span></button>
           </div>
@@ -1385,7 +1385,7 @@ const App: React.FC = () => {
           </div>
         )}
         <div className="mb-10 space-y-2 relative z-10">
-           <h2 className={`text-6xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-white font-display-fantasy' : 'text-white shadow-sm'}`}>{t.title}</h2>
+           <h2 className={`text-6xl font-black uppercase tracking-tighter leading-none ${isRpg ? 'text-white ' : 'text-white shadow-sm'}`}>{t.title}</h2>
            <p className={`text-[11px] font-bold uppercase tracking-[0.2em] opacity-50 ${isRpg ? 'text-indigo-400' : 'text-white/60'}`}>{t.subTitle}</p>
            <p className={`text-[16px] leading-snug px-4 italic mt-4 opacity-70 ${isRpg ? 'text-slate-400' : 'text-white/80'}`}>{t.description}</p>
         </div>
@@ -1415,10 +1415,10 @@ const App: React.FC = () => {
   };
 
   const renderRanksInfo = () => (
-    <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
+    <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
       <header className="mb-6 flex items-center space-x-4">
         <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={24}/></button>
-        <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-white shadow-sm'}`}>Ранги Сознания</h1>
+        <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Ранги Сознания</h1>
       </header>
       <div className={`mb-10 p-6 rounded-[32px] border ${userProfile.rpgMode ? 'bg-slate-800 border-slate-700 shadow-xl' : 'bg-white bento-border shadow-sm shadow-slate-200/40'}`}>
          <div className="flex justify-between items-center mb-4">
@@ -1483,7 +1483,7 @@ const App: React.FC = () => {
         {currentView === 'CHAT' && selectedMode === 'REFLECTION' && <JournalInterface rpgMode={userProfile.rpgMode} entries={journalEntries} onSaveEntry={(e, i, d) => { setJournalEntries(prev => i ? [e, ...prev] : prev.map(item => item.id === e.id ? e : item)); const xpGain = Math.max(1, Math.ceil(d / 60)); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + (i ? 1 : 0), totalMinutes: p.totalMinutes + xpGain})); reportEvent('session', { seconds: d, mode: 'REFLECTION' }); if (i) reportEvent('journal_entry', { entryType: e.type }); }} onDeleteEntry={(id) => setJournalEntries(prev => prev.filter(e => e.id !== id))} onUpdateOrder={(e) => setJournalEntries(e)} onBack={(totalSec) => { const xpGain = totalSec > 10 ? Math.max(1, Math.ceil(totalSec / 60)) : 0; if (totalSec > 10) { reportEvent('session', { seconds: totalSec, mode: 'REFLECTION' }); setUserProfile(p => ({...p, xp: p.xp + xpGain, totalMinutes: p.totalMinutes + xpGain})); } setCurrentView('HOME'); }} />}
         {currentView === 'CHAT' && selectedMode !== 'REFLECTION' && selectedMode && <ChatInterface rpgMode={userProfile.rpgMode} mode={selectedMode} archetype={userProfile.archetype} readOnly={!!viewingHistorySession} initialMessages={viewingHistorySession?.messages} onBack={() => { setViewingHistorySession(null); setCurrentView('HOME'); }} onSessionComplete={(msgs, dur, previewOverride) => { setHistory(prev => [{id: Date.now().toString(), mode: selectedMode!, date: Date.now(), duration: dur, preview: previewOverride || msgs.find(m => m.role === 'user')?.content || 'Сессия рефлексии', messages: msgs}, ...prev]); const xpGain = Math.max(1, Math.ceil(dur / 60)); const isDecision = selectedMode === 'DECISION'; const isEmotions = selectedMode === 'EMOTIONS'; if (isDecision) spendEnergyOnServer('decisions'); if (isEmotions) spendEnergyOnServer('emotions'); setUserProfile(p => { let newEnergyDecisions = p.energyDecisions; let newEmotionsDone = p.totalEmotionsDone || 0; if (!p.isSubscribed) { if (isDecision) newEnergyDecisions = Math.max(0, p.energyDecisions - 1); if (isEmotions) newEmotionsDone = Math.min(3, newEmotionsDone + 1); } return { ...p, xp: p.xp + xpGain, totalSessions: p.totalSessions + 1, totalMinutes: p.totalMinutes + xpGain, totalDecisions: isDecision ? (p.totalDecisions || 0) + 1 : (p.totalDecisions || 0), totalEmotionsDone: newEmotionsDone, energyDecisions: newEnergyDecisions }; }); reportEvent('session', { seconds: Math.round(dur), mode: selectedMode! }); }} />}
         {currentView === 'ARCHETYPE_TEST' && (
-           <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative overflow-hidden ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
+           <div className={`h-full flex flex-col animate-fade-in transition-colors duration-500 relative overflow-hidden ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
              <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.04] scale-[2.5] transform">
                     <svg width="400" height="400" viewBox="0 0 100 100" className={userProfile.rpgMode ? 'text-amber-900' : 'text-blue-900'}>
@@ -1509,12 +1509,12 @@ const App: React.FC = () => {
                 </div>
                 <span className="text-[11px] font-black tracking-widest text-white/50">{testQuestionIdx + 1}/{QUESTIONS.length}</span>
              </header>
-             <div className="flex-1 flex flex-col min-h-0 overflow-y-auto no-scrollbar pb-6 z-20 overflow-x-hidden w-full">
+             <div className="flex-1 flex flex-col min-h-0 overflow-visible no-scrollbar pb-6 z-20 overflow-visible w-full">
                <div className="flex flex-col items-center pt-2 overflow-visible">
                  <PrismAnimation rpgMode={userProfile.rpgMode} />
                  <div className="relative mt-1 mb-6 text-center px-10 w-full max-lg mx-auto">
                     <div className={`absolute inset-0 blur-3xl opacity-[0.15] -z-10 rounded-full scale-y-[0.4] ${userProfile.rpgMode ? 'bg-amber-400' : 'bg-indigo-300'}`} />
-                    <h2 className={`text-[22px] font-black italic leading-snug ${userProfile.rpgMode ? 'text-white font-serif-fantasy' : 'text-white shadow-sm'}`}>
+                    <h2 className={`text-[22px] font-black italic leading-snug ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>
                       {QUESTIONS[testQuestionIdx].q}
                     </h2>
                  </div>
@@ -1539,8 +1539,8 @@ const App: React.FC = () => {
         )}
         {currentView === 'ARCHETYPE_RESULT' && renderArchetypeResult()}
         {currentView === 'ARCHETYPE_GLOSSARY' && (
-           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
-             <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-white shadow-sm'}`}>Глоссарий</h1></header>
+           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
+             <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Глоссарий</h1></header>
              <div className="space-y-6">{ARCHETYPES.map(arc => (<div key={arc.id} className={`p-6 rounded-[28px] border ${userProfile.rpgMode ? 'rpg-card border-slate-700' : 'bg-white bento-border bento-shadow'}`}><h3 className={`text-xl font-bold mb-1 ${userProfile.rpgMode ? 'text-white' : ''}`}>{arc.name}</h3><p className="text-xs uppercase font-bold text-indigo-500 mb-4">{arc.role}</p><p className={`text-sm italic mb-4 opacity-70 ${userProfile.rpgMode ? 'text-slate-400' : ''}`}>"{arc.motto}"</p><p className={`text-xs leading-relaxed opacity-80 ${userProfile.rpgMode ? 'text-slate-300' : ''}`}>{arc.description}</p></div>))}</div>
            </div>
         )}
@@ -1548,9 +1548,9 @@ const App: React.FC = () => {
         {currentView === 'ADMIN' && renderAdmin()}
         {currentRank && currentView === 'RANKS_INFO' && renderRanksInfo()}
         {currentView === 'HISTORY' && (
-           <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment font-serif-fantasy' : 'bg-transparent'}`}>
+           <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
              <div className="flex items-center justify-between mb-8">
-               <h1 className={`text-4xl font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-white font-display-fantasy' : 'text-white shadow-sm'}`}>История</h1>
+               <h1 className={`text-4xl font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>История</h1>
                {history.length > 0 && (
                  <button 
                    onClick={handleClearHistory}

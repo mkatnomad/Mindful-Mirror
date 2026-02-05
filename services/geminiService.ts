@@ -145,7 +145,7 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
        4. Заканчивай реплику коротким, но цепляющим вопросом, чтобы человек продолжил говорить о себе.
        5. ТЫ — ЗЕРКАЛО: Отражай эмоцию пользователя, а не анализируй её как врач. Не допуская по отношению к собеседнику бесцеремонное, фамильярное или развязное отношение. Уважай собеседника.
        6. Ты помогаешь человеку разобраться в его чувствах и эмоциях, Человек становится счастливее и осознанне во время общения с тобой.`
-    : `Ты — мудрый наставник, помогающий человеку подвести итоги дня. Задавай глубокие вопросы, которые заставляют задуматься о смыслах и уроках, скрытых в обычных событиях. Будь краток и точен.`;
+    : `Ты — мудрый наставник, помогающий человеку разобраться в своих эмоциях. Задавай глубокие вопросы, которые заставляют задуматься о смыслах и уроках, скрытых в обычных событиях. Будь краток и точен.`;
 
   const geminiHistory = history
     .filter(m => m.role !== 'system' && m.content && m.content.trim() !== '')
@@ -166,29 +166,9 @@ export const sendMessageToGemini = async (history: Message[], newMessage: string
 };
 
 export const summarizeChatSession = async (history: Message[]): Promise<string> => {
-  try {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-    const chatContent = history
-      .filter(m => m.content && m.content.trim() !== '')
-      .map(m => `${m.role === 'user' ? 'Пользователь' : 'ИИ'}: ${m.content}`)
-      .join('\n');
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: `Проанализируй этот диалог и дай ему яркое, живое и глубокое название (до 5 слов), которое отражает суть разговора. Не используй кавычки. Если диалог слишком короткий, придумай название исходя из первой фразы пользователя.\n\nДиалог:\n${chatContent}`,
-      config: {
-        temperature: 0.7,
-        maxOutputTokens: 50
-      }
-    });
-
-    return response.text?.trim() || "Сессия рефлексии";
-  } catch (e) {
-    console.error("Summarization error:", e);
-    return "Завершенная сессия";
-  }
+  const firstUserMsg = history.find(m => m.role === 'user')?.content || "Сессия рефлексии";
+  return firstUserMsg.length > 40 ? firstUserMsg.slice(0, 40) + "..." : firstUserMsg;
 };
-
 export const analyzeDecision = async (data: DecisionData): Promise<DecisionData> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
