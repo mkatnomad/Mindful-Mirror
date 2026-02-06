@@ -25,7 +25,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       title: "10 Зарядов Решений",
       description: "Дополнительная энергия для глубокого анализа ситуаций",
       payload: `energy_${userId}`,
-      amount: 33 // 2 звезды за пак энергии
+      amount: 35 // 2 звезды за пак энергии
     } : {
       title: "Premium статус на 30 дней",
       description: "Безлимитный доступ ко всем функциям на 30 дней",
