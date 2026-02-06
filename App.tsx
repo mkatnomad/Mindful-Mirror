@@ -1298,7 +1298,7 @@ const App: React.FC = () => {
               <Send size={22} />
             </div>
             <div>
-              <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-slate-400' : 'text-slate-400'}`}>Сообщество</p>
+              <p className={`text-[10px] font-black uppercase tracking-widest ${userProfile.rpgMode ? 'text-slate-400' : 'text-slate-400'}`}>Сообщество, FAQ, Поддержка</p>
               <span className={`text-lg font-extrabold ${userProfile.rpgMode ? 'text-white' : 'text-slate-700'}`}>Наш Telegram канал</span>
             </div>
           </div>
