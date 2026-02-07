@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useMemo, useEffect } from 'react';
-import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowLeft, Plus, X, Lightbulb, Heart, Target, Search, Trash2, ChevronLeft, ChevronRight, Sparkles, Download } from 'lucide-react';
 import { Reorder, useDragControls, motion, AnimatePresence } from 'framer-motion';
 import { JournalEntry, JournalEntryType } from '../types';
 
@@ -85,7 +85,7 @@ const JournalCard: React.FC<{
       setIsLongPressed(true);
       isDraggingActive.current = true;
       
-      const tg = window.Telegram?.WebApp;
+      const tg = (window as any).Telegram?.WebApp;
       if (tg) {
         if (tg.isVersionAtLeast?.('6.1') && tg.disableVerticalSwipes) {
           tg.disableVerticalSwipes();
@@ -117,7 +117,7 @@ const JournalCard: React.FC<{
       timerRef.current = null;
     }
     
-    const tg = window.Telegram?.WebApp;
+    const tg = (window as any).Telegram?.WebApp;
     if (tg && tg.isVersionAtLeast?.('6.1') && tg.enableVerticalSwipes) {
       tg.enableVerticalSwipes();
     }
@@ -274,6 +274,35 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
     });
   }, [entries, searchQuery, activeFilter]);
 
+  const handleExport = () => {
+    if (entries.length === 0) return;
+    
+    const header = `--- Mindful Mirror Journal Export ---\nGenerated: ${new Date().toLocaleString()}\n\n`;
+    const body = entries
+      .map(e => {
+        const date = new Date(e.date).toLocaleString('ru-RU');
+        const typeLabel = TYPE_CONFIG[e.type]?.label || e.type;
+        return `[${date}] ${typeLabel}\n${e.content}\n----------------------------`;
+      })
+      .join('\n\n');
+      
+    const fullText = header + body;
+    const blob = new Blob([fullText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `mindful_mirror_journal_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg?.HapticFeedback) {
+      tg.HapticFeedback.notificationOccurred('success');
+    }
+  };
+
   const openNewEntry = () => {
     setEditingId(null);
     setSelectedType(activeFilter === 'ALL' ? 'INSIGHT' : activeFilter);
@@ -292,7 +321,6 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
       type: selectedType,
       content: content.trim()
     };
-    // Fix typo: iNew was used instead of isNew
     onSaveEntry(entry, isNew, duration);
     setIsEditorOpen(false);
   };
@@ -382,6 +410,16 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
                   {rpgMode ? 'Свитки мудрости' : 'Дневник'}
                 </h2>
             </div>
+            <button 
+              onClick={handleExport}
+              disabled={entries.length === 0}
+              className={`p-2 rounded-full transition-all ${
+                entries.length === 0 ? 'opacity-30' : 'active:scale-90 hover:bg-white/10'
+              } ${rpgMode ? 'text-white' : 'text-white'}`}
+              title="Экспорт дневника"
+            >
+              <Download size={20} />
+            </button>
         </div>
         <div className="mt-4 flex items-center space-x-2">
            <div className="relative flex-1">
