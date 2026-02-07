@@ -1425,7 +1425,7 @@ const App: React.FC = () => {
             <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-indigo-400' : 'text-slate-400'}`}>Ваш статус</p>
             <div className={`px-3 py-1 rounded-full text-[11px] font-black ${userProfile.rpgMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-indigo-600 text-white'}`}>{userProfile.xp} XP</div>
          </div>
-         <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-slate-300 font-medium italic' : 'text-slate-500'}`}>Каждая сессия рефлексии и принятое решение — это шаг к трансформации вашего внутреннего состояния.</p>
+         <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-slate-300 font-medium italic' : 'text-slate-500'}`}>Опыт начисляется за каждое решение, каждую сессию осознанности, каждую запись в дневнике. Больше всего баллов вы получаете за прохождение квеста. Также очки опыта прибавляются в зависимости от времени, проведенного в каждом инструменте приложения. Рост вашего Дерева — это визуальный индикатор вашей дисциплины и глубины работы над собой.</p>
       </div>
       <div className="space-y-6">
         {RANKS.map((rank, i) => {
