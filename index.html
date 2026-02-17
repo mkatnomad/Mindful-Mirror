@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,700;1,400;1,700&family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
       :root {
-        --tg-safe-area-top: 0px;
-        --tg-safe-area-bottom: 0px;
+        /* Высота системной плашки Telegram */
+        --tg-header-height: 48px;
       }
 
       body {
@@ -30,26 +30,17 @@
         height: 100%;
       }
 
+      /* Отступ для "чистой" шапки */
+      .pt-top-safe {
+        padding-top: var(--tg-header-height);
+      }
+
       .font-serif-fantasy {
         font-family: 'Lora', serif;
       }
       
       .font-display-fantasy {
         font-family: 'Cinzel', serif;
-      }
-
-      /* Enhanced Safe Area Helpers with fallback */
-      .pt-safe {
-        padding-top: calc(var(--tg-safe-area-top, 0px) + env(safe-area-inset-top, 0px));
-      }
-      .pb-safe {
-        padding-bottom: calc(var(--tg-safe-area-bottom, 0px) + env(safe-area-inset-bottom, 0px));
-      }
-      .mt-safe {
-        margin-top: calc(var(--tg-safe-area-top, 0px) + env(safe-area-inset-top, 0px));
-      }
-      .mb-safe {
-        margin-bottom: calc(var(--tg-safe-area-bottom, 0px) + env(safe-area-inset-bottom, 0px));
       }
 
       /* Слой зернистости: Film Grain */

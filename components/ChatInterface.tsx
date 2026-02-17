@@ -403,7 +403,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   return (
     <div className={`flex flex-col h-full relative z-10 ${rpgMode ? 'bg-[#0F172A]' : 'bg-transparent'}`}>
       {mode !== 'DECISION' && (
-        <div className={`px-6 py-4 flex items-center justify-between sticky top-0 z-40 transition-all pt-safe ${rpgMode ? 'bg-[#0F172A]/80 backdrop-blur-md border-b border-slate-700' : 'bg-transparent'}`}>
+        <div className={`px-6 py-4 flex items-center justify-between sticky top-0 z-40 transition-all pt-top-safe ${rpgMode ? 'bg-[#0F172A]/80 backdrop-blur-md border-b border-slate-700' : 'bg-transparent'}`}>
           <button onClick={handleBack} className={`p-2 -ml-2 rounded-full ${rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={20} /></button>
           <h2 className={`text-base font-black uppercase tracking-tighter ${rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>
             {mode === 'EMOTIONS' ? 'Состояние' : 'Дневник'}
@@ -417,7 +417,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div className={`flex flex-col ${decisionStep === 4 ? 'min-h-full' : 'h-full overflow-hidden'}`}>
             {decisionStep === 1 && !isIdentifying && (
               <div className="flex-1 flex flex-col animate-fade-in relative h-full overflow-hidden">
-                <div className="flex items-center px-4 pt-2 shrink-0 pt-safe">
+                <div className="flex items-center px-4 pt-2 shrink-0 pt-top-safe">
                   <button onClick={handleBack} className={`p-3 rounded-full transition-colors ${rpgMode ? 'text-white' : 'text-white'} hover:text-white/80`}>
                     <ArrowLeft size={24} />
                   </button>
@@ -457,7 +457,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 </div>
 
-                <div className={`p-4 pb-6 shrink-0 z-20 transition-colors pb-safe ${rpgMode ? 'bg-[#0F172A]' : 'bg-transparent'}`}>
+                <div className={`p-4 pb-6 shrink-0 z-20 transition-colors ${rpgMode ? 'bg-[#0F172A]' : 'bg-transparent'}`}>
                    <button onClick={handleDecisionStart} disabled={!decisionData.topic.trim() || isIdentifying} className={`w-full py-5 rounded-[32px] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center space-x-4 transition-all shadow-xl ${rpgMode ? 'bg-indigo-600 text-white shadow-indigo-900/50' : 'bg-white text-slate-900 border-slate-800/30'}`}>
                      <span>Взвесить факторы</span><ChevronRight size={16} strokeWidth={4} className={rpgMode ? 'text-white' : ''} />
                    </button>
@@ -477,7 +477,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             {decisionStep === 2 && !isIdentifying && (
               <div className="px-4 pb-4 flex-1 flex flex-col animate-fade-in h-full overflow-hidden">
-                 <div className="flex items-center justify-between mb-2 pt-safe">
+                 <div className="flex items-center justify-between mb-2 pt-top-safe">
                     <div className="flex items-center space-x-2 flex-1">
                       <button onClick={() => setDecisionStep(1)} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-white' : 'text-white'} hover:text-white/80`}>
                         <ArrowLeft size={20} />
@@ -507,7 +507,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                    {renderSideColumn('B')}
                  </div>
 
-                 <div className="mt-2 pb-4 pb-safe">
+                 <div className="mt-2 pb-4">
                     <button 
                       onClick={performAnalysis} 
                       disabled={decisionData.argsA.length === 0 && decisionData.argsB.length === 0}
@@ -531,7 +531,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             {decisionStep === 4 && (
               <div className="animate-fade-in pb-32">
-                <div className="px-6 pt-6 flex items-center space-x-2 mb-2 pt-safe">
+                <div className="px-6 pt-6 flex items-center space-x-2 mb-2 pt-top-safe">
                     <button onClick={handleBack} className={`p-2 -ml-2 rounded-full transition-colors ${rpgMode ? 'text-white' : 'text-white'} hover:bg-white/10`}>
                       <ArrowLeft size={20} />
                     </button>
@@ -560,13 +560,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {(decisionStep === 4 && !readOnly) ? (
-        <div className={`p-6 pb-safe z-30 transition-all ${rpgMode ? 'bg-[#0F172A]' : 'bg-transparent'}`}>
+        <div className={`p-6 safe-area-bottom z-30 transition-all ${rpgMode ? 'bg-[#0F172A]' : 'bg-transparent'}`}>
            <button onClick={handleBack} className={`w-full py-6 rounded-[32px] font-black text-xs uppercase tracking-[0.4em] flex items-center justify-center space-x-3 shadow-xl active:scale-95 transition-all ${rpgMode ? 'bg-indigo-600 text-white' : 'bg-white text-slate-900 shadow-white/10'}`}>
               <CheckCircle2 size={20} /><span>Завершить и сохранить</span>
            </button>
         </div>
       ) : (mode !== 'DECISION' || (decisionStep === 4 && readOnly)) ? (
-        <div className={`p-4 pb-safe z-30 transition-all ${rpgMode ? 'bg-[#0F172A]' : 'bg-transparent'}`}>
+        <div className={`p-4 safe-area-bottom z-30 transition-all ${rpgMode ? 'bg-[#0F172A]' : 'bg-transparent'}`}>
            {!readOnly ? (
              <div className={`flex items-center p-1 rounded-[32px] border shadow-2xl ${rpgMode ? 'bg-slate-800 border-slate-700' : 'bg-white bento-border border-white focus-within:border-indigo-400 shadow-white/10'}`}>
                 <div className="pl-5 text-slate-400"><MessageSquare size={18} /></div>
