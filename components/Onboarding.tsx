@@ -280,7 +280,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete, rpgMode = fa
         filter: isExiting ? 'blur(10px)' : 'blur(0px)'
       }}
       transition={{ duration: 0.9, ease: "easeInOut" }}
-      className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-all duration-1000 ${rpgMode ? 'bg-parchment font-serif-fantasy' : ''}`}
+      className={`h-screen w-full flex flex-col items-center justify-center relative overflow-hidden transition-all duration-1000 pt-top-safe ${rpgMode ? 'bg-parchment font-serif-fantasy' : ''}`}
       style={{ backgroundColor: !rpgMode ? slide.mainBg : undefined }}
     >
       <AuroraBackground colors={slide.aurora} rpgMode={rpgMode} />
