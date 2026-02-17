@@ -329,7 +329,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
     <div className={`absolute inset-0 z-[100] flex flex-col animate-fade-in transition-all duration-500 ${
       rpgMode ? 'bg-[#0F172A] ' : 'bg-[#F8F9FB]/40 backdrop-blur-2xl'
     }`}>
-      <div className={`flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10 transition-all duration-500 pt-top-safe ${
+      <div className={`flex items-center justify-between px-6 py-4 border-b sticky top-0 z-10 transition-all duration-500 ${
         rpgMode ? 'bg-slate-900 border-slate-800' : 'bg-white/30 border-slate-200/50'
       }`}>
         <button onClick={() => setIsEditorOpen(false)} className={`p-2 -ml-2 rounded-full transition-colors ${
@@ -398,7 +398,7 @@ export const JournalInterface: React.FC<JournalInterfaceProps> = ({ entries, onS
     }`}>
       {isEditorOpen && renderEditor()}
 
-      <div className={`sticky top-0 z-20 px-6 py-4 transition-all duration-500 pt-top-safe ${
+      <div className={`sticky top-0 z-20 px-6 py-4 transition-all duration-500 ${
         rpgMode ? 'bg-[#0F172A]/80 backdrop-blur-md border-b border-slate-700' : 'bg-transparent'
       }`}>
         <div className="flex items-center justify-between">

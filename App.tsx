@@ -1056,7 +1056,7 @@ const App: React.FC = () => {
     const isFreeLimitReached = !userProfile.isSubscribed && (userProfile.totalQuestsDone || 0) >= 3;
 
     return (
-      <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-40 pt-top-safe transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
+      <div className={`h-full overflow-y-auto animate-fade-in relative z-10 pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
         <div className="px-6 pt-6 mb-8 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <div className={`w-11 h-11 rounded-full overflow-hidden bg-white shadow-sm border-2 ${userProfile.rpgMode ? 'border-slate-700' : 'bento-border'} cursor-pointer`} onClick={() => setCurrentView('PROFILE')}>
@@ -1215,8 +1215,8 @@ const App: React.FC = () => {
     const isOwner = getTelegramUserId() === ADMIN_ID;
     const arc = userProfile.archetype;
     return (
-      <div className={`px-5 h-full overflow-y-auto pb-40 pt-top-safe transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
-        <header className="mb-8 pt-6 flex items-center justify-between"><h1 className={`text-4xl font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Профиль</h1></header>
+      <div className={`px-5 pt-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
+        <header className="mb-8 flex items-center justify-between"><h1 className={`text-4xl font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Профиль</h1></header>
         <div className="flex items-center space-x-6 mb-10">
            <div className={`w-24 h-24 rounded-[32px] overflow-hidden border-4 shadow-sm ${userProfile.rpgMode ? 'border-slate-700' : 'bento-border'}`}>{userProfile.avatarUrl ? <img src={userProfile.avatarUrl} className="w-full h-full object-cover" /> : <UserIcon size={40} className="m-6 text-slate-200" />}</div>
            <div>
@@ -1324,7 +1324,7 @@ const App: React.FC = () => {
     const remainingQuests = Math.max(0, 3 - (userProfile.totalQuestsDone || 0));
 
     return (
-      <div className={`h-full overflow-y-auto overflow-x-hidden flex flex-col items-center px-6 pb-12 text-center animate-fade-in relative pt-top-safe transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-transparent'}`}>
+      <div className={`h-full overflow-y-auto overflow-x-hidden flex flex-col items-center px-6 pt-2 pb-12 text-center animate-fade-in relative transition-all duration-700 ${isRpg ? 'bg-parchment' : 'bg-transparent'}`}>
         <div className={`absolute top-0 left-0 w-full h-1/2 opacity-20 blur-[100px] pointer-events-none ${isRpg ? 'bg-slate-800' : 'bg-indigo-500'}`} />
         <div className="w-full flex mb-2">
            <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={24}/></button>
@@ -1415,35 +1415,33 @@ const App: React.FC = () => {
   };
 
   const renderRanksInfo = () => (
-    <div className={`h-full overflow-y-auto pb-40 pt-top-safe transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
-      <header className="mb-6 flex items-center space-x-4 px-8 pt-4">
+    <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
+      <header className="mb-6 flex items-center space-x-4">
         <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={24}/></button>
         <h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Ранги Сознания</h1>
       </header>
-      <div className="px-8 pb-12">
-        <div className={`mb-10 p-6 rounded-[32px] border ${userProfile.rpgMode ? 'bg-slate-800 border-slate-700 shadow-xl' : 'bg-white bento-border shadow-sm shadow-slate-200/40'}`}>
-           <div className="flex justify-between items-center mb-4">
-              <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-indigo-400' : 'text-slate-400'}`}>Ваш статус</p>
-              <div className={`px-3 py-1 rounded-full text-[11px] font-black ${userProfile.rpgMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-indigo-600 text-white'}`}>{userProfile.xp} XP</div>
-           </div>
-           <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-slate-300 font-medium italic' : 'text-slate-500'}`}>Опыт начисляется за каждое решение, каждую сессию осознанности, каждую запись в дневнике. Больше всего баллов вы получаете за прохождение квеста. Также очки опыта прибавляются в зависимости от времени, проведенного в каждом инструменте приложения. Рост вашего Дерева — это визуальный индикатор вашей дисциплины и глубины работы над собой.</p>
-        </div>
-        <div className="space-y-6">
-          {RANKS.map((rank, i) => {
-            const isReached = userProfile.xp >= rank.threshold;
-            return (
-              <div key={i} className={`p-6 rounded-[28px] border-2 flex items-center space-x-5 transition-all duration-500 ${userProfile.rpgMode ? (isReached ? 'bg-slate-800 border-slate-600' : 'bg-slate-900 border-slate-800 opacity-40 grayscale') : (isReached ? 'bg-white border-amber-400 shadow-sm' : 'bg-white opacity-60 border-slate-200 grayscale')}`}>
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={i} size={48} rpgMode={userProfile.rpgMode} /></div>
-                <div className="flex-1 ml-2">
-                  <h3 className={`font-bold text-lg ${userProfile.rpgMode ? 'text-white' : 'text-slate-800'}`}>{rank.title}</h3>
-                  <p className={`text-xs font-bold uppercase tracking-widest ${isReached ? (userProfile.rpgMode ? 'text-indigo-400' : 'text-indigo-600') : 'text-slate-400'}`}>{rank.threshold} XP</p>
-                  <p className={`text-sm mt-1 leading-tight ${isReached ? (userProfile.rpgMode ? 'text-slate-400' : 'text-slate-600') : 'text-slate-400'}`}>{rank.desc}</p>
-                </div>
-                <div className="shrink-0">{isReached ? <Check size={20} className="text-emerald-500" strokeWidth={3} /> : <Lock size={18} className="text-slate-300" />}</div>
+      <div className={`mb-10 p-6 rounded-[32px] border ${userProfile.rpgMode ? 'bg-slate-800 border-slate-700 shadow-xl' : 'bg-white bento-border shadow-sm shadow-slate-200/40'}`}>
+         <div className="flex justify-between items-center mb-4">
+            <p className={`text-[10px] font-black uppercase tracking-[0.2em] ${userProfile.rpgMode ? 'text-indigo-400' : 'text-slate-400'}`}>Ваш статус</p>
+            <div className={`px-3 py-1 rounded-full text-[11px] font-black ${userProfile.rpgMode ? 'bg-indigo-600 text-white shadow-lg' : 'bg-indigo-600 text-white'}`}>{userProfile.xp} XP</div>
+         </div>
+         <p className={`text-xs leading-relaxed ${userProfile.rpgMode ? 'text-slate-300 font-medium italic' : 'text-slate-500'}`}>Опыт начисляется за каждое решение, каждую сессию осознанности, каждую запись в дневнике. Больше всего баллов вы получаете за прохождение квеста. Также очки опыта прибавляются в зависимости от времени, проведенного в каждом инструменте приложения. Рост вашего Дерева — это визуальный индикатор вашей дисциплины и глубины работы над собой.</p>
+      </div>
+      <div className="space-y-6">
+        {RANKS.map((rank, i) => {
+          const isReached = userProfile.xp >= rank.threshold;
+          return (
+            <div key={i} className={`p-6 rounded-[28px] border-2 flex items-center space-x-5 transition-all duration-500 ${userProfile.rpgMode ? (isReached ? 'bg-slate-800 border-slate-600' : 'bg-slate-900 border-slate-800 opacity-40 grayscale') : (isReached ? 'bg-white border-amber-400 shadow-sm' : 'bg-white opacity-60 border-slate-200 grayscale')}`}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"><TreeIcon stage={i} size={48} rpgMode={userProfile.rpgMode} /></div>
+              <div className="flex-1 ml-2">
+                <h3 className={`font-bold text-lg ${userProfile.rpgMode ? 'text-white' : 'text-slate-800'}`}>{rank.title}</h3>
+                <p className={`text-xs font-bold uppercase tracking-widest ${isReached ? (userProfile.rpgMode ? 'text-indigo-400' : 'text-indigo-600') : 'text-slate-400'}`}>{rank.threshold} XP</p>
+                <p className={`text-sm mt-1 leading-tight ${isReached ? (userProfile.rpgMode ? 'text-slate-400' : 'text-slate-600') : 'text-slate-400'}`}>{rank.desc}</p>
               </div>
-            );
-          })}
-        </div>
+              <div className="shrink-0">{isReached ? <Check size={20} className="text-emerald-500" strokeWidth={3} /> : <Lock size={18} className="text-slate-300" />}</div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1465,7 +1463,7 @@ const App: React.FC = () => {
     const arc = userProfile.archetype;
     if (!arc) return null;
     return (
-      <div className={`h-screen w-full overflow-y-auto animate-fade-in pt-top-safe transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-transparent'}`}>
+      <div className={`h-screen w-full overflow-y-auto animate-fade-in transition-colors duration-1000 ${userProfile.rpgMode ? 'bg-parchment' : 'bg-transparent'}`}>
         <div className="min-h-full flex flex-col items-center p-6 pb-20 justify-center">
             <ArchetypeCard archetype={arc} expanded={true} onToggle={() => {}} />
             <button onClick={() => setCurrentView('HOME')} className={`w-full max-w-md py-4 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] shadow-md active:scale-95 transition-all ${userProfile.rpgMode ? 'rpg-button border-none' : 'bg-slate-900 text-white shadow-xl'}`}>Принять путь</button>
@@ -1500,7 +1498,7 @@ const App: React.FC = () => {
                 </div>
                 <div className={`absolute top-[-20%] left-[-20%] right-[-20%] bottom-[-20%] blur-[120px] opacity-[0.1] rounded-full ${userProfile.rpgMode ? 'bg-amber-500' : 'bg-blue-400'}`} />
              </div>
-             <header className="relative z-30 pt-6 px-6 mb-1 flex items-center justify-between pointer-events-none pt-top-safe">
+             <header className="relative z-30 pt-6 px-6 mb-1 flex items-center justify-between pointer-events-none">
                 <button onClick={() => setCurrentView('HOME')} className={`p-2 -ml-2 rounded-full active:bg-black/5 transition-all pointer-events-auto ${userProfile.rpgMode ? 'text-white' : 'text-white shadow-sm'}`}>
                   <X size={24}/>
                 </button>
@@ -1541,8 +1539,8 @@ const App: React.FC = () => {
         )}
         {currentView === 'ARCHETYPE_RESULT' && renderArchetypeResult()}
         {currentView === 'ARCHETYPE_GLOSSARY' && (
-           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-40 pt-top-safe transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
-             <header className="mb-10 flex items-center space-x-4 pt-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Глоссарий</h1></header>
+           <div className={`p-8 h-full overflow-y-auto animate-fade-in pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
+             <header className="mb-10 flex items-center space-x-4"><button onClick={() => setCurrentView('PROFILE')} className={`p-2 -ml-2 rounded-full ${userProfile.rpgMode ? 'text-white' : 'text-white'}`}><ArrowLeft size={24}/></button><h1 className={`text-2xl font-bold uppercase ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>Глоссарий</h1></header>
              <div className="space-y-6">{ARCHETYPES.map(arc => (<div key={arc.id} className={`p-6 rounded-[28px] border ${userProfile.rpgMode ? 'rpg-card border-slate-700' : 'bg-white bento-border bento-shadow'}`}><h3 className={`text-xl font-bold mb-1 ${userProfile.rpgMode ? 'text-white' : ''}`}>{arc.name}</h3><p className="text-xs uppercase font-bold text-indigo-500 mb-4">{arc.role}</p><p className={`text-sm italic mb-4 opacity-70 ${userProfile.rpgMode ? 'text-slate-400' : ''}`}>"{arc.motto}"</p><p className={`text-xs leading-relaxed opacity-80 ${userProfile.rpgMode ? 'text-slate-300' : ''}`}>{arc.description}</p></div>))}</div>
            </div>
         )}
@@ -1550,8 +1548,8 @@ const App: React.FC = () => {
         {currentView === 'ADMIN' && renderAdmin()}
         {currentRank && currentView === 'RANKS_INFO' && renderRanksInfo()}
         {currentView === 'HISTORY' && (
-           <div className={`p-8 h-full overflow-y-auto pb-40 pt-top-safe transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
-             <div className="flex items-center justify-between mb-8 pt-4">
+           <div className={`p-8 h-full overflow-y-auto pb-40 transition-colors duration-500 ${userProfile.rpgMode ? 'bg-parchment ' : 'bg-transparent'}`}>
+             <div className="flex items-center justify-between mb-8">
                <h1 className={`text-4xl font-black uppercase tracking-tighter ${userProfile.rpgMode ? 'text-white ' : 'text-white shadow-sm'}`}>История</h1>
                {history.length > 0 && (
                  <button 
