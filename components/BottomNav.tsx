@@ -22,7 +22,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentView, onChangeView,
     }`;
 
   return (
-    <div className="fixed bottom-6 left-0 w-full px-8 z-50 pointer-events-none">
+    <div 
+      className="fixed left-0 w-full px-8 z-50 pointer-events-none" 
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) + 1.5rem)' }}
+    >
       <div className={`pointer-events-auto flex justify-between items-center h-[72px] max-w-xs mx-auto rounded-[36px] px-2 transition-all duration-500 backdrop-blur-2xl ${
         rpgMode 
           ? 'bg-slate-900/90 border-slate-700 shadow-[0_15px_35px_-5px_rgba(0,0,0,0.4)]' 
